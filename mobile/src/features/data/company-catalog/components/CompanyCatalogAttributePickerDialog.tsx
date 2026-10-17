@@ -177,7 +177,7 @@ export function CompanyCatalogAttributePickerDialog({
         sizeHeight="large"
         nestedDismissGuard={libraryPickerOpen}
         footer={
-          <View className="flex-row flex-wrap justify-end gap-2">
+          <View className="flex-row flex-nowrap justify-end gap-2">
             <Button variant="outline" onPress={() => onOpenChange(false)} disabled={busy}>
               {tc('close')}
             </Button>

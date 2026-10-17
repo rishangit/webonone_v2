@@ -419,7 +419,7 @@ export function ServiceFormDialog({
 
   const footer =
     phase === 'library' ? (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-nowrap items-center justify-end gap-2">
         <Button
           type="button"
           variant="outline"
@@ -449,7 +449,7 @@ export function ServiceFormDialog({
         </Button>
       </div>
     ) : phase === 'source' ? (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-nowrap items-center justify-end gap-2">
         <Button
           type="button"
           variant="outline"
@@ -469,7 +469,7 @@ export function ServiceFormDialog({
         </Button>
       </div>
     ) : (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-nowrap items-center justify-end gap-2">
         <Button
           type="button"
           variant="outline"

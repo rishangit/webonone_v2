@@ -175,7 +175,7 @@ export function CustomDialog({
             {footer ? (
               <View
                 nativeID={id ? `${id}-footer` : undefined}
-                className="shrink-0 flex-row flex-wrap justify-end gap-2 border-t border-border px-4 py-3"
+                className="shrink-0 flex-row flex-nowrap items-center justify-end gap-2 border-t border-border px-4 py-3"
               >
                 {footer}
               </View>

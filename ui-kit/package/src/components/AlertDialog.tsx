@@ -50,7 +50,10 @@ function AlertDialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDiv
 function AlertDialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)}
+      className={cn(
+        'flex flex-nowrap items-center justify-end gap-2 overflow-x-auto [&_button]:shrink-0 [&_button]:whitespace-nowrap',
+        className,
+      )}
       {...props}
     />
   )
@@ -104,7 +107,7 @@ const AlertDialogCancel = React.forwardRef<
     ref={ref}
     className={cn(
       buttonVariants({ variant: 'outline' }),
-      'mt-2 h-10 border-[hsl(var(--glass-border))] sm:mt-0',
+      'h-10 shrink-0 whitespace-nowrap border-[hsl(var(--glass-border))]',
       className,
     )}
     {...props}

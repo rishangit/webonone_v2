@@ -85,11 +85,14 @@ export function Button({
           <ActivityIndicator size="small" color={spinnerColor} />
         </View>
       ) : typeof children === 'string' || typeof children === 'number' ? (
-        <Text className={cn('relative z-10', controlLabelClassName, labelVariant[variant])}>
+        <Text
+          numberOfLines={1}
+          className={cn('relative z-10', controlLabelClassName, labelVariant[variant])}
+        >
           {children}
         </Text>
       ) : (
-        <View className="relative z-10 flex-row items-center justify-center gap-2">{children}</View>
+        <View className="relative z-10 flex-row flex-nowrap items-center justify-center gap-2">{children}</View>
       )}
     </Pressable>
   )

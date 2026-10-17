@@ -263,7 +263,7 @@ export function TokenPosDialog({
         sizeWidth="large"
         sizeHeight="large"
         footer={
-          <div className="flex w-full flex-wrap items-center justify-end gap-4">
+          <div className="flex w-full flex-nowrap items-center justify-end gap-4 overflow-x-auto">
             <p className="flex items-baseline gap-2 text-lg font-semibold">
               <span>{t('pos.total')}</span>
               <PriceDisplay value={total} size="lg" />

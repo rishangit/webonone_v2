@@ -109,7 +109,7 @@ export function AiUserSettingsDialog({
       sizeWidth="medium"
       sizeHeight="large"
       footer={
-        <View className="flex-row flex-wrap justify-end gap-2">
+        <View className="flex-row flex-nowrap justify-end gap-2">
           <Button variant="outline" onPress={() => onOpenChange(false)} disabled={saving}>
             {t('ai.cancel')}
           </Button>

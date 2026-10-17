@@ -206,7 +206,7 @@ function CustomDialog({
             {footer ? (
               <div
                 id={id ? `${id}-footer` : undefined}
-                className="flex shrink-0 justify-end gap-2 border-t border-[hsl(var(--glass-border))] px-6 py-3"
+                className="flex shrink-0 flex-nowrap items-center justify-end gap-2 overflow-x-auto border-t border-[hsl(var(--glass-border))] px-6 py-3 [&>div]:flex-row [&>div]:flex-nowrap [&>div]:items-center [&>div]:justify-end [&_button]:shrink-0 [&_button]:whitespace-nowrap"
               >
                 {footer}
               </div>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { AccountOptionRow, Body, Button, CustomDialog } from '@webonone/mobile-ui'
 import { useSession } from '@/features/auth/SessionContext'
@@ -24,7 +24,6 @@ export function AccountSwitchDialog({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const appliedPreferredRef = useRef<string | null>(null)
-  const stackedActions = Platform.OS === 'web'
 
   useEffect(() => {
     if (!open) {
@@ -75,17 +74,15 @@ export function AccountSwitchDialog({
       sizeWidth="medium"
       sizeHeight="auto"
       footer={
-        <View className={stackedActions ? 'w-full gap-2' : 'flex-row flex-wrap justify-end gap-2'}>
+        <View className="flex-row flex-nowrap justify-end gap-2">
           <Button
             variant="outline"
-            className={stackedActions ? 'w-full' : undefined}
             disabled={busy}
             onPress={() => onOpenChange(false)}
           >
             {tc('cancel')}
           </Button>
           <Button
-            className={stackedActions ? 'w-full' : undefined}
             loading={busy}
             disabled={!pending || busy}
             onPress={() => void handleSwitch()}

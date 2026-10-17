@@ -49,7 +49,7 @@ export function LocationPermissionDialog({
       sizeHeight="auto"
       maxWidth="max-w-md"
       footer={
-        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-nowrap items-center justify-end gap-2">
           <Button type="button" variant="outline" onClick={onNotNow}>
             {t('locationNotNow')}
           </Button>

@@ -423,7 +423,7 @@ export function SpaceFormDialog({
 
   const footer =
     phase === 'library' ? (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-nowrap items-center justify-end gap-2">
         <Button
           type="button"
           variant="outline"
@@ -453,7 +453,7 @@ export function SpaceFormDialog({
         </Button>
       </div>
     ) : phase === 'source' ? (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-nowrap items-center justify-end gap-2">
         <Button
           type="button"
           variant="outline"
@@ -473,7 +473,7 @@ export function SpaceFormDialog({
         </Button>
       </div>
     ) : (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-nowrap items-center justify-end gap-2">
         <Button
           type="button"
           variant="outline"

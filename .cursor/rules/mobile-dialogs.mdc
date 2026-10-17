@@ -26,6 +26,7 @@ Also available: `ConfirmDialog` for destructive confirms.
 ## Patterns
 
 - Form dialogs: fields in dialog body; submit in `footer`; validation errors inline via `FormField`.
+- Footer actions stay on **one row** (`flex-row flex-nowrap`). Do not use `flex-wrap` or a stacked `w-full` column. Button labels use a single line.
 - Wizards: one step per dialog open state or separate screens — no peer-dialog bridge.
 - Selection: `UserSelectionDialog`, `TagSelectionDialog` from mobile-ui.
 

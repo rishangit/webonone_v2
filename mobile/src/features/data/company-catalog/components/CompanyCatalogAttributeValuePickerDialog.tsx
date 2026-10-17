@@ -113,7 +113,7 @@ export function CompanyCatalogAttributeValuePickerDialog({
       title={t('attributeDetail.addValue')}
       description={t('attributesTab.addDescription')}
       footer={
-        <View className="flex-row flex-wrap justify-end gap-2">
+        <View className="flex-row flex-nowrap justify-end gap-2">
           <Button variant="outline" onPress={() => onOpenChange(false)} disabled={saving}>
             {tc('cancel')}
           </Button>

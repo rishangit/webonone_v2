@@ -102,7 +102,7 @@ export function RoleSelectionDialog() {
     }
   }
 
-  const actionButtonClassName = 'h-10 w-full sm:w-auto'
+  const actionButtonClassName = 'h-10 shrink-0 whitespace-nowrap'
 
   return (
     <CustomDialog
@@ -115,7 +115,7 @@ export function RoleSelectionDialog() {
       sizeWidth="medium"
       sizeHeight="auto"
       footer={
-        <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+        <div className="flex flex-nowrap items-center justify-end gap-2">
           {isSettingsMode ? (
             <Button
               type="button"

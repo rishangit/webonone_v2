@@ -35,7 +35,7 @@ Any **create / edit / selection / wizard** dialog box or dialog window in a sate
 - Every dialog: visible **header** + visible **footer**.
 - Global actions (Cancel, Save, Submit, Delete, Next, Previous, **Crop & Upload**) go in the **`footer` prop only** — never in the body.
 - This applies to **stacked inner dialogs** and **consumer-hosted embed dialogs** — if the consumer renders `CustomDialog`, the iframe/embed child must not duplicate footer actions.
-- `CustomDialog` footer is already `flex justify-end gap-2`. Pass buttons as a fragment. No `w-full` / `flex-1` on footer buttons unless explicitly required.
+- `CustomDialog` footer is `flex flex-nowrap justify-end gap-2`. Pass buttons as a fragment or a `flex-nowrap` row. No `w-full` / `flex-1` / `flex-wrap` on footer buttons.
 
 ### Core-hosted peer dialogs (WebOnOne shell) — mandatory
 
@@ -267,7 +267,7 @@ Reference: [`ProfileMediaSelectorModal.tsx`](identity/frontend/src/features/prof
 
 **Body content:** mobile-first single column; columns at `md:` / `lg:` only (e.g. `grid grid-cols-1 gap-6 lg:grid-cols-2`). No horizontal overflow; `min-w-0` on flex/grid children. Full-width inputs on phone. Wizard bar stays `w-1/2 mx-auto`.
 
-**Footer on narrow screens:** wrap long footers in `<div className="flex flex-wrap items-center justify-end gap-2">`; keep `h-10` touch targets; no full-width stacked buttons unless required.
+**Footer on narrow screens:** one row, `flex flex-nowrap items-center justify-end gap-2`. Buttons stay `whitespace-nowrap` and do not stack or wrap to a second line. If the row is wider than the dialog, the footer scrolls horizontally. Keep `h-10` touch targets.
 
 See [tailwind-css.mdc](tailwind-css.mdc) for breakpoint conventions.
 

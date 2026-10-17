@@ -641,7 +641,7 @@ export function SpaceFormDialog({
   )
 
   const footer = (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="flex flex-nowrap items-center justify-end gap-2">
       <Button
         type="button"
         variant="outline"

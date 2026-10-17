@@ -320,7 +320,7 @@ export function EventFormDialog({
         {...DIALOG_SIZE}
         nestedDismissGuard={servicePickerOpen || attendeePickerOpen}
         footer={
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-nowrap items-center justify-end gap-2">
             <Button
               type="button"
               variant="outline"

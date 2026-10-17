@@ -55,7 +55,7 @@ export function CatalogReviewDialog({
       sizeWidth="small"
       sizeHeight="auto"
       footer={
-        <View className="flex-row flex-wrap items-center justify-end gap-2">
+        <View className="flex-row flex-nowrap items-center justify-end gap-2">
           <Button variant="outline" disabled={saving} onPress={() => onOpenChange(false)}>
             {cancelLabel}
           </Button>

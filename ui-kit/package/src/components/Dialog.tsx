@@ -90,7 +90,7 @@ function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
   return (
     <div
       className={cn(
-        'flex shrink-0 flex-col-reverse border-t px-6 pb-6 pt-4 sm:flex-row sm:justify-end sm:space-x-2',
+        'flex shrink-0 flex-nowrap items-center justify-end gap-2 overflow-x-auto border-t px-6 pb-6 pt-4 [&_button]:shrink-0 [&_button]:whitespace-nowrap',
         className,
       )}
       {...props}

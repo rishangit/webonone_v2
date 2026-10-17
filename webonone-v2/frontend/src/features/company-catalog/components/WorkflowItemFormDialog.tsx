@@ -250,7 +250,7 @@ export function WorkflowItemFormDialog({
         {...DIALOG_SIZE}
         nestedDismissGuard={pickerOpen}
         footer={
-          <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex flex-nowrap items-center justify-end gap-2">
             <Button
               type="button"
               variant="outline"

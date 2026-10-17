@@ -89,7 +89,7 @@ export function ExpandEventUntilDialog({
       sizeWidth="medium"
       sizeHeight="auto"
       footer={
-        <View className="flex-row flex-wrap justify-end gap-2">
+        <View className="flex-row flex-nowrap justify-end gap-2">
           <Button variant="outline" disabled={saving} onPress={() => onOpenChange(false)}>
             Cancel
           </Button>

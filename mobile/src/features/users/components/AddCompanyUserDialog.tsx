@@ -143,7 +143,7 @@ export function AddCompanyUserDialog({
         sizeHeight="auto"
         stackLevel={1}
         footer={
-          <View className="flex-row flex-wrap justify-end gap-2">
+          <View className="flex-row flex-nowrap justify-end gap-2">
             <Button variant="outline" onPress={() => setCreateOpen(false)} disabled={creating}>
               Cancel
             </Button>

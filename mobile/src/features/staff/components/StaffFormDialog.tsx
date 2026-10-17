@@ -193,7 +193,7 @@ export function StaffFormDialog({
         sizeHeight="large"
         nestedDismissGuard={userPickerOpen}
         footer={
-          <View className="flex-row flex-wrap justify-end gap-2">
+          <View className="flex-row flex-nowrap justify-end gap-2">
             <Button variant="outline" onPress={() => onOpenChange(false)} disabled={saving}>
               Cancel
             </Button>

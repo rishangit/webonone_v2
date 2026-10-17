@@ -175,7 +175,7 @@ export function TokenBillDialog({
       sizeWidth="large"
       sizeHeight="large"
       footer={
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-nowrap items-center justify-end gap-2">
           {isPaid ? (
             <Button
               type="button"
