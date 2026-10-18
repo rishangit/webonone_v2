@@ -6,6 +6,154 @@ export const createFontLibrarySchema = z.object({
   family: z.string().trim().min(1).max(255),
 })
 
+const colorLibraryPaletteHex = z
+  .string()
+  .trim()
+  .regex(/^#[0-9A-Fa-f]{6}$/, 'Enter a valid hex color (#RRGGBB)')
+
+export const websiteColorLibraryPaletteSchema = z.object({
+  color_1: colorLibraryPaletteHex,
+  color_2: colorLibraryPaletteHex,
+  color_3: colorLibraryPaletteHex,
+  color_4: colorLibraryPaletteHex,
+  color_5: colorLibraryPaletteHex,
+  color_6: colorLibraryPaletteHex,
+})
+
+export const createColorLibrarySchema = z.object({
+  name: z.string().trim().min(1).max(128),
+  palette: websiteColorLibraryPaletteSchema,
+})
+
+export const websiteElementCustomizationSchema = z.object({
+  html: z.string().max(50000).optional().default(''),
+  styles: z.string().max(50000).optional().default(''),
+  scripts: z.string().max(50000).optional().default(''),
+})
+
+export const textLibraryDefinitionSchema = z.object({
+  fontName: z.string().trim().min(1).max(128),
+  googleFontUrl: z.string().trim().min(1).max(2048),
+  family: z.string().trim().min(1).max(255),
+  colorName: z.string().trim().min(1).max(128),
+  colorValue: z.string().trim().min(1).max(32),
+  size: z.number().min(8).max(200),
+  sizeByBreakpoint: z
+    .object({
+      sm: z.number().min(8).max(200).optional(),
+      md: z.number().min(8).max(200).optional(),
+      lg: z.number().min(8).max(200).optional(),
+      xl: z.number().min(8).max(200).optional(),
+      '2xl': z.number().min(8).max(200).optional(),
+    })
+    .optional(),
+  customization: websiteElementCustomizationSchema.optional(),
+})
+
+export const createTextLibrarySchema = z.object({
+  name: z.string().trim().min(1).max(128),
+  definition: textLibraryDefinitionSchema,
+})
+
+export const buttonLibraryDefinitionSchema = z.object({
+  backgroundColorName: z.string().trim().min(1).max(128),
+  backgroundColorValue: z.string().trim().min(1).max(32),
+  textColorName: z.string().trim().min(1).max(128),
+  textColorValue: z.string().trim().min(1).max(32),
+  borderColorName: z.string().trim().min(1).max(128),
+  borderColorValue: z.string().trim().min(1).max(32),
+  borderWidth: z.number().min(0).max(16),
+  radius: z.number().min(0).max(999),
+  textStyleName: z.string().trim().min(1).max(128),
+  textFontName: z.string().trim().min(1).max(128),
+  textGoogleFontUrl: z.string().trim().min(1).max(2048),
+  textFontFamily: z.string().trim().min(1).max(255),
+  textSize: z.number().min(8).max(200),
+  labelColorName: z.string().trim().min(1).max(128),
+  labelColorValue: z.string().trim().min(1).max(32),
+  customization: websiteElementCustomizationSchema.optional(),
+})
+
+export const createButtonLibrarySchema = z.object({
+  name: z.string().trim().min(1).max(128),
+  definition: buttonLibraryDefinitionSchema,
+})
+
+function codeField() {
+  return z.preprocess((value) => {
+    if (value == null) return undefined
+    if (typeof value === 'string') return value
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => (typeof item === 'string' ? item : JSON.stringify(item)))
+        .join('\n')
+    }
+    return value
+  }, z.string().max(50000).optional())
+}
+
+function jsonObject<T extends z.ZodType>(schema: T) {
+  return z.preprocess((value) => {
+    if (typeof value !== 'string') return value
+    const trimmed = value.trim()
+    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return value
+    try {
+      return JSON.parse(trimmed) as unknown
+    } catch {
+      return value
+    }
+  }, schema)
+}
+
+const elementLibraryPatchFields = {
+  html: codeField(),
+  styles: codeField(),
+  scripts: codeField(),
+}
+
+function hasElementLibraryPatch(
+  data: { name?: string; definition?: unknown; html?: string; styles?: string; scripts?: string },
+): boolean {
+  return (
+    data.name != null ||
+    data.definition != null ||
+    data.html != null ||
+    data.styles != null ||
+    data.scripts != null
+  )
+}
+
+const buttonLibraryDefinitionPatchSchema = buttonLibraryDefinitionSchema.extend({
+  borderWidth: z.coerce.number().min(0).max(16),
+  radius: z.coerce.number().min(0).max(999),
+  textSize: z.coerce.number().min(8).max(200),
+}).partial()
+
+const textLibraryDefinitionPatchSchema = textLibraryDefinitionSchema.extend({
+  size: z.coerce.number().min(8).max(200),
+}).partial()
+
+export const updateButtonLibraryElementSchema = z
+  .object({
+    name: z.string().trim().min(1).max(128).optional(),
+    definition: jsonObject(buttonLibraryDefinitionPatchSchema).optional(),
+    ...elementLibraryPatchFields,
+  })
+  .refine(hasElementLibraryPatch, {
+    message: 'Send at least one of name, definition, html, styles, or scripts',
+  })
+
+export const updateTextLibraryElementSchema = z
+  .object({
+    name: z.string().trim().min(1).max(128).optional(),
+    definition: jsonObject(textLibraryDefinitionPatchSchema).optional(),
+    ...elementLibraryPatchFields,
+  })
+  .refine(hasElementLibraryPatch, {
+    message: 'Send at least one of name, definition, html, styles, or scripts',
+  })
+
 export const websiteFontTokenSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(128),
@@ -34,6 +182,8 @@ export const websiteTextStyleSchema = z.object({
     })
     .optional(),
   colorId: z.string().max(64).default(''),
+  sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
+  customization: websiteElementCustomizationSchema.optional(),
 })
 
 export const websiteButtonStyleSchema = z.object({
@@ -45,6 +195,8 @@ export const websiteButtonStyleSchema = z.object({
   borderColorId: z.string().max(64).default(''),
   borderWidth: z.number().min(0).max(16).default(0),
   radius: z.number().min(0).max(999).default(6),
+  sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
+  customization: websiteElementCustomizationSchema.optional(),
 })
 
 export const createWebsiteThemeSchema = z.object({

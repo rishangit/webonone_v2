@@ -15,6 +15,7 @@ import {
   type DatasetFilters,
   type DatasetSourceType,
 } from '../schemas/websiteDatasetFilters.schema.js'
+import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 import type {
   CreateWebsiteDatasetBody,
   UpdateWebsiteDatasetBody,
@@ -80,13 +81,13 @@ export async function listWebsiteDatasets(input: {
   page?: number
   pageSize?: number
   q?: string
+  names?: string | string[]
 }): Promise<{ items: WebsiteDatasetDto[]; total: number; page: number; pageSize: number }> {
-  const page = Math.max(1, input.page ?? 1)
-  const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
-  const offset = (page - 1) * pageSize
+  const { names, page, pageSize, offset } = namedListWindow(input, 20)
   let query = db<DesignWebsiteDatasetRow>('design_website_datasets').where({
     company_id: input.companyId,
   })
+  applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
     query = query.andWhere((builder) => {

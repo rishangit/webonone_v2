@@ -7,5 +7,8 @@
   "signingIn": "Signing in…",
   "completingSignIn": "Completing sign in…",
   "backToSignIn": "Back to sign in",
-  "loadingSession": "Loading session…"
+  "loadingSession": "Loading session…",
+  "copyToAi": "Copy to AI",
+  "copyToAiSuccess": "Added to AI assistant",
+  "copyToAiUnavailable": "Open Design from WebOnOne to use AI"
 }

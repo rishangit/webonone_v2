@@ -6,6 +6,7 @@ import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { emptyWebsiteDocument, websiteDocumentSchema, type WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
 import type { CreateWebsiteChromeBody, UpdateWebsiteChromeBody } from '../schemas/websiteChrome.schema.js'
 import { countLayoutsUsingChrome } from './websiteLayout.service.js'
+import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 
 export type WebsiteChromeKind = 'headers' | 'footers'
 
@@ -16,6 +17,7 @@ export type WebsiteChromeDto = {
   isDefault: boolean
   isLocked: boolean
   document: WebsiteDocumentV1
+  sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -47,6 +49,7 @@ function toDto(row: DesignWebsiteChromeRow): WebsiteChromeDto {
     isDefault: toBool(row.is_default),
     isLocked: isLockedFlag(row.is_locked),
     document: parseDocument(row.document),
+    sourceLibraryId: row.source_library_id ?? null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -59,13 +62,13 @@ export async function listWebsiteChrome(input: {
   page?: number
   pageSize?: number
   q?: string
+  names?: string | string[]
 }): Promise<{ items: WebsiteChromeDto[]; total: number; page: number; pageSize: number }> {
-  const page = Math.max(1, input.page ?? 1)
-  const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
-  const offset = (page - 1) * pageSize
+  const { names, page, pageSize, offset } = namedListWindow(input, 20)
   let query = db<DesignWebsiteChromeRow>(tableName(input.kind)).where({
     company_id: input.companyId,
   })
+  applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
     query = query.andWhere((builder) => {

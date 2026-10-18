@@ -224,6 +224,7 @@ export type WebsitePage = {
   sortOrder: number
   document: WebsiteDocumentV1
   isLocked: boolean
+  sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -246,6 +247,7 @@ export type WebsiteLayout = {
   themeId: string | null
   isDefault: boolean
   isLocked: boolean
+  sourceLibraryId: string | null
   pages: WebsiteLayoutPage[]
   createdBy: string | null
   createdAt: string
@@ -259,6 +261,7 @@ export type WebsiteChrome = {
   isDefault: boolean
   isLocked: boolean
   document: WebsiteDocumentV1
+  sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -270,6 +273,7 @@ export type WebsitePreset = {
   name: string
   document: WebsiteDocumentV1
   isLocked: boolean
+  sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -290,10 +294,32 @@ export type WebsiteFontLibraryItem = {
   sortOrder: number
 }
 
+export type WebsiteColorLibraryPalette = {
+  color_1: string
+  color_2: string
+  color_3: string
+  color_4: string
+  color_5: string
+  color_6: string
+}
+
+export type WebsiteColorLibraryItem = {
+  id: string
+  name: string
+  palette: WebsiteColorLibraryPalette
+  sortOrder: number
+}
+
 export type WebsiteColorToken = {
   id: string
   name: string
   value: string
+}
+
+export type WebsiteElementCustomization = {
+  html: string
+  styles: string
+  scripts: string
 }
 
 export type WebsiteTextStyle = {
@@ -303,6 +329,8 @@ export type WebsiteTextStyle = {
   size: number
   sizeByBreakpoint?: Partial<Record<WebsiteBreakpoint, number>>
   colorId: string
+  sourceLibraryId?: string | null
+  customization?: WebsiteElementCustomization
 }
 
 export type WebsiteButtonStyle = {
@@ -314,6 +342,52 @@ export type WebsiteButtonStyle = {
   borderColorId: string
   borderWidth: number
   radius: number
+  sourceLibraryId?: string | null
+  customization?: WebsiteElementCustomization
+}
+
+export type WebsiteTextLibraryDefinition = {
+  fontName: string
+  googleFontUrl: string
+  family: string
+  colorName: string
+  colorValue: string
+  size: number
+  sizeByBreakpoint?: WebsiteTextStyle['sizeByBreakpoint']
+  customization?: WebsiteElementCustomization
+}
+
+export type WebsiteTextLibraryItem = {
+  id: string
+  name: string
+  definition: WebsiteTextLibraryDefinition
+  sortOrder: number
+}
+
+export type WebsiteButtonLibraryDefinition = {
+  backgroundColorName: string
+  backgroundColorValue: string
+  textColorName: string
+  textColorValue: string
+  borderColorName: string
+  borderColorValue: string
+  borderWidth: number
+  radius: number
+  textStyleName: string
+  textFontName: string
+  textGoogleFontUrl: string
+  textFontFamily: string
+  textSize: number
+  labelColorName: string
+  labelColorValue: string
+  customization?: WebsiteElementCustomization
+}
+
+export type WebsiteButtonLibraryItem = {
+  id: string
+  name: string
+  definition: WebsiteButtonLibraryDefinition
+  sortOrder: number
 }
 
 export type WebsiteTheme = {
@@ -325,6 +399,7 @@ export type WebsiteTheme = {
   isActive: boolean
   isDefault: boolean
   isLocked: boolean
+  sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
   colors: WebsiteColorToken[]
   textStyles: WebsiteTextStyle[]

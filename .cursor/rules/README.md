@@ -7,6 +7,7 @@
 | [cursor-rules.mdc](cursor-rules.mdc) | How to add, edit, and maintain rules (self-contained; no `spec/` links) |
 | [code-cleanliness.mdc](code-cleanliness.mdc) | Path aliases, focused diffs, no dead code or empty folders |
 | [microservice-architecture.mdc](microservice-architecture.mdc) | Standalone services, secure data passing (JWT, events, iframe/postMessage), shared-package build order |
+| [ui-consistency.mdc](ui-consistency.mdc) | Before feature UI, run the UI consistency subagent; reuse the app and UI kit; extract duplicates |
 
 ## Service projects
 
@@ -96,6 +97,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | Support | [support-agent](../agents/support-agent.md) | [skill](../skills/support-agent/SKILL.md) |
 | Mobile | [mobile-agent](../agents/mobile-agent.md) | [skill](../skills/mobile-agent/SKILL.md) |
 | Desktop | [desktop-agent](../agents/desktop-agent.md) | [skill](../skills/desktop-agent/SKILL.md) |
+| UI consistency | [ui-consistency-agent](../agents/ui-consistency-agent.md) | [skill](../skills/ui-consistency/SKILL.md) |
 
 ### Cross-cutting skills
 
@@ -111,6 +113,7 @@ Each service has a **subagent** (system prompt) and a **skill** (workflow). Scop
 | [date-display](../skills/date-display/SKILL.md) | User-visible dates as `Oct 10, 2026`; shared `DISPLAY_DATE_OPTIONS` |
 | [help-articles](../skills/help-articles/SKILL.md) | User-visible WebOnOne/shell features → Support Markdown (`en` + `si`) in the same task |
 | [website-designer-addons](../skills/website-designer-addons/SKILL.md) | Design website WebpageEditor addons — registry, settings tabs, data binding roles |
+| [ui-consistency](../skills/ui-consistency/SKILL.md) | Before feature UI: search the app and kit, reuse the match, extract duplicated markup |
 
 Delegation map: [AGENTS.md](../../AGENTS.md)
 
@@ -132,6 +135,7 @@ Delegation map: [AGENTS.md](../../AGENTS.md)
 | Shared CRUD store factories (`@webonone/store-kit`) | `redux-store-and-epics.mdc`, [feature-store skill](../skills/feature-store/SKILL.md) |
 | Tailwind, shadcn/ui, responsive layout | `tailwind-css.mdc` |
 | `@webonone/ui-kit` consumption (all service frontends) | `ui-kit-consumption.mdc` |
+| Reuse existing UI before adding a feature (search app + kit, extract duplicates) | [ui-consistency.mdc](ui-consistency.mdc), [ui-consistency skill](../skills/ui-consistency/SKILL.md) |
 | Text search / query filter (`SearchInput`, not plain `Input`) | `ui-kit-consumption.mdc`, [list-filter-panel.mdc](list-filter-panel.mdc) |
 | `@/` imports, unused code cleanup | `code-cleanliness.mdc` |
 | Vite chunk splitting (lazy routes, manualChunks) | `frontend-vite-chunk-splitting.mdc` |

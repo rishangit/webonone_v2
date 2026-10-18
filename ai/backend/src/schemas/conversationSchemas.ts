@@ -2,6 +2,9 @@ import { z } from 'zod'
 
 export const nanoidIdSchema = z.string().length(21)
 
+/** Platform Design library ids (seeded `lib-button-primary` plus nanoid creates). */
+export const designLibraryIdSchema = z.string().trim().min(8).max(32)
+
 export const createConversationSchema = z
   .object({
     title: z.string().trim().min(1).max(255).optional(),
@@ -29,6 +32,8 @@ const webononeEntityKindSchema = z.enum([
   'company',
 ])
 
+const designEntityKindSchema = z.enum(['button', 'text'])
+
 export const dataEntityContextRefSchema = z
   .object({
     service: z.literal('data'),
@@ -50,9 +55,19 @@ export const webononeCatalogEntityContextRefSchema = z
 /** @deprecated Alias — kinds now include staff, event, and company. */
 export const webononeEntityContextRefSchema = webononeCatalogEntityContextRefSchema
 
+export const designEntityContextRefSchema = z
+  .object({
+    service: z.literal('design'),
+    kind: designEntityKindSchema,
+    id: designLibraryIdSchema,
+    label: z.string().trim().min(1).max(255).optional(),
+  })
+  .strict()
+
 export const entityContextRefSchema = z.discriminatedUnion('service', [
   dataEntityContextRefSchema,
   webononeCatalogEntityContextRefSchema,
+  designEntityContextRefSchema,
 ])
 
 export const sendMessageSchema = z

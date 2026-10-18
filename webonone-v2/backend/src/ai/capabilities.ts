@@ -54,7 +54,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
     requiredPermissions: ['ai:public_catalog:read'],
     auth: 'service_key',
     invoke: { method: 'GET', path: '/api/v1/internal/catalog/search' },
-    viewPath: '/catalog/{kind}/{id}',
+    viewPath: '/catalog/{companyId}/{kind}/{id}',
   }),
   webononeTool({
     name: 'search_company_catalog',

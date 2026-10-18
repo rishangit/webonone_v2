@@ -11,6 +11,7 @@ import {
   type WebsiteChromeKind,
 } from '../services/websiteChrome.service.js'
 import { createWebsiteChromeSchema, updateWebsiteChromeSchema } from '../schemas/websiteChrome.schema.js'
+import { readNamesQuery } from '../utils/namesQuery.js'
 
 function companyIdOrThrow(req: AuthenticatedRequest): string {
   const companyId = req.user?.companyId
@@ -36,6 +37,7 @@ export async function listWebsiteChromeHandler(req: AuthenticatedRequest, res: R
         page,
         pageSize,
         q,
+        names: readNamesQuery(req.query.names),
       }),
     )
   } catch (err) {

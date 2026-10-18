@@ -5,6 +5,7 @@ import { assertWebsiteUnlocked } from './websiteLock.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import type { CreateWebsiteLayoutBody, UpdateWebsiteLayoutBody } from '../schemas/websiteLayouts.schema.js'
 import type { WebsitePageStatus } from '../models/db.js'
+import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 
 export type WebsiteLayoutPageDto = {
   id: string
@@ -23,6 +24,7 @@ export type WebsiteLayoutDto = {
   themeId: string | null
   isDefault: boolean
   isLocked: boolean
+  sourceLibraryId: string | null
   pages: WebsiteLayoutPageDto[]
   createdBy: string | null
   createdAt: string
@@ -43,6 +45,7 @@ function toLayoutDto(row: DesignWebsiteLayoutRow, pages: WebsiteLayoutPageDto[])
     themeId: row.theme_id,
     isDefault: toBool(row.is_default),
     isLocked: toBool(row.is_locked),
+    sourceLibraryId: row.source_library_id ?? null,
     pages,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -144,13 +147,13 @@ export async function listWebsiteLayouts(input: {
   page?: number
   pageSize?: number
   q?: string
+  names?: string | string[]
 }): Promise<{ items: WebsiteLayoutDto[]; total: number; page: number; pageSize: number }> {
-  const page = Math.max(1, input.page ?? 1)
-  const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
-  const offset = (page - 1) * pageSize
+  const { names, page, pageSize, offset } = namedListWindow(input, 20)
   let query = db<DesignWebsiteLayoutRow>('design_website_layouts').where({
     company_id: input.companyId,
   })
+  applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
     query = query.andWhere((builder) => {

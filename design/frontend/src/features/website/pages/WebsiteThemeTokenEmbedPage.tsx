@@ -13,6 +13,7 @@ import { ThemeButtonStyleDialog } from '../components/theme-editor/ThemeButtonSt
 import { ThemeColorDialog } from '../components/theme-editor/ThemeColorDialog'
 import { ThemeFontDialog } from '../components/theme-editor/ThemeFontDialog'
 import { ThemeTextStyleDialog } from '../components/theme-editor/ThemeTextStyleDialog'
+import { parseElementEditorTab } from '../components/WebsiteElementEditorTabs'
 import { websiteThemesActions } from '../store'
 import { readThemeDraft } from '../utils/themeDraftStorage'
 
@@ -80,6 +81,7 @@ export function WebsiteThemeTokenEmbedPage({ kind }: { kind: ThemeTokenKind }) {
         chrome="embed-page"
         themeId={theme.id}
         initial={initial}
+        takenColorValues={theme.colors.map((color) => color.value)}
         onOpenChange={onOpenChange}
         onSubmit={complete}
       />
@@ -109,6 +111,7 @@ export function WebsiteThemeTokenEmbedPage({ kind }: { kind: ThemeTokenKind }) {
       chrome="embed-page"
       theme={theme}
       initial={initial}
+      initialTab={parseElementEditorTab(searchParams.get('tab'))}
       onOpenChange={onOpenChange}
       onSubmit={complete}
     />

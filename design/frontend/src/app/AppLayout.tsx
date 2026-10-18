@@ -47,6 +47,7 @@ import { hasPlatformHandoff, parsePlatformReturnUrl } from '@/features/auth/util
 import type { DesignRole } from '@/features/auth/types/auth.types'
 import { changeAppLocale } from '@/features/shell/utils/changeAppLocale'
 import { buildAppNav } from '@/features/shell/utils/buildAppNav'
+import { useAiMutationListRefresh } from '@/features/shell/hooks/useAiMutationListRefresh'
 import { isWebsiteDesignerPath } from '@/features/shell/utils/navigateDesign'
 
 export function AppLayout() {
@@ -58,6 +59,7 @@ export function AppLayout() {
 }
 
 function AppLayoutContent() {
+  useAiMutationListRefresh()
   const [searchParams] = useSearchParams()
   const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const listPageMode = useListPageModeValue(embedParentOrigin)

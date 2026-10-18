@@ -17,6 +17,7 @@ import {
   updateWebsiteDatasetSchema,
 } from '../schemas/websiteDatasets.schema.js'
 import { resolveCompanyFromWebOnOne } from '../services/webononeCompanyClient.js'
+import { readNamesQuery } from '../utils/namesQuery.js'
 
 function companyIdOrThrow(req: AuthenticatedRequest): string {
   const companyId = req.user?.companyId
@@ -33,7 +34,15 @@ export async function listWebsiteDatasetsHandler(
     const page = req.query.page ? Number(req.query.page) : undefined
     const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
     const q = typeof req.query.q === 'string' ? req.query.q : undefined
-    res.json(await listWebsiteDatasets({ companyId: companyIdOrThrow(req), page, pageSize, q }))
+    res.json(
+      await listWebsiteDatasets({
+        companyId: companyIdOrThrow(req),
+        page,
+        pageSize,
+        q,
+        names: readNamesQuery(req.query.names),
+      }),
+    )
   } catch (err) {
     next(err)
   }

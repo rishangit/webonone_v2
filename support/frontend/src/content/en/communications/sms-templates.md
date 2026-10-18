@@ -12,7 +12,9 @@ summary: "Manage SMS templates under SMS → Templates."
 
 ## Activate or deactivate notifications
 
-Company owners see platform **default** templates (welcome, sessions, appointments, and similar) plus any company copies.
+Company owners see platform **default** templates (welcome, sessions, appointments, catalog item share, and similar) plus any company copies.
+
+**Catalog item share** is the text message sent when someone shares a published product, service, or space by telephone number. Edit the message here; the public item link is filled in when the message is sent.
 
 - Open the row menu on a template and choose **Activate** or **Deactivate**.
 - Deactivating a default creates a company copy marked inactive.

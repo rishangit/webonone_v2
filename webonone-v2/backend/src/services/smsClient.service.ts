@@ -69,7 +69,14 @@ export async function sendTransactionalSms(params: SendSmsParams): Promise<boole
     scheduledAt: params.scheduledAt,
     requestedByService: params.requestedByService,
   })
-  return Boolean(response?.ok)
+  if (!response?.ok) return false
+  try {
+    const data = (await response.json()) as { status?: string }
+    if (data.status === 'skipped') return false
+  } catch {
+    return false
+  }
+  return true
 }
 
 export async function ensureWelcomeTemplate(

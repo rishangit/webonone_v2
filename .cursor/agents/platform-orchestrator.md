@@ -29,19 +29,22 @@ Before coding, list which roots the task affects.
 
 Keywords `iframe`, `postMessage`, `JWT handoff`, `embed login`, `core dialog`, `peer-dialog` → often **Identity/Email/Data/SMS + WebOnOne** (see `.cursor/rules/platform-shell-navigation.mdc` and `.cursor/skills/platform-orchestrator/SKILL.md`). AI tool schemas / `argCompletion` → owning service; generic completer → `ai/` (`.cursor/rules/ai-capabilities.mdc`). User-visible pages, nav, or workflows → **support-agent** after the product change (`.cursor/skills/help-articles/SKILL.md`).
 
+**UI features:** before any page, dialog, list, form, or control is written, run **ui-consistency-agent** and wait for the reuse report (`.cursor/agents/ui-consistency-agent.md`, `.cursor/skills/ui-consistency/SKILL.md`). The product agent implements only after that report, reusing the named component or kit export and extracting duplicates first.
+
 **Parent handles directly (no subagent):** root `package.json`, workspace wiring, `.cursor/` config that is not service-specific.
 
 ## Step 2 — Routing table
 
 | Task touches | Action |
 |--------------|--------|
+| New or changed UI (page, dialog, list, form, control) | **First** `ui-consistency-agent` (read-only report). Then the product agent follows it |
 | `identity/**` only | Delegate `identity-agent` |
 | `ui-kit/**` only | Delegate `ui-kit-agent` |
 | `webonone-v2/**` only | Delegate `webonone-agent`; then `support-agent` if user-visible |
 | `ai/**` only | Delegate `ai-agent` (generic completer only) |
 | AI tool schema / `argCompletion` on a peer | Delegate that peer (`data/`, `webonone-v2/`) — not AI |
 | iframe/postMessage/JWT across services | Sequential: identity then webonone |
-| User-visible product change (new page/nav/workflow) | Sequential: product agent then `support-agent` |
+| User-visible product change (new page/nav/workflow) | Sequential: `ui-consistency-agent`, then product agent, then `support-agent` |
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent |
 | `mobile/**` or `packages/mobile-ui/**` only | Delegate `mobile-agent` |
 | New nav item + native screen + web FE | Sequential: owning service agent then `mobile-agent` |
@@ -75,6 +78,7 @@ Launch multiple subagents in **one message** when work is independent.
 
 ## Do not
 
+- Implement feature UI before the UI consistency reuse report.
 - Edit multiple service roots in the parent when one subagent suffices.
 - Let a subagent change files outside its allowed prefix.
 - Break microservice boundaries (`.cursor/rules/microservice-architecture.mdc`).

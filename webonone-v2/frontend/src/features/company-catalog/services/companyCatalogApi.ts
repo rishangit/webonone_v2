@@ -22,6 +22,13 @@ import type {
   WebPublishStatus,
 } from '../types/companyCatalog.types'
 
+export type CatalogShareChannelResult = 'sent' | 'failed' | 'skipped'
+
+export type CatalogShareResult = {
+  email: CatalogShareChannelResult
+  sms: CatalogShareChannelResult
+}
+
 export type CompanyCatalogAttributeValue = {
   id: string
   libraryValueId: string | null
@@ -167,6 +174,17 @@ export const companyCatalogApi = {
     return apiClient<CompanyCatalogItem>(`/company/me/catalog/${kind}/${id}/web-publish`, {
       method: 'PATCH',
       body: JSON.stringify({ webPublishStatus }),
+    })
+  },
+
+  shareItem(
+    kind: Extract<CatalogEntityKind, 'products' | 'services' | 'spaces'>,
+    id: string,
+    body: { email?: string; phone?: string },
+  ) {
+    return apiClient<CatalogShareResult>(`/company/me/catalog/${kind}/${id}/share`, {
+      method: 'POST',
+      body: JSON.stringify(body),
     })
   },
 

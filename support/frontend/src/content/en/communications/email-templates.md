@@ -13,7 +13,9 @@ summary: "Create templates, versions, and previews under Email → Templates."
 
 ## Activate or deactivate notifications
 
-Company owners see platform **default** templates (welcome, sessions, appointments, and similar) plus any company copies.
+Company owners see platform **default** templates (welcome, sessions, appointments, catalog item share, and similar) plus any company copies.
+
+**Catalog item share** is the email sent when someone shares a published product, service, or space by email. Edit the subject and message here; the public item link is filled in when the message is sent.
 
 - Open the row menu on a template and choose **Activate** or **Deactivate**.
 - Deactivating a default creates a company copy marked inactive; the platform default is unchanged.

@@ -6,9 +6,13 @@ import {
   Layers,
   LayoutTemplate,
   Palette,
+  Droplets,
   PanelBottom,
   PanelTop,
   Settings,
+  Type,
+  Text,
+  RectangleHorizontal,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { NavConfigItem, NavItemConfig } from '@webonone/ui-kit'
@@ -29,6 +33,10 @@ const WEBSITE_SECTIONS: WebsiteSectionNav[] = [
   { section: 'presets', label: 'Presets', icon: Layers, superAdmin: true },
   { section: 'datasets', label: 'Data Sets', icon: Database, superAdmin: false },
   { section: 'themes', label: 'Themes', icon: Palette, superAdmin: true },
+  { section: 'fonts', label: 'Fonts', icon: Type, superAdmin: true },
+  { section: 'colors', label: 'Colors', icon: Droplets, superAdmin: true },
+  { section: 'texts', label: 'Texts', icon: Text, superAdmin: true },
+  { section: 'buttons', label: 'Buttons', icon: RectangleHorizontal, superAdmin: true },
   { section: 'media', label: 'Media', icon: Image, superAdmin: false },
   { section: 'settings', label: 'Settings', icon: Settings, superAdmin: false },
 ]

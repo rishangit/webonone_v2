@@ -42,7 +42,7 @@ import type { WebsitePage } from '../types'
 
 import { duplicateItemName, duplicatePagePath } from '../utils/duplicateWebsiteItem'
 
-import { WebsiteLibraryCopyControl } from '../components/WebsiteLibraryPickerDialog'
+import { WebsiteAddItemControl } from '../components/WebsiteAddItemControl'
 
 
 
@@ -198,7 +198,16 @@ export function WebsitePagesPage() {
 
             compactAddLabel={tc('add')}
 
-            extra={user?.role === 'company_admin' ? <WebsiteLibraryCopyControl kind="pages" /> : undefined}
+            extra={
+              user?.role === 'company_admin' ? (
+                <WebsiteAddItemControl
+                  kind="pages"
+                  addLabel={t('addPage')}
+                  compactAddLabel={tc('add')}
+                  onCreate={() => setDialog({})}
+                />
+              ) : undefined
+            }
 
           />
 

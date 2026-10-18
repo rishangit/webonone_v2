@@ -11,8 +11,8 @@ summary: "ගුවන් සහායක විවෘත කරන්න, ම�
 
 1. සහායක panel විවෘත කිරීමට එය click කරන්න.
 2. Desktop තිරයකදී, Close ට වමින් ඇති **expand** අයිකනය භාවිතා කර chat එක වම් navigation දක්වා පුළුල් කරන්න. නැවත click කර පටු panel එකට ආපසු යන්න. දුරකථනවල chat දැනටමත් සම්පූර්ණ පළලයි.
-3. සරල භාෂාවෙන් අසන්න (උදාහරණයක් ලෙස, සැකසුමක් සොයා ගැනීමට හෝ catalog අයිතම ලැයිස්තුගත කිරීමට උදව්).
-4. **Staff**, **events**, **companies**, හෝ **catalog** ලැයිස්තු සහ විස්තර පිටු වලින් **Copy to AI** භාවිතා කර එම වාර්තාව chat වෙත එක් කරන්න.
+3. සරල භාෂාවෙන් අසන්න (උදාහරණයක් ලෙස, සැකසුමක් සොයා ගැනීමට, catalog අයිතම ලැයිස්තුගත කිරීමට, හෝ Font library එකට fonts යෝජනා කිරීමට උදව්).
+4. **Staff**, **events**, **companies**, **catalog**, හෝ Design **button** සහ **text** library ලැයිස්තු සහ විස්තර පිටු වලින් **Copy to AI** භාවිතා කර එම වාර්තාව chat වෙත එක් කරන්න.
 5. සහායකයට යමක් සාදන්න හෝ වෙනස් කරන්න අවශ්‍ය නම්, සෑම suggestion එකක්ම (ඉහළින් item type) පරීක්ෂා කර **Confirm** හෝ **Cancel** තෝරන්න.
 
 සහායකයට ක්‍රියාත්මක API key එකක් අවශ්‍යයි. [AI API key](/docs/app-preferences/ai-api-key) යටතේ එය සකස් කරන්න. එම සැකසුම [text field sparkle](/docs/app-preferences/field-ai-polish) ද සක්‍රිය කරයි. public website හි guests වෙනම [catalog assistant](/docs/public-catalog/guest-assistant) භාවිතා කරයි.
@@ -44,6 +44,11 @@ Depending on your account, the card may include:
 | **Payment — Invoices** | Read-only subscription invoices when you can open Payment |
 | **SMS — Templates** | List and view SMS templates when your role includes SMS access |
 | **Design — Forms** | Form එකක් controls සමඟ සාදන්න, control එකක් එක් කරන්න, හෝ control එකක label, required, placeholder, හෝ options වෙනස් කරන්න. සක්‍රිය company එකක් අවශ්‍යයි. සුරැකීමට පෙර Confirm කරන්න |
+| **Website — Font library** | Super admin: fonts යෝජනා කරන ලෙස අසන්න. සෑම යෝජනාවක්ම Google font එකකි (නම, family, stylesheet URL). පුස්තකාලයේ ඇති fonts මඟ හරියි. සුරැකීමට පෙර Confirm කරන්න. Company පරිශීලකයින්ට fonts ලැයිස්තුව ඉල්ලිය හැක |
+| **Website — Button library** | Super admin: Copy to AI එකින් button එක attach කර, basic settings, HTML, styles, හෝ script වෙනස් කරන්නැයි අසන්න. Confirm කළ පසු live preview යාවත්කාලීන වේ. [Website button library](/docs/website-forms/website-button-library) බලන්න |
+| **Website — Text library** | Super admin: Copy to AI එකින් text style එක attach කර, basic settings, HTML, styles, හෝ script වෙනස් කරන්නැයි අසන්න. Confirm කළ පසු live preview යාවත්කාලීන වේ. [Website text library](/docs/website-forms/website-text-library) බලන්න |
+| **Website — company site** | සක්‍රිය company එකක් සහිත company admin: pages, presets, layouts, themes, headers, footers, හෝ data sets යෝජනා කරන ලෙස අසන්න. Designer හිස්ව පටන් ගනී; Confirm පසු layout කරන්න |
+| **Website library** | Super admin: සමාගම් පිටපත් කරන බෙදාගත් library එකට එම අයිතම |
 
 Rows marked **Needs active company** require company login — platform user sign-in alone is not enough.
 

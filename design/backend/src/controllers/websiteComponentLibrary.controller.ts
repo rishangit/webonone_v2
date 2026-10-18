@@ -9,6 +9,11 @@ import {
   copyLibraryPage,
   copyLibraryPreset,
   copyLibraryTheme,
+  revertLibraryChrome,
+  revertLibraryLayout,
+  revertLibraryPage,
+  revertLibraryPreset,
+  revertLibraryTheme,
   createLibraryChrome,
   createLibraryLayout,
   createLibraryPage,
@@ -41,6 +46,7 @@ import { createWebsitePresetSchema, updateWebsitePresetSchema } from '../schemas
 import { createWebsiteLayoutSchema, updateWebsiteLayoutSchema } from '../schemas/websiteLayouts.schema.js'
 import { createWebsiteThemeSchema, updateWebsiteThemeSchema } from '../schemas/websiteThemes.schema.js'
 import { copyWebsiteLibrarySchema } from '../schemas/websiteLibraryCopy.schema.js'
+import { readNamesQuery } from '../utils/namesQuery.js'
 
 function userId(req: AuthenticatedRequest): string {
   if (!req.user?.id) throw new HttpError(401, 'Unauthorized', 'UNAUTHORIZED')
@@ -62,6 +68,7 @@ function listQuery(req: AuthenticatedRequest) {
     page: req.query.page ? Number(req.query.page) : undefined,
     pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined,
     q: typeof req.query.q === 'string' ? req.query.q : undefined,
+    names: readNamesQuery(req.query.names),
     status,
   }
 }
@@ -378,6 +385,59 @@ export async function copyLibraryThemeHandler(req: AuthenticatedRequest, res: Re
       libraryId: body.libraryId,
     })
     res.status(201).json({ theme })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function revertLibraryPageHandler(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const page = await revertLibraryPage({ companyId: companyIdOrThrow(req), id: String(req.params.id) })
+    res.json({ page })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function revertLibraryChromeHandler(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const item = await revertLibraryChrome({
+      kind: chromeKind(String(req.params.kind)),
+      companyId: companyIdOrThrow(req),
+      id: String(req.params.id),
+    })
+    res.json({ item })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function revertLibraryPresetHandler(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const item = await revertLibraryPreset({ companyId: companyIdOrThrow(req), id: String(req.params.id) })
+    res.json({ item })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function revertLibraryLayoutHandler(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const item = await revertLibraryLayout({
+      companyId: companyIdOrThrow(req),
+      userId: userId(req),
+      id: String(req.params.id),
+    })
+    res.json({ item })
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function revertLibraryThemeHandler(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  try {
+    const theme = await revertLibraryTheme({ companyId: companyIdOrThrow(req), id: String(req.params.id) })
+    res.json({ theme })
   } catch (err) {
     next(err)
   }

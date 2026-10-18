@@ -14,6 +14,7 @@ import {
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteDesignerUrl } from '@/features/shell/utils/navigateDesign'
 import type { WebsitePage } from '../types'
+import { useWebsiteLibraryRevert, WebsiteLibrarySourceTag } from './WebsiteLibraryRevert'
 
 interface WebsitePagesListProps {
   pages: WebsitePage[]
@@ -35,6 +36,7 @@ export function WebsitePagesList({
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
+  const revert = useWebsiteLibraryRevert()
 
   const columns = useMemo(
     () => [
@@ -55,6 +57,7 @@ export function WebsitePagesList({
               {page.name}
             </a>
             {page.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
+            <WebsiteLibrarySourceTag sourceLibraryId={page.sourceLibraryId} />
           </span>
         ),
       },
@@ -84,6 +87,14 @@ export function WebsitePagesList({
           <DropdownMenuItem onClick={() => onBrowse(page)}>{t('browseLive')}</DropdownMenuItem>
         ) : null}
         <DropdownMenuItem onClick={() => onDuplicate(page)}>{t('duplicate')}</DropdownMenuItem>
+        {page.sourceLibraryId && !page.isLocked ? (
+          <DropdownMenuItem
+            disabled={revert.reverting}
+            onClick={() => revert.ask({ kind: 'pages', id: page.id, name: page.name })}
+          >
+            {t('downloadUpdatedFromLibrary')}
+          </DropdownMenuItem>
+        ) : null}
         {page.isLocked ? null : (
           <DropdownMenuItem onClick={() => onEditDetails(page)}>{t('editDetails')}</DropdownMenuItem>
         )}
@@ -106,6 +117,7 @@ export function WebsitePagesList({
         <div className="flex items-center gap-2">
           <p className="font-medium">{page.name}</p>
           {page.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
+          <WebsiteLibrarySourceTag sourceLibraryId={page.sourceLibraryId} />
           <StatusTag variant={page.status === 'active' ? 'approved' : 'pending'}>
             {page.status === 'active' ? t('active') : t('inactive')}
           </StatusTag>
@@ -159,6 +171,7 @@ export function WebsitePagesList({
         )}
       />
       {confirm}
+      {revert.dialog}
     </>
   )
 }

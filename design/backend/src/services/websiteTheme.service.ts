@@ -4,6 +4,7 @@ import { HttpError } from './httpError.js'
 import { assertWebsiteUnlocked } from './websiteLock.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { countLayoutsUsingTheme } from './websiteLayout.service.js'
+import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 import type {
   CreateWebsiteThemeBody,
   UpdateWebsiteThemeBody,
@@ -22,6 +23,7 @@ export type WebsiteThemeDto = {
   isActive: boolean
   isDefault: boolean
   isLocked: boolean
+  sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
   colors: WebsiteColorToken[]
   textStyles: WebsiteTextStyle[]
@@ -58,6 +60,7 @@ function toDto(row: DesignWebsiteThemeRow): WebsiteThemeDto {
     isActive: toBool(row.is_active),
     isDefault: toBool(row.is_default),
     isLocked: toBool(row.is_locked),
+    sourceLibraryId: row.source_library_id ?? null,
     fonts: parseJsonArray<WebsiteFontToken>(row.fonts),
     colors: parseJsonArray<WebsiteColorToken>(row.colors),
     textStyles: parseJsonArray<WebsiteTextStyle>(row.text_styles),
@@ -73,13 +76,13 @@ export async function listWebsiteThemes(input: {
   page?: number
   pageSize?: number
   q?: string
+  names?: string | string[]
 }): Promise<{ items: WebsiteThemeDto[]; total: number; page: number; pageSize: number }> {
-  const page = Math.max(1, input.page ?? 1)
-  const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
-  const offset = (page - 1) * pageSize
+  const { names, page, pageSize, offset } = namedListWindow(input, 20)
   let query = db<DesignWebsiteThemeRow>('design_website_themes').where({
     company_id: input.companyId,
   })
+  applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
     query = query.andWhere((builder) => {

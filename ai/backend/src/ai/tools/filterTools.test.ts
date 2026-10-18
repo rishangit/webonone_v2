@@ -217,6 +217,76 @@ describe('filterToolsForContext', () => {
     assert.equal(shown.length, 1)
   })
 
+  it('shows platform button and text library tools to a super admin without a company', () => {
+    const updateButton: ToolDefinition = {
+      name: 'update_design_button_library',
+      description: 'Update a button',
+      jsonSchema: { type: 'object', properties: {} },
+      riskLevel: 'write',
+      requiredRoles: ['super_admin'],
+      requiredPermissions: ['ai:design:platform:write'],
+      service: 'design',
+      auth: 'user_jwt',
+      invoke: { method: 'PATCH', path: '/api/v1/website/button-library/:id' },
+      capabilityVersion: '1',
+    }
+    const getText: ToolDefinition = {
+      ...updateButton,
+      name: 'get_design_text_library',
+      riskLevel: 'read',
+      requiredPermissions: ['ai:design:platform:read'],
+      invoke: { method: 'GET', path: '/api/v1/website/text-library/:id' },
+    }
+    const shown = filterToolsForContext([updateButton, getText], {
+      role: 'super_admin',
+      permissions: permissionsForRole('super_admin', null),
+      companyId: null,
+    })
+    assert.equal(shown.length, 2)
+  })
+
+  it('shows platform font tools to a super admin without a company', () => {
+    const createFont: ToolDefinition = {
+      name: 'create_design_font',
+      description: 'Add a font',
+      jsonSchema: { type: 'object', properties: {} },
+      riskLevel: 'write',
+      requiredRoles: ['super_admin'],
+      requiredPermissions: ['ai:design:platform:write'],
+      service: 'design',
+      auth: 'user_jwt',
+      invoke: { method: 'POST', path: '/api/v1/website/font-library' },
+      capabilityVersion: '1',
+    }
+    const shown = filterToolsForContext([createFont], {
+      role: 'super_admin',
+      permissions: permissionsForRole('super_admin', null),
+      companyId: null,
+    })
+    assert.equal(shown.length, 1)
+  })
+
+  it('hides company website tools without a company session', () => {
+    const createPage: ToolDefinition = {
+      name: 'create_design_website_page',
+      description: 'Create a page',
+      jsonSchema: { type: 'object', properties: {} },
+      riskLevel: 'write',
+      requiredRoles: ['company_admin'],
+      requiredPermissions: ['ai:design:write'],
+      service: 'design',
+      auth: 'user_jwt',
+      invoke: { method: 'POST', path: '/api/v1/website/pages' },
+      capabilityVersion: '1',
+    }
+    const hidden = filterToolsForContext([createPage], {
+      role: 'company_admin',
+      permissions: ['ai:design:write'],
+      companyId: null,
+    })
+    assert.equal(hidden.length, 0)
+  })
+
   it('does not give super_admin company catalog writes', () => {
     const names = namesFor('super_admin', 'company00000000000001')
     assert.equal(names.includes('create_catalog_item'), false)

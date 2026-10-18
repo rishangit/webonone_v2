@@ -34,6 +34,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | [help-articles](.cursor/skills/help-articles/SKILL.md) | User-visible WebOnOne (and shell) features must get Support Markdown how-tos (`en` + `si`) in the same task |
 | [website-designer-addons](.cursor/skills/website-designer-addons/SKILL.md) | Design website WebpageEditor addons — registry, settings tabs, data binding roles |
 | [web-mobile-view](.cursor/skills/web-mobile-view/SKILL.md) | Phone-width web item details use maximum content width (`px-0` below `sm`) so they match the Expo `FeatureScreen` inset |
+| [ui-consistency](.cursor/skills/ui-consistency/SKILL.md) | Before any feature UI: search the app and UI kit, reuse the match, extract duplicated markup into a shared component |
 
 ## Service agents
 
@@ -52,6 +53,7 @@ Root: `npm run build:platform-nav`, `npm run build:platform-embed`, `npm run bui
 | Support | `support/` | [support-agent](.cursor/agents/support-agent.md) | [skill](.cursor/skills/support-agent/SKILL.md) |
 | Website | `website/` | — | Public marketing/search site (FE :3018, BE :4018); proxies catalog search to WebOnOne |
 | Desktop | `desktop/` | [desktop-agent](.cursor/agents/desktop-agent.md) | [skill](.cursor/skills/desktop-agent/SKILL.md) |
+| UI consistency | any frontend / mobile UI | [ui-consistency-agent](.cursor/agents/ui-consistency-agent.md) | [skill](.cursor/skills/ui-consistency/SKILL.md) |
 
 AI tools: peers publish `jsonSchema` + optional `argCompletion`; AI stays generic — [.cursor/rules/ai-capabilities.mdc](.cursor/rules/ai-capabilities.mdc).
 
@@ -60,11 +62,12 @@ Company registration, memberships, platform roles, and super-admin approval are 
 ## What the parent agent does
 
 1. Classify which service roots the task affects.
-2. Delegate to the matching subagent (or use the Task tool with the agent skill).
-3. Keep root `package.json` / workspace wiring in the parent unless the task is service-only.
-4. User-visible WebOnOne (or shell) changes that affect popups, OAuth, permissions, or cross-origin handoffs: product agent returns a **desktop shell** assessment; delegate **desktop-agent** when the shell must change (see [desktop-agent skill](.cursor/skills/desktop-agent/SKILL.md)).
-5. If the change is **user-visible** in WebOnOne (or a peer in the shell), also update Support help or delegate **support-agent** — [help-articles](.cursor/skills/help-articles/SKILL.md). Do not treat the product PR as done with stale how-tos.
-6. Merge subagent results and run verification.
+2. If the task adds or changes user-visible UI, run **ui-consistency-agent** first and wait for the reuse report — [ui-consistency](.cursor/skills/ui-consistency/SKILL.md). Pass that report to the product agent. Do not write feature UI before it.
+3. Delegate to the matching subagent (or use the Task tool with the agent skill). The product agent reuses the reported component or kit export and extracts duplicates before adding the feature.
+4. Keep root `package.json` / workspace wiring in the parent unless the task is service-only.
+5. User-visible WebOnOne (or shell) changes that affect popups, OAuth, permissions, or cross-origin handoffs: product agent returns a **desktop shell** assessment; delegate **desktop-agent** when the shell must change (see [desktop-agent skill](.cursor/skills/desktop-agent/SKILL.md)).
+6. If the change is **user-visible** in WebOnOne (or a peer in the shell), also update Support help or delegate **support-agent** — [help-articles](.cursor/skills/help-articles/SKILL.md). Do not treat the product PR as done with stale how-tos.
+7. Merge subagent results and run verification.
 
 ## Dev commands (repo root)
 

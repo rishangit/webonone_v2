@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -11,8 +12,11 @@ import {
 import { useTranslation } from 'react-i18next'
 import { resolveTextStyle } from '../../document/theme'
 import type { WebsiteTextStyle } from '../../types'
+import { useThemeTextLibraryDownload } from '../../hooks/useThemeTextLibraryDownload'
 import { writeThemeDraft } from '../../utils/themeDraftStorage'
+import { applyThemeTokenPatch } from '../../utils/themeLibraryMaterialize'
 import { upsertById } from '../../utils/upsertById'
+import { WebsiteLibrarySourceTag } from '../WebsiteLibraryRevert'
 import { ThemeEditorListHeader } from './ThemeEditorListHeader'
 import { ThemeTextStyleDialog } from './ThemeTextStyleDialog'
 import type { ThemeEditorTabProps } from './types'
@@ -24,11 +28,18 @@ type ThemeTextsTabProps = ThemeEditorTabProps & {
 export function ThemeTextsTab({ theme, onPersist, saving, onTextStyleInUse }: ThemeTextsTabProps) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
+  const { goToWebsite } = useNavigateDesign()
   const [dialog, setDialog] = useState<{ style?: WebsiteTextStyle } | null>(null)
+  const download = useThemeTextLibraryDownload(theme, onPersist)
 
-  function openDialog(style?: WebsiteTextStyle) {
+  function openCreateDialog() {
     writeThemeDraft(theme)
-    setDialog({ style })
+    setDialog({})
+  }
+
+  function openEditPage(style: WebsiteTextStyle) {
+    writeThemeDraft(theme)
+    goToWebsite(`/website/themes/${theme.id}/texts/${style.id}`)
   }
 
   function removeTextStyle(id: string) {
@@ -44,7 +55,7 @@ export function ThemeTextsTab({ theme, onPersist, saving, onTextStyleInUse }: Th
       <ThemeEditorListHeader
         title={t('texts')}
         addLabel={t('addTextStyle')}
-        onAdd={() => openDialog()}
+        onAdd={() => openCreateDialog()}
         disabled={saving}
       />
       {theme.textStyles.length === 0 ? (
@@ -60,10 +71,13 @@ export function ThemeTextsTab({ theme, onPersist, saving, onTextStyleInUse }: Th
                   <button
                     type="button"
                     className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => openDialog(style)}
+                    onClick={() => openEditPage(style)}
                     disabled={saving}
                   >
-                    <p className="font-medium">{style.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{style.name}</p>
+                      <WebsiteLibrarySourceTag sourceLibraryId={style.sourceLibraryId} />
+                    </div>
                     <p
                       className="truncate text-base leading-snug"
                       style={{ fontFamily: snap.fontFamily, color: snap.color, fontSize: snap.size }}
@@ -76,9 +90,17 @@ export function ThemeTextsTab({ theme, onPersist, saving, onTextStyleInUse }: Th
                   </button>
                 </ItemListContent>
                 <ItemListMenu ariaLabel={t('actionsFor', { name: style.name || t('texts') })}>
-                  <DropdownMenuItem onClick={() => openDialog(style)} disabled={saving}>
+                  <DropdownMenuItem onClick={() => openEditPage(style)} disabled={saving}>
                     {tc('edit')}
                   </DropdownMenuItem>
+                  {style.sourceLibraryId && !theme.isLocked ? (
+                    <DropdownMenuItem
+                      disabled={saving || download.downloading}
+                      onClick={() => download.ask(style)}
+                    >
+                      {t('downloadUpdatedFromLibrary')}
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
@@ -100,11 +122,13 @@ export function ThemeTextsTab({ theme, onPersist, saving, onTextStyleInUse }: Th
         onOpenChange={(open) => {
           if (!open) setDialog(null)
         }}
-        onSubmit={(style) => {
-          onPersist({ ...theme, textStyles: upsertById(theme.textStyles, style) })
+        onSubmit={(style, patch) => {
+          const base = applyThemeTokenPatch(theme, patch)
+          onPersist({ ...base, textStyles: upsertById(base.textStyles, style) })
           setDialog(null)
         }}
       />
+      {download.dialog}
     </div>
   )
 }

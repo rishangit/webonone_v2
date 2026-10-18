@@ -16,6 +16,7 @@ import {
   fromLibraryBodySchema,
   linkCatalogBodySchema,
   updateCatalogGalleryBodySchema,
+  shareCatalogItemBodySchema,
   updateCatalogWebPublishBodySchema,
   updateCompanyAttributeValueBodySchema,
   upsertProductVariantStockLimitsBodySchema,
@@ -267,6 +268,12 @@ router.patch(
   requireCompanyAdminSession,
   validateBody(updateCatalogWebPublishBodySchema),
   companyCatalogController.updateCatalogWebPublish,
+)
+router.post(
+  '/company/me/catalog/:kind/:id/share',
+  requireCompanySession,
+  validateBody(shareCatalogItemBodySchema),
+  companyCatalogController.shareCatalogItem,
 )
 router.patch(
   '/company/me/catalog/services/:id/form',

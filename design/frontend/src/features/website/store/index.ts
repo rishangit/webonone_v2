@@ -33,5 +33,42 @@ export {
   websiteFontLibraryActions,
   websiteFontLibraryCreateReducer,
   websiteFontLibraryCreateActions,
+  websiteFontLibraryUpdateReducer,
+  websiteFontLibraryUpdateActions,
+  websiteFontLibraryDeleteReducer,
+  websiteFontLibraryDeleteActions,
   websiteFontLibraryEpics,
 } from './websiteFontLibraryStore'
+export {
+  websiteColorLibraryReducer,
+  websiteColorLibraryActions,
+  websiteColorLibraryCreateReducer,
+  websiteColorLibraryCreateActions,
+  websiteColorLibraryUpdateReducer,
+  websiteColorLibraryUpdateActions,
+  websiteColorLibraryDeleteReducer,
+  websiteColorLibraryDeleteActions,
+  websiteColorLibraryEpics,
+} from './websiteColorLibraryStore'
+export {
+  websiteTextLibraryReducer,
+  websiteTextLibraryActions,
+  websiteTextLibraryCreateReducer,
+  websiteTextLibraryCreateActions,
+  websiteTextLibraryUpdateReducer,
+  websiteTextLibraryUpdateActions,
+  websiteTextLibraryDeleteReducer,
+  websiteTextLibraryDeleteActions,
+  websiteTextLibraryEpics,
+} from './websiteTextLibraryStore'
+export {
+  websiteButtonLibraryReducer,
+  websiteButtonLibraryActions,
+  websiteButtonLibraryCreateReducer,
+  websiteButtonLibraryCreateActions,
+  websiteButtonLibraryUpdateReducer,
+  websiteButtonLibraryUpdateActions,
+  websiteButtonLibraryDeleteReducer,
+  websiteButtonLibraryDeleteActions,
+  websiteButtonLibraryEpics,
+} from './websiteButtonLibraryStore'

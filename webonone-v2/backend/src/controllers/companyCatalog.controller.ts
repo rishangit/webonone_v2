@@ -2,6 +2,7 @@ import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import type { CompanyAdminSessionRequest } from '../middleware/requireCompanyAdminSession.js'
 import type { CompanySessionRequest } from '../middleware/requireCompanySession.js'
+import * as catalogShareService from '../services/catalogShare.service.js'
 import * as catalogService from '../services/companyCatalog.service.js'
 import { priceClockFromQuery } from '../utils/applicableCatalogPrice.js'
 import * as variantStockLimitsService from '../services/companyProductVariantStockLimits.service.js'
@@ -340,6 +341,33 @@ export async function updateCatalogWebPublish(req: CompanyAdminSessionRequest, r
       req.body.webPublishStatus,
     )
     res.json(item)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
+export async function shareCatalogItem(req: CompanySessionRequest, res: Response) {
+  const session = requireSession(req, res)
+  if (!session) return
+  try {
+    const kind = catalogService.parseKindParam(String(req.params.kind))
+    const result = await catalogShareService.sharePublishedCatalogItem({
+      userId: session.userId,
+      companyId: session.companyId,
+      kind,
+      id: String(req.params.id),
+      email: req.body.email,
+      phone: req.body.phone,
+    })
+    if (result.email !== 'sent' && result.sms !== 'sent') {
+      res.status(502).json({
+        message: 'Could not send the share link',
+        code: 'SHARE_FAILED',
+        ...result,
+      })
+      return
+    }
+    res.json(result)
   } catch (err) {
     handleServiceError(err, res)
   }

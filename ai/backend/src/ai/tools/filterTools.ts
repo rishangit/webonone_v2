@@ -14,6 +14,15 @@ function isCompanySessionExempt(path: string): boolean {
   return COMPANY_SESSION_EXEMPT_PATHS.has(path)
 }
 
+/** Company website rows. Platform libraries (fonts, components, buttons, texts) do not use a company session. */
+function isDesignCompanyWebsitePath(path: string): boolean {
+  if (path.startsWith('/api/v1/website/font-library')) return false
+  if (path.startsWith('/api/v1/website/library')) return false
+  if (path.startsWith('/api/v1/website/button-library')) return false
+  if (path.startsWith('/api/v1/website/text-library')) return false
+  return path.startsWith('/api/v1/website/') || path.startsWith('/api/v1/website-themes')
+}
+
 export function toolRequiresCompanySession(tool: ToolDefinition): boolean {
   const path = tool.invoke.path
   if (isCompanySessionExempt(path)) {
@@ -25,6 +34,7 @@ export function toolRequiresCompanySession(tool: ToolDefinition): boolean {
     /\/company\/staff(\/|$)/.test(path) ||
     path === '/api/v1/forms' ||
     path.startsWith('/api/v1/forms/') ||
+    isDesignCompanyWebsitePath(path) ||
     path.includes(':companyId')
   )
 }

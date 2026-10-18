@@ -29,7 +29,8 @@ import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsitePresetDialog } from '../components/WebsiteEntityDialogs'
 import type { WebsitePreset } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
-import { WebsiteLibraryCopyControl } from '../components/WebsiteLibraryPickerDialog'
+import { WebsiteAddItemControl } from '../components/WebsiteAddItemControl'
+import { useWebsiteLibraryRevert, WebsiteLibrarySourceTag } from '../components/WebsiteLibraryRevert'
 
 export function WebsitePresetsPage() {
   const { t } = useTranslation('website')
@@ -44,6 +45,7 @@ export function WebsitePresetsPage() {
   const [dialog, setDialog] = useState<{ initialName?: string; id?: string } | null>(null)
   const [awaitingCreate, setAwaitingCreate] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
+  const revert = useWebsiteLibraryRevert()
   const list = useEpicCatalogList((s) => s.websitePresets, websitePresetsActions)
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websitePresets)
   usePlatformLoading(list.loading ? t('loading') : null)
@@ -95,7 +97,16 @@ export function WebsitePresetsPage() {
             addLabel={t('addPreset')}
             onAdd={() => setDialog({})}
             compactAddLabel={tc('add')}
-            extra={user?.role === 'company_admin' ? <WebsiteLibraryCopyControl kind="presets" /> : undefined}
+            extra={
+              user?.role === 'company_admin' ? (
+                <WebsiteAddItemControl
+                  kind="presets"
+                  addLabel={t('addPreset')}
+                  compactAddLabel={tc('add')}
+                  onCreate={() => setDialog({})}
+                />
+              ) : undefined
+            }
           />
         }
       />
@@ -126,6 +137,7 @@ export function WebsitePresetsPage() {
                           {t('lockedDefault')}
                         </StatusTag>
                       ) : null}
+                      <WebsiteLibrarySourceTag sourceLibraryId={item.sourceLibraryId} />
                     </a>
                   </ItemListContent>
                   {canManage ? (
@@ -148,6 +160,14 @@ export function WebsitePresetsPage() {
                       >
                         {t('duplicate')}
                       </DropdownMenuItem>
+                      {item.sourceLibraryId && !item.isLocked ? (
+                        <DropdownMenuItem
+                          disabled={revert.reverting}
+                          onClick={() => revert.ask({ kind: 'presets', id: item.id, name: item.name })}
+                        >
+                          {t('downloadUpdatedFromLibrary')}
+                        </DropdownMenuItem>
+                      ) : null}
                       {item.isLocked ? null : (
                         <DropdownMenuItem onClick={() => setDialog({ id: item.id, initialName: item.name })}>
                           {t('editDetails')}
@@ -199,6 +219,7 @@ export function WebsitePresetsPage() {
           }
         }}
       />
+      {revert.dialog}
     </FeaturePage>
   )
 }

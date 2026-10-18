@@ -107,7 +107,19 @@ export type WebononeAiEntityRef = {
   label: string
 }
 
-export type PlatformAiEntityRef = DataAiEntityRef | WebononeAiEntityRef
+/** Design website library elements attached to the WebOnOne AI assistant. */
+export const DESIGN_AI_ENTITY_KINDS = ['button', 'text'] as const
+
+export type DesignAiEntityKind = (typeof DESIGN_AI_ENTITY_KINDS)[number]
+
+export type DesignAiEntityRef = {
+  service: 'design'
+  kind: DesignAiEntityKind
+  id: string
+  label: string
+}
+
+export type PlatformAiEntityRef = DataAiEntityRef | WebononeAiEntityRef | DesignAiEntityRef
 
 export const IDENTITY_USER_PICKER_MESSAGE_TYPES = {
   SELECT: 'webonone:identity:user-picker-select',
@@ -236,7 +248,7 @@ export type PlatformAiMutationMessage = {
   toolName: string
 }
 
-/** Peer iframe → shell: attach Data library entities to the AI assistant. */
+/** Peer iframe → shell: attach Data or Design entities to the AI assistant. */
 export type PlatformAiEntityContextMessage = {
   type: typeof PLATFORM_MESSAGE_TYPES.AI_ENTITY_CONTEXT
   entity: PlatformAiEntityRef
@@ -592,6 +604,9 @@ function isPlatformAiEntityRef(data: unknown): data is PlatformAiEntityRef {
   }
   if (entity.service === 'webonone') {
     return WEBONONE_AI_ENTITY_KINDS.includes(entity.kind as WebononeAiEntityKind)
+  }
+  if (entity.service === 'design') {
+    return DESIGN_AI_ENTITY_KINDS.includes(entity.kind as DesignAiEntityKind)
   }
   return false
 }

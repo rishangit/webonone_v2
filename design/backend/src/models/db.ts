@@ -48,6 +48,7 @@ export interface DesignWebsitePageRow {
   sort_order: number
   document: string | Record<string, unknown>
   is_locked: number | boolean
+  source_library_id: string | null
   created_by: string | null
   created_at: Date
   updated_at: Date
@@ -62,6 +63,7 @@ export interface DesignWebsiteLayoutRow {
   theme_id: string | null
   is_default: number | boolean
   is_locked: number | boolean
+  source_library_id: string | null
   created_by: string | null
   created_at: Date
   updated_at: Date
@@ -74,6 +76,7 @@ export interface DesignWebsiteChromeRow {
   is_default: number | boolean
   is_locked: number | boolean
   document: string | Record<string, unknown>
+  source_library_id: string | null
   created_by: string | null
   created_at: Date
   updated_at: Date
@@ -85,6 +88,7 @@ export interface DesignWebsitePresetRow {
   name: string
   document: string | Record<string, unknown>
   is_locked: number | boolean
+  source_library_id: string | null
   created_by: string | null
   created_at: Date
   updated_at: Date
@@ -106,6 +110,7 @@ export interface DesignWebsiteThemeRow {
   is_active: number | boolean
   is_default: number | boolean
   is_locked: number | boolean
+  source_library_id: string | null
   fonts: string | unknown[]
   colors: string | unknown[]
   text_styles: string | unknown[]

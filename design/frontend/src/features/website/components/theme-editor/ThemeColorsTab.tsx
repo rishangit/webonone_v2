@@ -213,27 +213,37 @@ export function ThemeColorsTab({ theme, onPersist, saving, onColorInUse }: Theme
       )}
 
       <ThemeColorDialog
-
         open={dialog !== null}
-
         themeId={theme.id}
-
         initial={dialog?.color}
-
+        takenColorValues={theme.colors.map((color) => color.value)}
         onOpenChange={(open) => {
-
           if (!open) setDialog(null)
-
         }}
-
         onSubmit={(color) => {
-
           onPersist({ ...theme, colors: upsertById(theme.colors, color) })
-
           setDialog(null)
-
         }}
-
+        onApplyPalette={(swatches) => {
+          const usedIds = new Set(
+            [
+              ...theme.textStyles.map((style) => style.colorId),
+              ...theme.buttonStyles.flatMap((style) => [
+                style.backgroundColorId,
+                style.textColorId,
+                style.borderColorId,
+              ]),
+            ].filter(Boolean),
+          )
+          const names = WEBSITE_PALETTE_SLOT_NAME_KEYS.map((key) => t(key))
+          const colors = mergeImportedSwatches(swatches, theme.colors, names, usedIds)
+          onPersist({
+            ...theme,
+            colors,
+            ...pageChromeFromTokens(colors),
+          })
+          setDialog(null)
+        }}
       />
 
       <ThemeCssImportDialog

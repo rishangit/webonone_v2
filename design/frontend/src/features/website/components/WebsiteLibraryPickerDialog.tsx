@@ -17,63 +17,19 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
-  ListAddButton,
   SearchInput,
   cn,
   itemListRowActiveClassName,
-  useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import type { WebsiteLibraryKind } from '../api'
-import {
-  websiteLibraryBrowseActions,
-  websiteLibraryCopyActions,
-} from '../store/websiteLibraryCopyStore'
+import { websiteLibraryBrowseActions } from '../store/websiteLibraryCopyStore'
 
 const PICKER_SIZE = { sizeWidth: 'medium' as const, sizeHeight: 'large' as const }
 
 function libraryPickerPath(kind: WebsiteLibraryKind): string {
   return `/embed/dialogs/website/library/${kind}`
-}
-
-export function WebsiteLibraryCopyControl({ kind }: { kind: WebsiteLibraryKind }) {
-  const { t } = useTranslation('website')
-  const { toast } = useToast()
-  const dispatch = useAppDispatch()
-  const [open, setOpen] = useState(false)
-  const copy = useAppSelector((state) => state.websiteLibraryCopy)
-
-  useEffect(() => {
-    if (copy.status === 'idle' || copy.kind !== kind) return
-    if (copy.status === 'succeeded') {
-      toast({ title: t('addedFromLibrary') })
-      dispatch(websiteLibraryCopyActions.copyReset())
-    } else if (copy.status === 'error') {
-      toast({
-        title: t('addFromLibraryFailed'),
-        description: copy.error ?? undefined,
-        variant: 'destructive',
-      })
-      dispatch(websiteLibraryCopyActions.copyReset())
-    }
-  }, [copy.error, copy.kind, copy.status, dispatch, kind, t, toast])
-
-  return (
-    <>
-      <ListAddButton compactLabel={t('addFromLibrary')} onClick={() => setOpen(true)}>
-        {t('addFromLibrary')}
-      </ListAddButton>
-      <WebsiteLibraryPickerDialog
-        kind={kind}
-        open={open}
-        onOpenChange={setOpen}
-        onSelect={(libraryId) => {
-          dispatch(websiteLibraryCopyActions.copyRequested({ kind, libraryId }))
-        }}
-      />
-    </>
-  )
 }
 
 export function WebsiteLibraryPickerDialog({
@@ -152,7 +108,9 @@ export function WebsiteLibraryPickerDialog({
     />
   )
 
-  if (chrome === 'embed-page') return body
+  if (chrome === 'embed-page') {
+    return <div className="flex h-full min-h-0 w-full flex-col gap-4 p-4 sm:p-6">{body}</div>
+  }
   if (isHosted) return null
 
   return (
@@ -165,10 +123,15 @@ export function WebsiteLibraryPickerDialog({
       sizeHeight={PICKER_SIZE.sizeHeight}
       footer={
         <>
-          <Button type="button" variant="outline" className="h-10 px-4" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+            onClick={() => onOpenChange(false)}
+          >
             {tc('cancel')}
           </Button>
-          <Button type="button" className="h-10" disabled={!selectedId} onClick={confirm}>
+          <Button type="button" className="h-10 px-4" disabled={!selectedId} onClick={confirm}>
             {t('addFromLibrary')}
           </Button>
         </>

@@ -8,7 +8,7 @@ alwaysApply: false
 
 The Expo app (`mobile/src`) must use **`@webonone/mobile-ui`** for interactive UI — not raw React Native controls for standard patterns, and not `@webonone/ui-kit` (web/Radix).
 
-Related: [mobile-ui-project.mdc](mobile-ui-project.mdc), [mobile-dialogs.mdc](mobile-dialogs.mdc), [form-creation skill](../skills/form-creation/SKILL.md), [item-list skill](../skills/item-list/SKILL.md), [toast-notifications skill](../skills/toast-notifications/SKILL.md).
+Related: [mobile-ui-project.mdc](mobile-ui-project.mdc), [mobile-dialogs.mdc](mobile-dialogs.mdc), [form-creation skill](../skills/form-creation/SKILL.md), [item-list skill](../skills/item-list/SKILL.md), [toast-notifications skill](../skills/toast-notifications/SKILL.md). Before a new screen, run [ui-consistency](../skills/ui-consistency/SKILL.md).
 
 ## Dependency and wiring
 

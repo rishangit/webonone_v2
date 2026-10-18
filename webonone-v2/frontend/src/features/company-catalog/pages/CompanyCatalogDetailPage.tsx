@@ -29,6 +29,7 @@ import { CatalogEntityGalleryCard } from '../components/CatalogEntityGalleryCard
 import { ProductFormDialog } from '../components/ProductFormDialog'
 import { ServiceFormDialog } from '../components/ServiceFormDialog'
 import { SpaceFormDialog } from '../components/SpaceFormDialog'
+import { CatalogShareDialog } from '../components/CatalogShareDialog'
 import { CatalogWebPublishDialog } from '../components/CatalogWebPublishDialog'
 import { CompanyCatalogAttributesTab } from '../components/CompanyCatalogAttributesTab'
 import { CompanyCatalogDetailPageMenu } from '../components/CompanyCatalogDetailPageMenu'
@@ -132,6 +133,7 @@ export function CompanyCatalogDetailPage({
   )
   const [spaceDialog, setSpaceDialog] = useState<{ initialStep: ProductWizardStep } | null>(null)
   const [webPublishOpen, setWebPublishOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
   const priceKind =
     kind === 'products' || kind === 'services' || kind === 'spaces' ? kind : null
   const pricing = useCatalogPricing(priceKind, id, companyId)
@@ -503,6 +505,9 @@ export function CompanyCatalogDetailPage({
             ariaLabel={t('detail.actionsFor', { name: detail.displayName })}
             canEdit={Boolean(canEdit)}
             canRemove={canManage}
+            canShare={
+              !readOnly && resolveWebPublishStatus(detail.webPublishStatus) === 'published'
+            }
             busy={busy}
             onEdit={() => {
               if (kind === 'services') setServiceDialog({ initialStep: 1 })
@@ -510,6 +515,7 @@ export function CompanyCatalogDetailPage({
               else if (kind === 'spaces') setSpaceDialog({ initialStep: 1 })
             }}
             onRemove={() => setPendingRemove(true)}
+            onShare={() => setShareOpen(true)}
           />
         ) : undefined
       }
@@ -664,6 +670,16 @@ export function CompanyCatalogDetailPage({
               }),
             )
           }}
+        />
+      ) : null}
+
+      {!readOnly && kind && isCatalogGalleryKind(kind) && detail ? (
+        <CatalogShareDialog
+          open={shareOpen}
+          kind={kind}
+          id={id}
+          itemName={detail.displayName}
+          onOpenChange={setShareOpen}
         />
       ) : null}
 

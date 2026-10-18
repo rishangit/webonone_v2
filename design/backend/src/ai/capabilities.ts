@@ -1,4 +1,5 @@
 import { AI_CAPABILITY_VERSION, type ToolDefinition } from './capabilityTypes.js'
+import { websiteAiCapabilities } from './websiteCapabilities.js'
 
 const stringId = { type: 'string', minLength: 8, maxLength: 32 }
 
@@ -230,4 +231,5 @@ export const designAiCapabilities: ToolDefinition[] = [
     invoke: { method: 'PATCH', path: '/api/v1/forms/:id' },
     viewPath: formViewPath,
   }),
+  ...websiteAiCapabilities,
 ]

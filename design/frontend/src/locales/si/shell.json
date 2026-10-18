@@ -7,5 +7,8 @@
   "signingIn": "පිවිසෙමින්…",
   "completingSignIn": "පිවිසීම සම්පූර්ණ කරමින්…",
   "backToSignIn": "පිවිසීමට ආපසු",
-  "loadingSession": "සැසිය පූරණය වෙමින්…"
+  "loadingSession": "සැසිය පූරණය වෙමින්…",
+  "copyToAi": "AI වෙත පිටපත් කරන්න",
+  "copyToAiSuccess": "AI සහායකයට එකතු කළා",
+  "copyToAiUnavailable": "AI භාවිතා කිරීමට WebOnOne වෙතින් Design විවෘත කරන්න"
 }

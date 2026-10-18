@@ -21,6 +21,8 @@ export const AI_PERMISSIONS = [
   'ai:sms:read',
   'ai:design:read',
   'ai:design:write',
+  'ai:design:platform:read',
+  'ai:design:platform:write',
 ] as const
 
 export type AiPermission = (typeof AI_PERMISSIONS)[number]
@@ -64,6 +66,8 @@ export function permissionsForRole(role: AiRole, companyId: string | null): AiPe
       'ai:company:write',
       'ai:payment:read',
       'ai:sms:read',
+      'ai:design:platform:read',
+      'ai:design:platform:write',
     ]
     if (companyId) {
       perms.push('ai:design:read', 'ai:design:write')
@@ -78,7 +82,7 @@ export function permissionsForRole(role: AiRole, companyId: string | null): AiPe
   if (role === 'member') {
     const perms: AiPermission[] = [...withSessionCompany, 'ai:sms:read']
     if (companyId) {
-      perms.push('ai:design:read')
+      perms.push('ai:design:read', 'ai:design:platform:read')
     }
     return perms
   }
@@ -92,7 +96,14 @@ export function permissionsForRole(role: AiRole, companyId: string | null): AiPe
     'ai:sms:read',
   ]
   if (companyId) {
-    companyAdmin.push('ai:catalog:write', 'ai:events:write', 'ai:staff:write', 'ai:design:read', 'ai:design:write')
+    companyAdmin.push(
+      'ai:catalog:write',
+      'ai:events:write',
+      'ai:staff:write',
+      'ai:design:read',
+      'ai:design:write',
+      'ai:design:platform:read',
+    )
   }
   return companyAdmin
 }

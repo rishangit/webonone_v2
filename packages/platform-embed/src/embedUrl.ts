@@ -154,7 +154,7 @@ export type SendPlatformAiEntityContextOptions = {
   composerText?: string
 }
 
-/** Embedded peer → shell: attach Data entities to the AI assistant composer. */
+/** Embedded peer → shell: attach Data or Design entities to the AI assistant composer. */
 export function sendPlatformAiEntityContext(
   parentOrigin: string,
   entity: PlatformAiEntityRef,

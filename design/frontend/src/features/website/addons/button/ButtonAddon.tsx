@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { FormField, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@webonone/ui-kit'
 import { nanoid } from 'nanoid'
+import { CustomWebsiteElementHost } from '../../components/CustomWebsiteElementHost'
 import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon } from '../../types'
@@ -30,9 +31,12 @@ function ButtonAddonRenderer({
     fontFamily: snap.fontFamily,
     fontSize: snap.fontSize,
   }
+  const scopeId = buttonStyle?.id ?? addon.id
+  const customization = buttonStyle?.customization
+  const label = addon.props.label
 
-  if (publish && href) {
-    return (
+  const fallback =
+    publish && href ? (
       <a
         href={href}
         className="inline-flex h-full w-full items-center justify-center px-3 no-underline"
@@ -44,22 +48,32 @@ function ButtonAddonRenderer({
           }
         }}
       >
-        {addon.props.label}
+        {label}
       </a>
+    ) : (
+      <span
+        className="inline-flex h-full w-full items-center justify-center px-3"
+        style={{
+          ...style,
+          textDecoration: addon.props.linkPageId ? 'underline' : undefined,
+          cursor: interactive ? 'default' : 'pointer',
+        }}
+      >
+        {label}
+      </span>
     )
-  }
 
   return (
-    <span
-      className="inline-flex h-full w-full items-center justify-center px-3"
-      style={{
-        ...style,
-        textDecoration: addon.props.linkPageId ? 'underline' : undefined,
-        cursor: interactive ? 'default' : 'pointer',
-      }}
-    >
-      {addon.props.label}
-    </span>
+    <CustomWebsiteElementHost
+      scopeId={scopeId}
+      kind="button"
+      customization={customization}
+      placeholders={{ label }}
+      baseStyle={style}
+      className="inline-flex h-full w-full"
+      scriptContext={{ publish, href }}
+      fallback={fallback}
+    />
   )
 }
 

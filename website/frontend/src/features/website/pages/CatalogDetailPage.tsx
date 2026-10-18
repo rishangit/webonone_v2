@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Ticket } from 'lucide-react'
 import {
@@ -28,7 +28,6 @@ import { IssueTokenDialog } from '@/features/catalog/components/IssueTokenDialog
 import { TokenWorkflowProgress } from '@/features/catalog/components/TokenWorkflowProgress'
 import { catalogApi } from '@/features/catalog/services/catalogApi'
 import {
-  isCatalogKind,
   type CatalogDetailItem,
   type CatalogSessionItem,
   type PublicProductVariantOffer,
@@ -40,6 +39,10 @@ import { LocationPermissionDialog } from '@/features/website/components/Location
 import { useUserLocation } from '@/features/website/hooks/useUserLocation'
 import { websitePageContentClassName } from '@/features/website/layout/websitePageContent'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
+import {
+  parseCatalogDetailPath,
+  publicCatalogItemPath,
+} from '@/features/catalog/utils/publicCatalogItemPath'
 
 function kindLabel(kind: CatalogDetailItem['kind'], t: (key: string) => string): string {
   if (kind === 'products') return t('product')
@@ -91,9 +94,11 @@ type BookingTarget = {
 
 export function CatalogDetailPage() {
   const { t, i18n } = useTranslation('search')
-  const { kind: kindParam = '', id = '' } = useParams()
+  const location = useLocation()
   const navigate = useNavigate()
-  const kind = isCatalogKind(kindParam) ? kindParam : null
+  const parsedPath = parseCatalogDetailPath(location.pathname)
+  const kind = parsedPath.kind
+  const id = parsedPath.id
   const { user, accessToken, isAuthenticated } = useWebsiteAuth()
   const {
     coords,
@@ -125,10 +130,14 @@ export function CatalogDetailPage() {
   itemRef.current = item
 
   const detailReturnPath = useMemo(() => {
-    const kindSegment = encodeURIComponent(item?.kind ?? kind ?? 'services')
-    const idSegment = encodeURIComponent(item?.id ?? id)
-    return `/catalog/${kindSegment}/${idSegment}`
-  }, [id, item?.id, item?.kind, kind])
+    const companyId = item?.companyId ?? parsedPath.companyId
+    const itemKind = item?.kind ?? kind
+    const itemId = item?.id ?? id
+    if (!companyId || !itemKind || !itemId) {
+      return location.pathname
+    }
+    return publicCatalogItemPath(companyId, itemKind, itemId)
+  }, [id, item?.companyId, item?.id, item?.kind, kind, location.pathname, parsedPath.companyId])
 
   const sessionSpaces = useMemo(() => {
     const byId = new Map<string, string>()
@@ -184,6 +193,26 @@ export function CatalogDetailPage() {
       cancelled = true
     }
   }, [coords, kind, id, coords?.lat, coords?.lng, t])
+
+  useEffect(() => {
+    if (!item?.companyId) return
+    const current = parseCatalogDetailPath(location.pathname)
+    if (
+      current.companyId === item.companyId &&
+      current.kind === item.kind &&
+      current.id === item.id
+    ) {
+      return
+    }
+    navigate(
+      {
+        pathname: publicCatalogItemPath(item.companyId, item.kind, item.id),
+        search: location.search,
+        hash: location.hash,
+      },
+      { replace: true },
+    )
+  }, [item, location.hash, location.pathname, location.search, navigate])
 
   useEffect(() => {
     if (!item || item.kind !== 'services' || item.timeMode !== 'window') {

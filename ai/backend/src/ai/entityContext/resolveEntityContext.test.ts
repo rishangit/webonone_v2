@@ -103,4 +103,18 @@ describe('formatEntityContextSupplement', () => {
   it('returns empty string for no refs', () => {
     assert.equal(formatEntityContextSupplement([]), '')
   })
+
+  it('includes design button library update instructions', () => {
+    const text = formatEntityContextSupplement([
+      {
+        ref: { service: 'design', kind: 'button', id: 'btn000000000000000001', label: 'Primary' },
+        record: { id: 'btn000000000000000001', name: 'Primary' },
+      },
+    ])
+    assert.match(text, /Design button library: Primary/)
+    assert.match(text, /Update tool: update_design_button_library/)
+    assert.match(text, /html, styles, and scripts/)
+    assert.match(text, /Current html:/)
+    assert.match(text, /top-level update fields/)
+  })
 })

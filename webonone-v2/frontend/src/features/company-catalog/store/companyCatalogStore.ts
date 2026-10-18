@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
 import { catchError, exhaustMap, mergeMap, switchMap } from 'rxjs/operators'
-import { companyCatalogApi } from '../services/companyCatalogApi'
+import { companyCatalogApi, type CatalogShareResult } from '../services/companyCatalogApi'
 import type {
   CatalogBindingMode,
   CatalogEntityKind,
@@ -24,9 +24,12 @@ interface CompanyCatalogState {
   listStatus: Status
   detailStatus: Status
   mutateStatus: Status
+  shareStatus: Status
   listError: string | null
   detailError: string | null
   mutateError: string | null
+  shareError: string | null
+  shareResult: CatalogShareResult | null
 }
 
 const initialState: CompanyCatalogState = {
@@ -36,9 +39,12 @@ const initialState: CompanyCatalogState = {
   listStatus: 'idle',
   detailStatus: 'idle',
   mutateStatus: 'idle',
+  shareStatus: 'idle',
   listError: null,
   detailError: null,
   mutateError: null,
+  shareError: null,
+  shareResult: null,
 }
 
 const companyCatalogSlice = createSlice({
@@ -166,6 +172,34 @@ const companyCatalogSlice = createSlice({
     clearMutateError(state) {
       state.mutateError = null
       if (state.mutateStatus === 'error') state.mutateStatus = 'idle'
+    },
+    shareLinkRequested(
+      state,
+      _action: PayloadAction<{
+        kind: CatalogGalleryKind
+        id: string
+        email?: string
+        phone?: string
+      }>,
+    ) {
+      state.shareStatus = 'saving'
+      state.shareError = null
+      state.shareResult = null
+    },
+    shareLinkSucceeded(state, action: PayloadAction<CatalogShareResult>) {
+      state.shareStatus = 'idle'
+      state.shareResult = action.payload
+      state.shareError = null
+    },
+    shareLinkFailed(state, action: PayloadAction<string>) {
+      state.shareStatus = 'error'
+      state.shareError = action.payload
+      state.shareResult = null
+    },
+    clearShareLink(state) {
+      state.shareStatus = 'idle'
+      state.shareError = null
+      state.shareResult = null
     },
   },
 })
@@ -339,6 +373,18 @@ const updateWebPublishEpic: CatalogEpic = (action$) =>
     }),
   )
 
+const shareLinkEpic: CatalogEpic = (action$) =>
+  action$.pipe(
+    ofType(companyCatalogActions.shareLinkRequested.type),
+    exhaustMap((action: ReturnType<typeof companyCatalogActions.shareLinkRequested>) => {
+      const { kind, id, email, phone } = action.payload
+      return from(companyCatalogApi.shareItem(kind, id, { email, phone })).pipe(
+        mergeMap((result) => of(companyCatalogActions.shareLinkSucceeded(result))),
+        catchError((err: Error) => of(companyCatalogActions.shareLinkFailed(err.message))),
+      )
+    }),
+  )
+
 const deleteEpic: CatalogEpic = (action$) =>
   action$.pipe(
     ofType(companyCatalogActions.deleteRequested.type),
@@ -365,5 +411,6 @@ export const companyCatalogEpics = combineEpics(
   updateEpic,
   updateGalleryEpic,
   updateWebPublishEpic,
+  shareLinkEpic,
   deleteEpic,
 )

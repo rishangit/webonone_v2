@@ -4,6 +4,8 @@ import type {
   CatalogEntityKind,
   DataEntityContextRef,
   DataEntityKind,
+  DesignEntityContextRef,
+  DesignEntityKind,
   EntityContextRef,
   ResolvedEntityContext,
   WebononeEntityContextRef,
@@ -74,6 +76,21 @@ const WEBONONE_LIST_TOOL_BY_KIND: Partial<Record<WebononeEntityKind, string>> = 
   company: 'list_my_companies',
 }
 
+const DESIGN_GET_TOOL_BY_KIND: Record<DesignEntityKind, string> = {
+  button: 'get_design_button_library',
+  text: 'get_design_text_library',
+}
+
+const DESIGN_UPDATE_TOOL_BY_KIND: Record<DesignEntityKind, string> = {
+  button: 'update_design_button_library',
+  text: 'update_design_text_library',
+}
+
+const DESIGN_LIST_TOOL_BY_KIND: Record<DesignEntityKind, string> = {
+  button: 'list_design_button_library',
+  text: 'list_design_text_library',
+}
+
 function isCatalogEntityKind(kind: WebononeEntityKind): kind is CatalogEntityKind {
   return kind === 'product' || kind === 'service' || kind === 'space'
 }
@@ -83,10 +100,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function recordFromToolOutput(output: unknown): Record<string, unknown> | undefined {
-  if (isRecord(output)) {
-    return output
+  if (!isRecord(output)) {
+    return undefined
   }
-  return undefined
+  if (isRecord(output.item) && typeof output.item.id === 'string') {
+    return output.item
+  }
+  return output
 }
 
 export function getToolNameForDataEntityKind(kind: DataEntityKind): string {
@@ -224,6 +244,43 @@ async function resolveDataEntityRef(
   return { ref, record }
 }
 
+async function resolveDesignEntityRef(
+  ref: DesignEntityContextRef,
+  options: {
+    registry: ToolRegistry | undefined
+    executor: ToolExecutor | undefined
+    ctx: Pick<AiRequestContext, 'role' | 'permissions' | 'companyId' | 'accessToken'>
+  },
+): Promise<ResolvedEntityContext> {
+  const { registry, executor, ctx } = options
+  const toolName = DESIGN_GET_TOOL_BY_KIND[ref.kind]
+  const tool = registry?.get(toolName)
+  if (!tool || !executor) {
+    return { ref, error: 'Entity lookup unavailable' }
+  }
+
+  const result = await executor.execute(
+    { id: `ctx:design:${ref.kind}:${ref.id}`, name: toolName, arguments: { id: ref.id } },
+    ctx,
+    { confirmed: true },
+  )
+
+  if (!result.ok) {
+    const code =
+      isRecord(result.output) && typeof result.output.code === 'string'
+        ? result.output.code
+        : 'LOOKUP_FAILED'
+    return { ref, error: code }
+  }
+
+  const record = recordFromToolOutput(result.output)
+  if (!record) {
+    return { ref, error: 'EMPTY_RECORD' }
+  }
+
+  return { ref, record }
+}
+
 async function resolveWebononeEntityRef(
   ref: WebononeEntityContextRef,
   options: {
@@ -289,6 +346,10 @@ export async function resolveEntityContext(
       results.push(await resolveWebononeEntityRef(ref, options))
       continue
     }
+    if (ref.service === 'design') {
+      results.push(await resolveDesignEntityRef(ref, options))
+      continue
+    }
     results.push({ ref, error: 'Unsupported entity service' })
   }
 
@@ -331,6 +392,44 @@ function formatWebononeEntityBlock(
   return `--- WebOnOne ${item.ref.kind}: ${label} (id: ${item.ref.id}) ---\nLookup failed: ${item.error ?? 'UNKNOWN'}`
 }
 
+function customizationFromDesignRecord(record: Record<string, unknown>): {
+  html: string
+  styles: string
+  scripts: string
+} {
+  const definition = isRecord(record.definition) ? record.definition : undefined
+  const custom = definition && isRecord(definition.customization) ? definition.customization : undefined
+  return {
+    html: typeof custom?.html === 'string' ? custom.html : '',
+    styles: typeof custom?.styles === 'string' ? custom.styles : '',
+    scripts: typeof custom?.scripts === 'string' ? custom.scripts : '',
+  }
+}
+
+function formatDesignEntityBlock(
+  item: ResolvedEntityContext & { ref: DesignEntityContextRef },
+): string {
+  const label = item.ref.label?.trim() || item.ref.kind
+  const getTool = DESIGN_GET_TOOL_BY_KIND[item.ref.kind]
+  const updateTool = DESIGN_UPDATE_TOOL_BY_KIND[item.ref.kind]
+  const listTool = DESIGN_LIST_TOOL_BY_KIND[item.ref.kind]
+  if (item.record) {
+    const customization = customizationFromDesignRecord(item.record)
+    return [
+      `--- Design ${item.ref.kind} library: ${label} (id: ${item.ref.id}) ---`,
+      `Read tool: ${getTool}`,
+      `Update tool: ${updateTool}`,
+      `List tool: ${listTool}`,
+      'Send updated html, styles, and scripts as top-level update fields (not nested under definition.customization).',
+      `Current html:\n${customization.html || '(empty)'}`,
+      `Current styles:\n${customization.styles || '(empty)'}`,
+      `Current scripts:\n${customization.scripts || '(empty)'}`,
+      JSON.stringify(item.record, null, 2),
+    ].join('\n')
+  }
+  return `--- Design ${item.ref.kind} library: ${label} (id: ${item.ref.id}) ---\nLookup failed: ${item.error ?? 'UNKNOWN'}`
+}
+
 export function formatEntityContextSupplement(resolved: ResolvedEntityContext[]): string {
   if (resolved.length === 0) {
     return ''
@@ -339,6 +438,9 @@ export function formatEntityContextSupplement(resolved: ResolvedEntityContext[])
   const blocks = resolved.map((item) => {
     if (item.ref.service === 'webonone') {
       return formatWebononeEntityBlock(item as ResolvedEntityContext & { ref: WebononeEntityContextRef })
+    }
+    if (item.ref.service === 'design') {
+      return formatDesignEntityBlock(item as ResolvedEntityContext & { ref: DesignEntityContextRef })
     }
     return formatDataEntityBlock(item as ResolvedEntityContext & { ref: DataEntityContextRef })
   })
@@ -366,5 +468,15 @@ export function formatEntityContextSupplement(resolved: ResolvedEntityContext[])
     '- Use the matching update_* tool when the user asks to change fields; write tools park Confirm/Skip rows.',
   ].join('\n')
 
-  return `Attached records (authoritative; use these ids and fields when answering or calling tools):\n\n${blocks.join('\n\n')}\n\n${dataInstructions}\n\n${companyInstructions}`
+  const designInstructions = [
+    'When the user asks to redesign, restyle, or change an attached Design website button or text library item:',
+    '- Call the matching update_design_button_library or update_design_text_library tool with the attached id (never prose-only HTML).',
+    '- Change only basic settings plus html, styles, and scripts. Do not send page, theme, layout, or document fields.',
+    '- Copy current html, styles, and scripts from the attached block, then send the updated values as top-level html, styles, and scripts (not nested under definition.customization).',
+    '- Keep {{label}} on buttons and {{content}} on text. The button root tag must be <button type="button"> with website-element-root, website-el-{id}, data-website-element="button", Tailwind utilities, and --el-* CSS variables on that button — never a wrapping div.',
+    '- Styles must include a .website-el-{id} { } root rule. Send html, styles, and scripts together when the look or behavior changes so the live preview updates after confirm.',
+    '- Write tools park Confirm/Skip rows; after confirm the library detail preview reloads.',
+  ].join('\n')
+
+  return `Attached records (authoritative; use these ids and fields when answering or calling tools):\n\n${blocks.join('\n\n')}\n\n${dataInstructions}\n\n${companyInstructions}\n\n${designInstructions}`
 }

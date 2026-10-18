@@ -215,6 +215,33 @@ export const updateCatalogWebPublishBodySchema = z.object({
   webPublishStatus: webPublishStatusSchema,
 })
 
+const emptyToUndefined = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value
+
+export const shareCatalogItemBodySchema = z
+  .object({
+    email: z.preprocess(
+      emptyToUndefined,
+      z.string().trim().email().max(255).optional(),
+    ),
+    phone: z.preprocess(
+      emptyToUndefined,
+      z
+        .string()
+        .trim()
+        .min(5)
+        .max(32)
+        .regex(/^\+?[0-9\s-]{5,31}$/)
+        .optional(),
+    ),
+  })
+  .refine((value) => Boolean(value.email || value.phone), {
+    message: 'Enter an email address or a phone number',
+    path: ['email'],
+  })
+
+export type ShareCatalogItemBody = z.infer<typeof shareCatalogItemBodySchema>
+
 const variantStockLimitQuantitySchema = z.number().min(0).max(999_999_999.999).nullable()
 
 const stockDateString = z

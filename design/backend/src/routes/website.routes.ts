@@ -61,6 +61,13 @@ router.post(
   requireRole('company_admin'),
   componentLibrary.copyLibraryPageHandler,
 )
+router.post(
+  '/website/pages/:id/revert-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  componentLibrary.revertLibraryPageHandler,
+)
 router.get('/website/pages', requireAuth, requireCompanyContext, requireRole(...companyRoles), pages.listWebsitePagesHandler)
 router.get('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), pages.getWebsitePageHandler)
 router.post('/website/pages', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.createWebsitePageHandler)
@@ -73,6 +80,13 @@ router.post(
   requireCompanyContext,
   requireRole('company_admin'),
   componentLibrary.copyLibraryPresetHandler,
+)
+router.post(
+  '/website/presets/:id/revert-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  componentLibrary.revertLibraryPresetHandler,
 )
 router.get('/website/presets', requireAuth, requireCompanyContext, requireRole(...companyRoles), presets.listWebsitePresetsHandler)
 router.get('/website/presets/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), presets.getWebsitePresetHandler)
@@ -139,6 +153,13 @@ router.post(
   requireRole('company_admin'),
   componentLibrary.copyLibraryLayoutHandler,
 )
+router.post(
+  '/website/layouts/:id/revert-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  componentLibrary.revertLibraryLayoutHandler,
+)
 router.get('/website/layouts', requireAuth, requireCompanyContext, requireRole(...companyRoles), layouts.listWebsiteLayoutsHandler)
 router.get('/website/layouts/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), layouts.getWebsiteLayoutHandler)
 router.post('/website/layouts', requireAuth, requireCompanyContext, requireRole(...manageRoles), layouts.createWebsiteLayoutHandler)
@@ -164,6 +185,110 @@ router.post(
   requireAuth,
   requireRole('super_admin'),
   library.createFontLibraryHandler,
+)
+router.patch(
+  '/website/font-library/:id',
+  requireAuth,
+  requireRole('super_admin'),
+  library.updateFontLibraryHandler,
+)
+router.delete(
+  '/website/font-library/:id',
+  requireAuth,
+  requireRole('super_admin'),
+  library.deleteFontLibraryHandler,
+)
+
+router.get(
+  '/website/color-library',
+  requireAuth,
+  requireCompanyContextUnlessSuperAdmin,
+  requireRole(...companyRoles),
+  library.listColorLibraryHandler,
+)
+router.post(
+  '/website/color-library',
+  requireAuth,
+  requireRole('super_admin'),
+  library.createColorLibraryHandler,
+)
+router.patch(
+  '/website/color-library/:id',
+  requireAuth,
+  requireRole('super_admin'),
+  library.updateColorLibraryHandler,
+)
+router.delete(
+  '/website/color-library/:id',
+  requireAuth,
+  requireRole('super_admin'),
+  library.deleteColorLibraryHandler,
+)
+
+router.get(
+  '/website/text-library',
+  requireAuth,
+  requireCompanyContextUnlessSuperAdmin,
+  requireRole(...companyRoles),
+  library.listTextLibraryHandler,
+)
+router.post(
+  '/website/text-library',
+  requireAuth,
+  requireRole('super_admin'),
+  library.createTextLibraryHandler,
+)
+router.get(
+  '/website/text-library/:id',
+  requireAuth,
+  requireCompanyContextUnlessSuperAdmin,
+  requireRole(...companyRoles),
+  library.getTextLibraryHandler,
+)
+router.patch(
+  '/website/text-library/:id',
+  requireAuth,
+  requireRole('super_admin'),
+  library.updateTextLibraryHandler,
+)
+router.delete(
+  '/website/text-library/:id',
+  requireAuth,
+  requireRole('super_admin'),
+  library.deleteTextLibraryHandler,
+)
+
+router.get(
+  '/website/button-library',
+  requireAuth,
+  requireCompanyContextUnlessSuperAdmin,
+  requireRole(...companyRoles),
+  library.listButtonLibraryHandler,
+)
+router.post(
+  '/website/button-library',
+  requireAuth,
+  requireRole('super_admin'),
+  library.createButtonLibraryHandler,
+)
+router.get(
+  '/website/button-library/:id',
+  requireAuth,
+  requireCompanyContextUnlessSuperAdmin,
+  requireRole(...companyRoles),
+  library.getButtonLibraryHandler,
+)
+router.patch(
+  '/website/button-library/:id',
+  requireAuth,
+  requireRole('super_admin'),
+  library.updateButtonLibraryHandler,
+)
+router.delete(
+  '/website/button-library/:id',
+  requireAuth,
+  requireRole('super_admin'),
+  library.deleteButtonLibraryHandler,
 )
 
 const libraryRead = [requireAuth, requireRole(...libraryReadRoles)] as const
@@ -219,6 +344,13 @@ router.post(
     componentLibrary.copyLibraryChromeHandler(req, res, next)
   },
 )
+router.post(
+  '/website/:kind/:id/revert-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  componentLibrary.revertLibraryChromeHandler,
+)
 
 router.get('/website/:kind', requireAuth, requireCompanyContext, requireRole(...companyRoles), chrome.listWebsiteChromeHandler)
 router.get('/website/:kind/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), chrome.getWebsiteChromeHandler)
@@ -239,6 +371,13 @@ router.post(
   requireCompanyContext,
   requireRole('company_admin'),
   componentLibrary.copyLibraryThemeHandler,
+)
+router.post(
+  '/website-themes/:id/revert-library',
+  requireAuth,
+  requireCompanyContext,
+  requireRole(...manageRoles),
+  componentLibrary.revertLibraryThemeHandler,
 )
 router.get('/website-themes', requireAuth, requireCompanyContext, requireRole(...companyRoles), themes.listWebsiteThemesHandler)
 router.get('/website-themes/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), themes.getWebsiteThemeHandler)

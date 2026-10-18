@@ -47,6 +47,7 @@ const envSchema = z.object({
   COMPANY_SITE_HOST: z.string().default('live.webonone.com'),
   EXPO_ACCESS_TOKEN: z.string().optional(),
   WEBONONE_APP_ORIGIN: z.string().optional(),
+  WEBSITE_ORIGIN: z.string().optional(),
 })
 
 const parsed = envSchema.parse(process.env)
@@ -110,4 +111,5 @@ export const env = {
     'live.webonone.com',
   expoAccessToken: parsed.EXPO_ACCESS_TOKEN?.trim() ?? '',
   webononeAppOrigin: parsed.WEBONONE_APP_ORIGIN?.trim() ?? '',
+  websiteOrigin: parsed.WEBSITE_ORIGIN?.trim() ?? '',
 }

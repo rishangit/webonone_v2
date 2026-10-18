@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { FormField, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@webonone/ui-kit'
 import { nanoid } from 'nanoid'
+import { CustomWebsiteElementHost } from '../../components/CustomWebsiteElementHost'
 import { resolveTextStyle } from '../../document/theme'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon } from '../../types'
@@ -12,17 +13,23 @@ function TextAddonRenderer({ addon, breakpoint, theme, interactive }: AddonRende
   const style = theme?.textStyles.find((item) => item.id === addon.props.textStyleId)
   const snap = style ? resolveTextStyle(theme ?? null, style, breakpoint) : addon.props.snapshot
   const size = addon.props.fontSizeByBreakpoint?.[breakpoint] ?? snap.size
+  const content = addon.props.content || (interactive ? t('text') : '')
+  const baseStyle = {
+    fontFamily: snap.fontFamily,
+    fontSize: size,
+    color: snap.color,
+  }
+
   return (
-    <div
+    <CustomWebsiteElementHost
+      scopeId={style?.id ?? addon.id}
+      kind="text"
+      customization={style?.customization}
+      placeholders={{ content }}
+      baseStyle={baseStyle}
       className="h-full w-full overflow-hidden whitespace-pre-wrap p-2"
-      style={{
-        fontFamily: snap.fontFamily,
-        fontSize: size,
-        color: snap.color,
-      }}
-    >
-      {addon.props.content || (interactive ? t('text') : '')}
-    </div>
+      fallback={<div style={baseStyle}>{content}</div>}
+    />
   )
 }
 

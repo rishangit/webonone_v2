@@ -27,7 +27,8 @@ import { WebsiteLayoutDialog } from '../components/WebsiteLayoutDialog'
 import type { LayoutMetaValues } from '../schemas/websiteMeta'
 import type { WebsiteLayout } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
-import { WebsiteLibraryCopyControl } from '../components/WebsiteLibraryPickerDialog'
+import { WebsiteAddItemControl } from '../components/WebsiteAddItemControl'
+import { useWebsiteLibraryRevert, WebsiteLibrarySourceTag } from '../components/WebsiteLibraryRevert'
 
 export function WebsiteLayoutsPage() {
   const { t } = useTranslation('website')
@@ -41,6 +42,7 @@ export function WebsiteLayoutsPage() {
   const [dialog, setDialog] = useState<{ initial?: LayoutMetaValues; id?: string } | null>(null)
   const [pendingSave, setPendingSave] = useState<'create' | 'edit' | null>(null)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
+  const revert = useWebsiteLibraryRevert()
   const list = useEpicCatalogList((s) => s.websiteLayouts, websiteLayoutsActions)
   const headers = useAppSelector((s) => s.websiteHeaders.items)
   const footers = useAppSelector((s) => s.websiteFooters.items)
@@ -96,7 +98,16 @@ export function WebsiteLayoutsPage() {
             addLabel={t('addLayout')}
             onAdd={() => setDialog({})}
             compactAddLabel={tc('add')}
-            extra={user?.role === 'company_admin' ? <WebsiteLibraryCopyControl kind="layouts" /> : undefined}
+            extra={
+              user?.role === 'company_admin' ? (
+                <WebsiteAddItemControl
+                  kind="layouts"
+                  addLabel={t('addLayout')}
+                  compactAddLabel={tc('add')}
+                  onCreate={() => setDialog({})}
+                />
+              ) : undefined
+            }
           />
         }
       >
@@ -130,6 +141,7 @@ export function WebsiteLayoutsPage() {
                         <p className="font-medium">{item.name}</p>
                         {item.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
                         {item.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
+                        <WebsiteLibrarySourceTag sourceLibraryId={item.sourceLibraryId} />
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {t('layoutPagesCount', { count: item.pages.length })}
@@ -160,6 +172,14 @@ export function WebsiteLayoutsPage() {
                       >
                         {t('duplicate')}
                       </DropdownMenuItem>
+                      {item.sourceLibraryId && !item.isLocked ? (
+                        <DropdownMenuItem
+                          disabled={revert.reverting}
+                          onClick={() => revert.ask({ kind: 'layouts', id: item.id, name: item.name })}
+                        >
+                          {t('downloadUpdatedFromLibrary')}
+                        </DropdownMenuItem>
+                      ) : null}
                       {item.isLocked ? null : (
                         <DropdownMenuItem
                           onClick={() =>
@@ -244,6 +264,7 @@ export function WebsiteLayoutsPage() {
           }
         }}
       />
+      {revert.dialog}
     </FeaturePage>
   )
 }

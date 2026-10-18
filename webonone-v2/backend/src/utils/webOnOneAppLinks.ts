@@ -7,6 +7,16 @@ export function getWebOnOneAppOrigin(): string {
   return raw.replace(/\/$/, '')
 }
 
+export function getWebsiteOrigin(): string {
+  const raw = env.websiteOrigin?.trim() || 'http://127.0.0.1:3018'
+  return raw.replace(/\/$/, '')
+}
+
+/** Public website page for a published company catalog item. Company id is in the path so a shared link identifies the company. */
+export function publicCatalogItemUrl(companyId: string, kind: string, id: string): string {
+  return `${getWebsiteOrigin()}/catalog/${encodeURIComponent(companyId)}/${encodeURIComponent(kind)}/${encodeURIComponent(id)}`
+}
+
 export function absoluteWebOnOneUrl(relativePath: string): string {
   const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`
   return `${getWebOnOneAppOrigin()}${path}`

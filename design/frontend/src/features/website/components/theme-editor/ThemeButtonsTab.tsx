@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -11,8 +12,11 @@ import {
 import { useTranslation } from 'react-i18next'
 import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
 import type { WebsiteButtonStyle } from '../../types'
+import { useThemeButtonLibraryDownload } from '../../hooks/useThemeButtonLibraryDownload'
 import { writeThemeDraft } from '../../utils/themeDraftStorage'
+import { applyThemeTokenPatch } from '../../utils/themeLibraryMaterialize'
 import { upsertById } from '../../utils/upsertById'
+import { WebsiteLibrarySourceTag } from '../WebsiteLibraryRevert'
 import { ThemeButtonStyleDialog } from './ThemeButtonStyleDialog'
 import { ThemeEditorListHeader } from './ThemeEditorListHeader'
 import type { ThemeEditorTabProps } from './types'
@@ -20,11 +24,18 @@ import type { ThemeEditorTabProps } from './types'
 export function ThemeButtonsTab({ theme, onPersist, saving }: ThemeEditorTabProps) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
+  const { goToWebsite } = useNavigateDesign()
   const [dialog, setDialog] = useState<{ style?: WebsiteButtonStyle } | null>(null)
+  const download = useThemeButtonLibraryDownload(theme, onPersist)
 
-  function openDialog(style?: WebsiteButtonStyle) {
+  function openCreateDialog() {
     writeThemeDraft(theme)
-    setDialog({ style })
+    setDialog({})
+  }
+
+  function openEditPage(style: WebsiteButtonStyle) {
+    writeThemeDraft(theme)
+    goToWebsite(`/website/themes/${theme.id}/buttons/${style.id}`)
   }
 
   function removeButtonStyle(id: string) {
@@ -39,7 +50,7 @@ export function ThemeButtonsTab({ theme, onPersist, saving }: ThemeEditorTabProp
       <ThemeEditorListHeader
         title={t('buttons')}
         addLabel={t('addButtonStyle')}
-        onAdd={() => openDialog()}
+        onAdd={() => openCreateDialog()}
         disabled={saving}
       />
       {theme.buttonStyles.length === 0 ? (
@@ -54,7 +65,7 @@ export function ThemeButtonsTab({ theme, onPersist, saving }: ThemeEditorTabProp
                   <button
                     type="button"
                     className="flex w-full items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    onClick={() => openDialog(style)}
+                    onClick={() => openEditPage(style)}
                     disabled={saving}
                   >
                     <span
@@ -71,12 +82,21 @@ export function ThemeButtonsTab({ theme, onPersist, saving }: ThemeEditorTabProp
                       {style.name || t('buttonPreviewLabel')}
                     </span>
                     <p className="min-w-0 truncate font-medium">{style.name}</p>
+                    <WebsiteLibrarySourceTag sourceLibraryId={style.sourceLibraryId} />
                   </button>
                 </ItemListContent>
                 <ItemListMenu ariaLabel={t('actionsFor', { name: style.name || t('buttons') })}>
-                  <DropdownMenuItem onClick={() => openDialog(style)} disabled={saving}>
+                  <DropdownMenuItem onClick={() => openEditPage(style)} disabled={saving}>
                     {tc('edit')}
                   </DropdownMenuItem>
+                  {style.sourceLibraryId && !theme.isLocked ? (
+                    <DropdownMenuItem
+                      disabled={saving || download.downloading}
+                      onClick={() => download.ask(style)}
+                    >
+                      {t('downloadUpdatedFromLibrary')}
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
@@ -98,11 +118,13 @@ export function ThemeButtonsTab({ theme, onPersist, saving }: ThemeEditorTabProp
         onOpenChange={(open) => {
           if (!open) setDialog(null)
         }}
-        onSubmit={(style) => {
-          onPersist({ ...theme, buttonStyles: upsertById(theme.buttonStyles, style) })
+        onSubmit={(style, patch) => {
+          const base = applyThemeTokenPatch(theme, patch)
+          onPersist({ ...base, buttonStyles: upsertById(base.buttonStyles, style) })
           setDialog(null)
         }}
       />
+      {download.dialog}
     </div>
   )
 }

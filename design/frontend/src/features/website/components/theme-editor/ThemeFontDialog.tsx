@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { nanoid } from 'nanoid'
-import { Check } from 'lucide-react'
+import { Check, ChevronRight, Library, Plus } from 'lucide-react'
 import {
   PLATFORM_EMBED_QUERY,
   resolvePlatformEmbedParentOrigin,
@@ -25,8 +25,6 @@ import {
   ItemListContent,
   ItemListEmpty,
   ItemListItem,
-  SegmentedSwitch,
-  SegmentedSwitchItem,
   Spinner,
   cn,
   itemListRowActiveClassName,
@@ -40,6 +38,7 @@ import { websiteFontLibraryActions, websiteFontLibraryCreateActions } from '../.
 import type { WebsiteFontLibraryItem, WebsiteFontToken } from '../../types'
 import { themeFontFamilyStyle } from '../../utils/themeFontPreview'
 import { normalizeGoogleFontInput, parseGoogleFontFamily } from '../../utils/parseGoogleFontFamily'
+import { WebsiteSourceChoice, WebsiteSourceChoiceGrid } from '../WebsiteSourceChoice'
 import { WEBSITE_PAGE_DIALOG_SIZE } from '../WebsiteEntityDialogs'
 
 type FontSource = 'library' | 'custom'
@@ -77,7 +76,8 @@ export function ThemeFontDialog({
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isEdit = Boolean(initial)
-  const [source, setSource] = useState<FontSource>('library')
+  const [choice, setChoice] = useState<FontSource | null>(null)
+  const [source, setSource] = useState<FontSource | null>(null)
   const [name, setName] = useState(initial?.name ?? '')
   const [googleFontUrl, setGoogleFontUrl] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -86,7 +86,8 @@ export function ThemeFontDialog({
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
       : null
-  const dialogSize = isEdit || source === 'custom' ? WEBSITE_PAGE_DIALOG_SIZE : FONT_LIBRARY_DIALOG_SIZE
+  const dialogSize = isEdit ? WEBSITE_PAGE_DIALOG_SIZE : FONT_LIBRARY_DIALOG_SIZE
+  const choosing = !isEdit && source === null
   const taken = new Set(
     takenGoogleFontUrls.filter((url) => url && url !== initial?.googleFontUrl),
   )
@@ -108,7 +109,7 @@ export function ThemeFontDialog({
       : `/embed/dialogs/website/themes/${themeId}/fonts/create`,
     title: isEdit ? t('editFontTitle') : t('createFontTitle'),
     description: isEdit ? undefined : t('createFontDescription'),
-    submitLabel: isEdit ? tc('save') : t('create'),
+    submitLabel: isEdit ? tc('save') : tc('next'),
     ...dialogSize,
     onResult: (payload) => {
       const parsed = websiteFontTokenSchema.safeParse(payload)
@@ -130,7 +131,8 @@ export function ThemeFontDialog({
     if (!open && chrome === 'dialog') return
     setName(initial?.name ?? '')
     setGoogleFontUrl('')
-    setSource('library')
+    setChoice(null)
+    setSource(null)
     setSelectedId(null)
     setFieldErrors({})
     setPendingLibraryFont(null)
@@ -144,10 +146,16 @@ export function ThemeFontDialog({
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
-    const waitingForChoice = !isEdit && source === 'library' && !selected
+    const waitingForChoice = choosing ? !choice : source === 'library' && !selected
     const savingLibrary = fontLibraryCreate.status === 'saving'
-    sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, waitingForChoice || savingLibrary)
-  }, [dialogRequestId, fontLibraryCreate.status, isEdit, parentOrigin, selected, source])
+    sendPlatformPeerDialogBusy(
+      parentOrigin,
+      dialogRequestId,
+      waitingForChoice || savingLibrary,
+      isEdit ? tc('save') : choosing ? tc('next') : t('create'),
+      { secondaryLabel: choosing || isEdit ? null : tc('previous') },
+    )
+  }, [choice, choosing, dialogRequestId, fontLibraryCreate.status, isEdit, parentOrigin, selected, source, t, tc])
 
   useEffect(() => {
     if (!pendingLibraryFont) return
@@ -169,6 +177,25 @@ export function ThemeFontDialog({
     }
   }, [dispatch, fontLibraryCreate.error, fontLibraryCreate.status, onSubmit, pendingLibraryFont, t, toast])
 
+  function confirmChoice() {
+    if (!choice) return
+    setSource(choice)
+    setFieldErrors({})
+  }
+
+  function backToChoice() {
+    setSource(null)
+    setFieldErrors({})
+  }
+
+  function handlePrimary() {
+    if (choosing) {
+      confirmChoice()
+      return
+    }
+    submit()
+  }
+
   function submit() {
     if (isEdit && initial) {
       const parsed = websiteFontTokenSchema.safeParse({
@@ -185,6 +212,8 @@ export function ThemeFontDialog({
       onSubmit(parsed.data)
       return
     }
+
+    if (source !== 'library' && source !== 'custom') return
 
     if (source === 'library') {
       if (!selected) {
@@ -242,25 +271,36 @@ export function ThemeFontDialog({
   usePlatformPeerDialogSubmit({
     parentOrigin: dialogRequestId ? parentOrigin : null,
     requestId: dialogRequestId,
-    onSubmit: submit,
+    onSubmit: handlePrimary,
+    onSecondary: backToChoice,
   })
 
   const customPreview = themeFontFamilyStyle(customFamily ?? undefined)
   const editPreview = themeFontFamilyStyle(initial?.family)
 
-  const sourceSwitch = (
-    <SegmentedSwitch
-      value={source}
-      onValueChange={(value) => {
-        setSource(value as FontSource)
-        setFieldErrors({})
-      }}
-      size="sm"
-      aria-label={t('addFontSource')}
-    >
-      <SegmentedSwitchItem value="library">{t('addFontFromLibrary')}</SegmentedSwitchItem>
-      <SegmentedSwitchItem value="custom">{t('addFontCustom')}</SegmentedSwitchItem>
-    </SegmentedSwitch>
+  const choiceBody = (
+    <WebsiteSourceChoiceGrid ariaLabel={t('addFontSource')}>
+      <WebsiteSourceChoice
+        selected={choice === 'library'}
+        icon={<Library className="h-5 w-5 text-foreground" aria-hidden />}
+        title={t('addFontFromLibrary')}
+        hint={t('addFontLibraryHint')}
+        onClick={() => {
+          setChoice('library')
+          setFieldErrors({})
+        }}
+      />
+      <WebsiteSourceChoice
+        selected={choice === 'custom'}
+        icon={<Plus className="h-5 w-5 text-foreground" aria-hidden />}
+        title={t('addFontCustom')}
+        hint={t('addFontCustomHint')}
+        onClick={() => {
+          setChoice('custom')
+          setFieldErrors({})
+        }}
+      />
+    </WebsiteSourceChoiceGrid>
   )
 
   const libraryBody = (
@@ -364,10 +404,7 @@ export function ThemeFontDialog({
       <p className="text-sm text-muted-foreground">{t('editFontNameHint')}</p>
     </Form>
   ) : (
-    <div className="space-y-4">
-      {sourceSwitch}
-      {source === 'library' ? libraryBody : customBody}
-    </div>
+    choosing ? choiceBody : source === 'library' ? libraryBody : customBody
   )
 
   if (chrome === 'embed-page') {
@@ -385,17 +422,39 @@ export function ThemeFontDialog({
       sizeHeight={dialogSize.sizeHeight}
       footer={
         <>
-          <Button type="button" variant="outline" className="h-10 px-4" onClick={() => onOpenChange(false)}>
-            {tc('cancel')}
-          </Button>
           <Button
             type="button"
-            className="h-10 px-4"
-            onClick={submit}
-            disabled={fontLibraryCreate.status === 'saving' || (!isEdit && source === 'library' && !selected)}
+            variant="outline"
+            className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+            onClick={() => onOpenChange(false)}
           >
-            {fontLibraryCreate.status === 'saving' ? t('creating') : isEdit ? tc('save') : t('create')}
+            {tc('cancel')}
           </Button>
+          {!isEdit && !choosing ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 px-4 border-[hsl(var(--glass-border))] text-foreground hover:bg-accent"
+              onClick={backToChoice}
+            >
+              {tc('previous')}
+            </Button>
+          ) : null}
+          {choosing ? (
+            <Button type="button" className="h-10 px-4" disabled={!choice} onClick={confirmChoice}>
+              {tc('next')}
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              className="h-10 px-4"
+              onClick={submit}
+              disabled={fontLibraryCreate.status === 'saving' || (!isEdit && source === 'library' && !selected)}
+            >
+              {fontLibraryCreate.status === 'saving' ? t('creating') : isEdit ? tc('save') : t('create')}
+            </Button>
+          )}
         </>
       }
     >

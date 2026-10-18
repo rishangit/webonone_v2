@@ -16,6 +16,11 @@ import { ThemeButtonsTab } from '../components/theme-editor/ThemeButtonsTab'
 import { ThemeColorsTab } from '../components/theme-editor/ThemeColorsTab'
 import { ThemeFontsTab } from '../components/theme-editor/ThemeFontsTab'
 import { ThemeTextsTab } from '../components/theme-editor/ThemeTextsTab'
+import {
+  useWebsiteLibraryRevert,
+  WebsiteLibraryDownloadUpdateButton,
+  WebsiteLibrarySourceTag,
+} from '../components/WebsiteLibraryRevert'
 
 const THEME_TABS = [
   { id: 'basic', labelKey: 'basicSettings' },
@@ -54,6 +59,9 @@ export function WebsiteThemeEditorPage() {
   const { goToWebsite } = useNavigateDesign()
   const { toast } = useToast()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
+  const user = useAppSelector((s) => s.auth.user)
+  const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
+  const revert = useWebsiteLibraryRevert()
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websiteThemes)
   const [theme, setTheme] = useState<WebsiteTheme | null>(null)
   const [tab, setTab] = useState<ThemeTabId>('basic')
@@ -105,7 +113,18 @@ export function WebsiteThemeEditorPage() {
   }
 
   return (
-    <FeaturePage title={theme.name || t('themes')} onBack={() => goToWebsite('/website/themes')}>
+    <FeaturePage
+      title={theme.name || t('themes')}
+      onBack={() => goToWebsite('/website/themes')}
+      actions={
+        canManage && theme.sourceLibraryId && !theme.isLocked ? (
+          <WebsiteLibraryDownloadUpdateButton
+            disabled={revert.reverting}
+            onClick={() => revert.ask({ kind: 'themes', id: theme.id, name: theme.name })}
+          />
+        ) : null
+      }
+    >
       {fontUrls.map((url) => (
         <link key={url} rel="stylesheet" href={url} />
       ))}
@@ -118,7 +137,9 @@ export function WebsiteThemeEditorPage() {
         <Alert>
           <AlertDescription>{t('defaultLocked')}</AlertDescription>
         </Alert>
-      ) : null}
+      ) : (
+        <WebsiteLibrarySourceTag sourceLibraryId={theme.sourceLibraryId} />
+      )}
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as ThemeTabId)}
@@ -157,6 +178,7 @@ export function WebsiteThemeEditorPage() {
           <ThemeButtonsTab {...tokenTabProps} />
         </TabsContent>
       </Tabs>
+      {revert.dialog}
     </FeaturePage>
   )
 }

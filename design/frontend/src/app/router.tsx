@@ -43,6 +43,11 @@ const WebsiteLibraryPickerEmbedPage = lazy(() =>
     default: m.WebsiteLibraryPickerEmbedPage,
   })),
 )
+const WebsiteAddSourceEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteAddSourceEmbedPage').then((m) => ({
+    default: m.WebsiteAddSourceEmbedPage,
+  })),
+)
 const WebsitePagesFilterEmbedPage = lazy(() =>
   import('@/features/website/pages/WebsitePagesFilterEmbedPage').then((m) => ({
     default: m.WebsitePagesFilterEmbedPage,
@@ -59,6 +64,56 @@ const WebsiteFootersPage = lazy(() =>
 )
 const WebsiteThemesPage = lazy(() =>
   import('@/features/website/pages/WebsiteThemesPage').then((m) => ({ default: m.WebsiteThemesPage })),
+)
+const WebsiteFontLibraryPage = lazy(() =>
+  import('@/features/website/pages/WebsiteFontLibraryPage').then((m) => ({
+    default: m.WebsiteFontLibraryPage,
+  })),
+)
+const WebsiteColorLibraryPage = lazy(() =>
+  import('@/features/website/pages/WebsiteColorLibraryPage').then((m) => ({
+    default: m.WebsiteColorLibraryPage,
+  })),
+)
+const WebsiteTextLibraryPage = lazy(() =>
+  import('@/features/website/pages/WebsiteTextLibraryPage').then((m) => ({
+    default: m.WebsiteTextLibraryPage,
+  })),
+)
+const WebsiteButtonLibraryPage = lazy(() =>
+  import('@/features/website/pages/WebsiteButtonLibraryPage').then((m) => ({
+    default: m.WebsiteButtonLibraryPage,
+  })),
+)
+const WebsiteTextLibraryDetailPage = lazy(() =>
+  import('@/features/website/pages/WebsiteTextLibraryDetailPage').then((m) => ({
+    default: m.WebsiteTextLibraryDetailPage,
+  })),
+)
+const WebsiteButtonLibraryDetailPage = lazy(() =>
+  import('@/features/website/pages/WebsiteButtonLibraryDetailPage').then((m) => ({
+    default: m.WebsiteButtonLibraryDetailPage,
+  })),
+)
+const WebsiteButtonLibraryDialogEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteLibraryElementDialogEmbedPage').then((m) => ({
+    default: m.WebsiteButtonLibraryDialogEmbedPage,
+  })),
+)
+const WebsiteTextLibraryDialogEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteLibraryElementDialogEmbedPage').then((m) => ({
+    default: m.WebsiteTextLibraryDialogEmbedPage,
+  })),
+)
+const WebsiteThemeTextStyleDetailPage = lazy(() =>
+  import('@/features/website/pages/WebsiteThemeTextStyleDetailPage').then((m) => ({
+    default: m.WebsiteThemeTextStyleDetailPage,
+  })),
+)
+const WebsiteThemeButtonStyleDetailPage = lazy(() =>
+  import('@/features/website/pages/WebsiteThemeButtonStyleDetailPage').then((m) => ({
+    default: m.WebsiteThemeButtonStyleDetailPage,
+  })),
 )
 const WebsiteThemeEditorPage = lazy(() =>
   import('@/features/website/pages/WebsiteThemeEditorPage').then((m) => ({
@@ -367,6 +422,86 @@ export function App() {
               }
             />
             <Route
+              path="/website/fonts"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteFontLibraryPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/colors"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteColorLibraryPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/texts"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteTextLibraryPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/texts/:itemId"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteTextLibraryDetailPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/buttons"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteButtonLibraryPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/buttons/:itemId"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteButtonLibraryDetailPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/themes/:themeId/texts/:styleId"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeTextStyleDetailPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/themes/:themeId/buttons/:styleId"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeButtonStyleDetailPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
               path="/website/themes/:id"
               element={
                 <RoleRoute roles={[...companyRoles]}>
@@ -397,11 +532,61 @@ export function App() {
               }
             />
             <Route
+              path="/embed/dialogs/website/add-source/:kind"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteAddSourceEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
               path="/embed/dialogs/website/library/:kind"
               element={
                 <RoleRoute roles={[...manageRoles]}>
                   <LazyRoute>
                     <WebsiteLibraryPickerEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/button-library/create"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteButtonLibraryDialogEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/button-library/:itemId"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteButtonLibraryDialogEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/text-library/create"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteTextLibraryDialogEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/text-library/:itemId"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteTextLibraryDialogEmbedPage />
                   </LazyRoute>
                 </RoleRoute>
               }

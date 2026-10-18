@@ -261,6 +261,76 @@
             "title": "SMS — Templates",
             "detail": "List and view SMS templates when your role includes SMS access."
           }
+        },
+        "design": {
+          "forms": {
+            "title": "Design — Forms",
+            "detail": "List and create company forms, then add or update controls. Needs an active company."
+          },
+          "fonts": {
+            "title": "Website — Font library",
+            "detail": "Suggest and add Google fonts to the platform Font library. Super admin only. Company users can list fonts."
+          },
+          "buttonLibrary": {
+            "title": "Website — Button library",
+            "detail": "Redesign a shared button style. Super admin: attach a button with Copy to AI, then ask to change basic settings, HTML, styles, or script. Confirm to update the live preview."
+          },
+          "textLibrary": {
+            "title": "Website — Text library",
+            "detail": "Redesign a shared text style. Super admin: attach a text style with Copy to AI, then ask to change basic settings, HTML, styles, or script. Confirm to update the live preview."
+          },
+          "websitePages": {
+            "title": "Website — Pages",
+            "detail": "Suggest and add pages on the signed-in company website."
+          },
+          "websitePresets": {
+            "title": "Website — Presets",
+            "detail": "Suggest and add reusable presets on the signed-in company website."
+          },
+          "websiteLayouts": {
+            "title": "Website — Layouts",
+            "detail": "Suggest and add layouts on the signed-in company website."
+          },
+          "websiteThemes": {
+            "title": "Website — Themes",
+            "detail": "Suggest and add themes, including page background and body text color."
+          },
+          "websiteHeaders": {
+            "title": "Website — Headers",
+            "detail": "Suggest and add headers on the signed-in company website."
+          },
+          "websiteFooters": {
+            "title": "Website — Footers",
+            "detail": "Suggest and add footers on the signed-in company website."
+          },
+          "websiteDatasets": {
+            "title": "Website — Data sets",
+            "detail": "Suggest and add data sets that website blocks can bind to."
+          },
+          "libraryPages": {
+            "title": "Website library — Pages",
+            "detail": "Suggest and add pages in the platform library that companies can copy. Super admin only."
+          },
+          "libraryPresets": {
+            "title": "Website library — Presets",
+            "detail": "Suggest and add presets in the platform library. Super admin only."
+          },
+          "libraryLayouts": {
+            "title": "Website library — Layouts",
+            "detail": "Suggest and add layouts in the platform library. Super admin only."
+          },
+          "libraryThemes": {
+            "title": "Website library — Themes",
+            "detail": "Suggest and add themes in the platform library. Super admin only."
+          },
+          "libraryHeaders": {
+            "title": "Website library — Headers",
+            "detail": "Suggest and add headers in the platform library. Super admin only."
+          },
+          "libraryFooters": {
+            "title": "Website library — Footers",
+            "detail": "Suggest and add footers in the platform library. Super admin only."
+          }
         }
       }
     }

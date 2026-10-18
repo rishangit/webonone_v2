@@ -55,6 +55,7 @@ import { PlatformPeerDialogProvider } from '@/features/shell/PlatformPeerDialogH
 import { AppAssistant } from '@/features/ai/components/AppAssistant'
 import { AiEntityPasteProvider, useAiEntityPaste } from '@/features/ai/context/AiEntityPasteContext'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
+import { getDesignOrigin } from '@/features/design/utils/designConfig'
 import { NotificationBell } from '@/features/notifications/components/NotificationBell'
 import {
   PlatformLoadingProvider,
@@ -408,9 +409,11 @@ function AppLayoutShell({
   const { requestEntityPaste } = useAiEntityPaste()
 
   useEffect(() => {
-    const dataOrigin = getDataOrigin().replace(/\/$/, '')
+    const allowedOrigins = new Set(
+      [getDataOrigin(), getDesignOrigin()].map((origin) => origin.replace(/\/$/, '')),
+    )
     function onMessage(event: MessageEvent) {
-      if (event.origin.replace(/\/$/, '') !== dataOrigin) {
+      if (!allowedOrigins.has(event.origin.replace(/\/$/, ''))) {
         return
       }
       if (!isPlatformAiEntityContextMessage(event.data)) {

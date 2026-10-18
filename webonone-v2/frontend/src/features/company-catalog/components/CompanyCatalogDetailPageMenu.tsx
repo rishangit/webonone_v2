@@ -21,9 +21,11 @@ type CompanyCatalogDetailPageMenuProps = {
   ariaLabel: string
   canEdit: boolean
   canRemove: boolean
+  canShare: boolean
   busy: boolean
   onEdit: () => void
   onRemove: () => void
+  onShare: () => void
 }
 
 export function CompanyCatalogDetailPageMenu({
@@ -33,10 +35,13 @@ export function CompanyCatalogDetailPageMenu({
   ariaLabel,
   canEdit,
   canRemove,
+  canShare,
   busy,
   onEdit,
   onRemove,
+  onShare,
 }: CompanyCatalogDetailPageMenuProps) {
+  const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
 
   return (
@@ -53,6 +58,11 @@ export function CompanyCatalogDetailPageMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
+        {canShare ? (
+          <DropdownMenuItem disabled={busy} onClick={onShare}>
+            {t('share.action')}
+          </DropdownMenuItem>
+        ) : null}
         <CompanyCatalogCopyToAiMenuItem kind={kind} id={entityId} label={entityLabel} />
         {canEdit ? (
           <DropdownMenuItem disabled={busy} onClick={onEdit}>

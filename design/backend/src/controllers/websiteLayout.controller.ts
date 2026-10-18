@@ -10,6 +10,7 @@ import {
   updateWebsiteLayout,
 } from '../services/websiteLayout.service.js'
 import { createWebsiteLayoutSchema, updateWebsiteLayoutSchema } from '../schemas/websiteLayouts.schema.js'
+import { readNamesQuery } from '../utils/namesQuery.js'
 
 function companyIdOrThrow(req: AuthenticatedRequest): string {
   const companyId = req.user?.companyId
@@ -28,6 +29,7 @@ export async function listWebsiteLayoutsHandler(req: AuthenticatedRequest, res: 
         page,
         pageSize,
         q,
+        names: readNamesQuery(req.query.names),
       }),
     )
   } catch (err) {

@@ -1,5 +1,6 @@
 import { sendPlatformAiMutation } from '@webonone/platform-embed'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
+import { getDesignOrigin } from '@/features/design/utils/designConfig'
 
 function originOf(url: string): string | null {
   try {
@@ -9,13 +10,8 @@ function originOf(url: string): string | null {
   }
 }
 
-/** Tell the Data iframe (if it is open) to refetch the list for a confirmed AI write. */
-export function notifyPeerAiMutation(toolName: string): void {
-  if (toolName === 'create_data_product_variant' && typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('webonone:platform:ai-product-variants-changed'))
-  }
-  const dataOrigin = originOf(getDataOrigin())
-  if (!dataOrigin || typeof document === 'undefined') {
+function notifyPeerOrigin(peerOrigin: string | null, toolName: string): void {
+  if (!peerOrigin || typeof document === 'undefined') {
     return
   }
   document.querySelectorAll('iframe').forEach((iframe) => {
@@ -24,9 +20,18 @@ export function notifyPeerAiMutation(toolName: string): void {
       return
     }
     const frameOrigin = originOf(src)
-    if (frameOrigin !== dataOrigin) {
+    if (frameOrigin !== peerOrigin) {
       return
     }
-    sendPlatformAiMutation(iframe, dataOrigin, toolName)
+    sendPlatformAiMutation(iframe, peerOrigin, toolName)
   })
+}
+
+/** Tell open Data/Design iframes to refetch after a confirmed AI write. */
+export function notifyPeerAiMutation(toolName: string): void {
+  if (toolName === 'create_data_product_variant' && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('webonone:platform:ai-product-variants-changed'))
+  }
+  notifyPeerOrigin(originOf(getDataOrigin()), toolName)
+  notifyPeerOrigin(originOf(getDesignOrigin()), toolName)
 }

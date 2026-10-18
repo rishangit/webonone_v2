@@ -47,7 +47,25 @@ const SERVICE_PATH_ALLOWED: Record<ToolServiceId, (path: string) => boolean> = {
     path === '/api/v1/forms' ||
     path === '/api/v1/forms/:id' ||
     path === '/api/v1/forms/:id/fields' ||
-    path === '/api/v1/forms/:id/fields/:fieldId',
+    path === '/api/v1/forms/:id/fields/:fieldId' ||
+    path === '/api/v1/website/font-library' ||
+    path === '/api/v1/website/pages' ||
+    path === '/api/v1/website/presets' ||
+    path === '/api/v1/website/layouts' ||
+    path === '/api/v1/website/datasets' ||
+    path === '/api/v1/website/headers' ||
+    path === '/api/v1/website/footers' ||
+    path === '/api/v1/website-themes' ||
+    path === '/api/v1/website/library/pages' ||
+    path === '/api/v1/website/library/presets' ||
+    path === '/api/v1/website/library/layouts' ||
+    path === '/api/v1/website/library/themes' ||
+    path === '/api/v1/website/library/headers' ||
+    path === '/api/v1/website/library/footers' ||
+    path === '/api/v1/website/button-library' ||
+    path === '/api/v1/website/button-library/:id' ||
+    path === '/api/v1/website/text-library' ||
+    path === '/api/v1/website/text-library/:id',
 }
 
 export function isAllowedInvokePath(service: string, path: string): boolean {

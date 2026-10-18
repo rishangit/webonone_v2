@@ -376,10 +376,26 @@ describe('coreNav', () => {
     if (website?.kind === 'group') {
       assert.deepEqual(
         website.children.map((child) => child.label),
-        ['Pages', 'Layouts', 'Headers', 'Footers', 'Presets', 'Themes'],
+        ['Pages', 'Layouts', 'Headers', 'Footers', 'Presets', 'Themes', 'Fonts', 'Colors', 'Texts', 'Buttons'],
       )
       assert.equal(website.children[0]?.externalService, 'design')
       assert.equal(website.children[0]?.externalPath, '/website/pages')
+      assert.equal(
+        website.children.find((child) => child.label === 'Fonts')?.externalPath,
+        '/website/fonts',
+      )
+      assert.equal(
+        website.children.find((child) => child.label === 'Colors')?.externalPath,
+        '/website/colors',
+      )
+      assert.equal(
+        website.children.find((child) => child.label === 'Texts')?.externalPath,
+        '/website/texts',
+      )
+      assert.equal(
+        website.children.find((child) => child.label === 'Buttons')?.externalPath,
+        '/website/buttons',
+      )
     }
   })
 })

@@ -10,7 +10,7 @@ const OUTLINE_FOOTER =
 export type LoginRequiredDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Path (+ optional search) to return to after login, e.g. `/catalog/services/abc`. */
+  /** Path (+ optional search) to return to after login, e.g. `/catalog/{companyId}/services/{id}`. */
   returnPath: string
   title?: string
   description?: string

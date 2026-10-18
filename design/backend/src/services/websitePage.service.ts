@@ -11,6 +11,7 @@ import {
 } from './websiteLayout.service.js'
 import { ensureCompanyWebsiteDefaults } from './websiteLibrary.service.js'
 import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
+import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 
 export type WebsitePageDto = {
   id: string
@@ -23,6 +24,7 @@ export type WebsitePageDto = {
   sortOrder: number
   document: WebsiteDocumentV1
   isLocked: boolean
+  sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -48,6 +50,7 @@ function toDto(row: PageRowWithLayout): WebsitePageDto {
     sortOrder: row.sort_order ?? 0,
     document: parseDocument(row.document),
     isLocked: isLockedFlag(row.is_locked),
+    sourceLibraryId: row.source_library_id ?? null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -73,6 +76,7 @@ export async function listWebsitePages(input: {
   page?: number
   pageSize?: number
   q?: string
+  names?: string | string[]
   status?: WebsitePageStatus
 }): Promise<{ items: WebsitePageDto[]; total: number; page: number; pageSize: number }> {
   try {
@@ -84,9 +88,7 @@ export async function listWebsitePages(input: {
     console.error('[website] ensure starter website failed:', err)
   }
 
-  const page = Math.max(1, input.page ?? 1)
-  const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
-  const offset = (page - 1) * pageSize
+  const { names, page, pageSize, offset } = namedListWindow(input, 20)
 
   let query = db<PageRowWithLayout>('design_website_pages as p')
     .leftJoin('design_website_layouts as l', 'l.id', 'p.layout_id')
@@ -94,6 +96,7 @@ export async function listWebsitePages(input: {
   if (input.status) {
     query = query.andWhere('p.status', input.status)
   }
+  applyNamesFilter(query, 'p.name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
     query = query.andWhere((builder) => {

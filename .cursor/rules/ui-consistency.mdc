@@ -1,0 +1,45 @@
+---
+description: Run the UI consistency subagent before any feature UI so screens reuse existing components and the UI kit
+alwaysApply: true
+---
+
+# UI consistency before implementation
+
+Before writing or changing user-visible UI, run the **UI consistency** subagent and wait for its reuse report. Do not start the feature until that report exists.
+
+- **Agent:** [ui-consistency-agent.md](../agents/ui-consistency-agent.md)
+- **Skill:** [ui-consistency/SKILL.md](../skills/ui-consistency/SKILL.md)
+
+The subagent searches this app and `@webonone/ui-kit` (web) or `@webonone/mobile-ui` (mobile). The implementing agent then follows the report.
+
+## When
+
+Pages, dialogs, lists, forms, controls, empty states, or layout in any `*/frontend`, `ui-kit/`, `mobile/`, or `packages/mobile-ui/`.
+
+Skip backend-only work, migrations, and copy edits that do not change components or layout.
+
+If you **are** the UI consistency agent, do the search and return the report. Do not spawn another copy.
+
+## Order
+
+1. Search for a similar screen or control already in the app or the kit.
+2. **Reuse** that component or kit export.
+3. When the same markup is copied inline, **extract** it into one component and switch existing call sites first.
+4. Only then implement the new feature on that shared piece.
+
+| Used by | Place |
+|---------|--------|
+| One feature | `features/<module>/components/` |
+| Two features, same app | `shared/components/` — [front-end-structure.mdc](front-end-structure.mdc) |
+| Two services, or a kit primitive | `@webonone/ui-kit` / `@webonone/mobile-ui` via that agent |
+
+Kit mapping and forbidden raw controls: [ui-kit-consumption.mdc](ui-kit-consumption.mdc). Mobile: [mobile-ui-consumption.mdc](mobile-ui-consumption.mdc).
+
+## Verification
+
+The change summary must include the reuse report (similar UI, component reused or extracted, kit export). Then, in the touched frontend:
+
+```bash
+npm run type-check
+npm run lint
+```

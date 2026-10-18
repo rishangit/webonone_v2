@@ -11,6 +11,7 @@ import {
   PriceDisplay,
 } from '@webonone/ui-kit'
 import type { CatalogSearchItem } from '@/features/catalog/types/catalog.types'
+import { publicCatalogItemPath } from '@/features/catalog/utils/publicCatalogItemPath'
 import {
   formatPublicServiceScheduleSummary,
   formatPublicServiceTimeModeLabel,
@@ -127,7 +128,7 @@ export function CatalogPublicItemCard({ item, className, companyDistanceLabel }:
   const companyLogoUrl = item.companyImageUrl ?? null
   const navigate = useNavigate()
   const { t } = useTranslation('search')
-  const detailPath = `/catalog/${item.kind}/${item.id}`
+  const detailPath = publicCatalogItemPath(item.companyId, item.kind, item.id)
 
   function openDetail() {
     navigate(detailPath)

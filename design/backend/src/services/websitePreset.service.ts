@@ -5,6 +5,7 @@ import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { emptyWebsiteDocument, websiteDocumentSchema, type WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
 import type { CreateWebsitePresetBody, UpdateWebsitePresetBody } from '../schemas/websitePresets.schema.js'
+import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 
 export type WebsitePresetDto = {
   id: string
@@ -12,6 +13,7 @@ export type WebsitePresetDto = {
   name: string
   document: WebsiteDocumentV1
   isLocked: boolean
+  sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -30,6 +32,7 @@ function toDto(row: DesignWebsitePresetRow): WebsitePresetDto {
     name: row.name,
     document: parseDocument(row.document),
     isLocked: isLockedFlag(row.is_locked),
+    sourceLibraryId: row.source_library_id ?? null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -41,13 +44,13 @@ export async function listWebsitePresets(input: {
   page?: number
   pageSize?: number
   q?: string
+  names?: string | string[]
 }): Promise<{ items: WebsitePresetDto[]; total: number; page: number; pageSize: number }> {
-  const page = Math.max(1, input.page ?? 1)
-  const pageSize = Math.min(100, Math.max(1, input.pageSize ?? 20))
-  const offset = (page - 1) * pageSize
+  const { names, page, pageSize, offset } = namedListWindow(input, 20)
   let query = db<DesignWebsitePresetRow>('design_website_presets').where({
     company_id: input.companyId,
   })
+  applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
     query = query.andWhere((builder) => {

@@ -13,7 +13,9 @@ summary: "Email → Templates යටතේ templates, versions සහ previews �
 
 ## සක්‍රිය / අක්‍රිය කිරීම
 
-සමාගම් අයිතිකරුවන්ට platform **default** templates (welcome, sessions, appointments ආදිය) සහ සමාගම් පිටපත් දැකිය හැක.
+සමාගම් අයිතිකරුවන්ට platform **default** templates (welcome, sessions, appointments, catalog item share ආදිය) සහ සමාගම් පිටපත් දැකිය හැක.
+
+**Catalog item share** යනු ප්‍රකාශිත නිෂ්පාදනයක්, සේවාවක්, හෝ අවකාශයක් විද්‍යුත් තැපෑලෙන් බෙදාගන්නා විට යවන ලිපියයි. මෙහි මාතෘකාව සහ පණිවිඩය සංස්කරණය කරන්න; ප්‍රසිද්ධ අයිතම සබැඳිය යවන විට පිරේ.
 
 - පේළියේ menu එකෙන් **Activate** හෝ **Deactivate** තෝරන්න.
 - default එක අක්‍රිය කිරීම සමාගම් පිටපතක් අක්‍රිය ලෙස සාදයි; platform default එක වෙනස් නොවේ.

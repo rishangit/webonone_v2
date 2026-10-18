@@ -12,9 +12,29 @@ import {
 } from '@/features/website/store/websiteStore'
 import { websiteDatasetsReducer } from '@/features/website/store/websiteDatasetsStore'
 import {
+  websiteColorLibraryCreateReducer,
+  websiteColorLibraryDeleteReducer,
+  websiteColorLibraryReducer,
+  websiteColorLibraryUpdateReducer,
+} from '@/features/website/store/websiteColorLibraryStore'
+import {
+  websiteButtonLibraryCreateReducer,
+  websiteButtonLibraryDeleteReducer,
+  websiteButtonLibraryReducer,
+  websiteButtonLibraryUpdateReducer,
+} from '@/features/website/store/websiteButtonLibraryStore'
+import {
   websiteFontLibraryCreateReducer,
+  websiteFontLibraryDeleteReducer,
   websiteFontLibraryReducer,
+  websiteFontLibraryUpdateReducer,
 } from '@/features/website/store/websiteFontLibraryStore'
+import {
+  websiteTextLibraryCreateReducer,
+  websiteTextLibraryDeleteReducer,
+  websiteTextLibraryReducer,
+  websiteTextLibraryUpdateReducer,
+} from '@/features/website/store/websiteTextLibraryStore'
 import { websiteSettingsReducer } from '@/features/website/store/websiteSettingsStore'
 import {
   websiteLibraryBrowseReducer,
@@ -40,6 +60,20 @@ export const store = configureStore({
     websiteSettings: websiteSettingsReducer,
     websiteFontLibrary: websiteFontLibraryReducer,
     websiteFontLibraryCreate: websiteFontLibraryCreateReducer,
+    websiteFontLibraryUpdate: websiteFontLibraryUpdateReducer,
+    websiteFontLibraryDelete: websiteFontLibraryDeleteReducer,
+    websiteColorLibrary: websiteColorLibraryReducer,
+    websiteColorLibraryCreate: websiteColorLibraryCreateReducer,
+    websiteColorLibraryUpdate: websiteColorLibraryUpdateReducer,
+    websiteColorLibraryDelete: websiteColorLibraryDeleteReducer,
+    websiteTextLibrary: websiteTextLibraryReducer,
+    websiteTextLibraryCreate: websiteTextLibraryCreateReducer,
+    websiteTextLibraryUpdate: websiteTextLibraryUpdateReducer,
+    websiteTextLibraryDelete: websiteTextLibraryDeleteReducer,
+    websiteButtonLibrary: websiteButtonLibraryReducer,
+    websiteButtonLibraryCreate: websiteButtonLibraryCreateReducer,
+    websiteButtonLibraryUpdate: websiteButtonLibraryUpdateReducer,
+    websiteButtonLibraryDelete: websiteButtonLibraryDeleteReducer,
     websiteLibraryCopy: websiteLibraryCopyReducer,
     websiteLibraryBrowse: websiteLibraryBrowseReducer,
   },

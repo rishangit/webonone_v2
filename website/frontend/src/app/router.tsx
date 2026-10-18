@@ -20,7 +20,7 @@ export function App() {
             <Route element={<WebsiteLayout />}>
               <Route index element={<WebsiteHomePage />} />
               <Route path="search" element={<CatalogSearchRedirectPage />} />
-              <Route path="catalog/:kind/:id" element={<CatalogDetailPage />} />
+              <Route path="catalog/*" element={<CatalogDetailPage />} />
               <Route path="*" element={<WebsiteHomePage />} />
             </Route>
             <Route path="login" element={<WebsiteLoginPage />} />

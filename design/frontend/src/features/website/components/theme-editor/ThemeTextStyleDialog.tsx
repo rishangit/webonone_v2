@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { nanoid } from 'nanoid'
+import { Check } from 'lucide-react'
 import {
   PLATFORM_EMBED_QUERY,
   resolvePlatformEmbedParentOrigin,
@@ -9,24 +10,37 @@ import {
   usePlatformPeerDialogSubmit,
   useRequestPlatformPeerDialog,
 } from '@webonone/platform-embed'
-import {
-  Button,
-  CustomDialog,
-  Form,
-  FormField,
-  Input,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from '@webonone/ui-kit'
+import { Button, CustomDialog, cn } from '@webonone/ui-kit'
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { fallbackTextSize, resolveTextStyle } from '../../document/theme'
 import { websiteTextStyleSchema } from '../../schemas/websiteThemeSchemas'
-import { WEBSITE_BREAKPOINTS, type WebsiteBreakpoint, type WebsiteTextStyle, type WebsiteTheme } from '../../types'
+import { websiteTextLibraryActions } from '../../store'
+import { type WebsiteBreakpoint, type WebsiteTextStyle, type WebsiteTheme } from '../../types'
+import {
+  materializeTextLibraryItem,
+  type ThemeTokenPatch,
+} from '../../utils/themeLibraryMaterialize'
 import { mapThemeFieldErrors } from '../../utils/mapThemeFieldErrors'
 import { WEBSITE_PAGE_DIALOG_SIZE } from '../WebsiteEntityDialogs'
-import { defaultSizeByBreakpoint, SIZE_LABEL_KEYS } from './textStyleDefaults'
-import { ThemeTokenSelect } from './ThemeTokenSelect'
+import {
+  defaultElementHtml,
+  emptyWebsiteElementCustomization,
+  finalizeElementCustomization,
+  hasElementCustomization,
+  normalizeWebsiteElementCustomization,
+} from '../../utils/websiteElementCustomization'
+import { defaultSizeByBreakpoint } from './textStyleDefaults'
+import { ThemeStyleLibraryChoice, ThemeStyleLibraryList } from './ThemeStyleLibraryCreateShell'
+import { ThemeTextStyleEditPanel } from './ThemeTextStyleEditPanel'
+import type { WebsiteElementEditorTab } from '../WebsiteElementEditorTabs'
+import { themeFontFamilyStyle } from '../../utils/themeFontPreview'
+type TextSource = 'library' | 'custom'
+
+const TEXT_LIBRARY_DIALOG_SIZE = {
+  sizeWidth: 'medium' as const,
+  sizeHeight: 'large' as const,
+}
 
 export function ThemeTextStyleDialog({
   open,
@@ -40,21 +54,30 @@ export function ThemeTextStyleDialog({
   theme: WebsiteTheme
   initial?: WebsiteTextStyle
   onOpenChange: (open: boolean) => void
-  onSubmit: (style: WebsiteTextStyle) => void
+  onSubmit: (style: WebsiteTextStyle, patch?: ThemeTokenPatch) => void
   chrome?: 'dialog' | 'embed-page'
 }) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
+  const dispatch = useAppDispatch()
+  const textLibrary = useAppSelector((state) => state.websiteTextLibrary)
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isEdit = Boolean(initial)
+  const [choice, setChoice] = useState<TextSource | null>(null)
+  const [source, setSource] = useState<TextSource | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [values, setValues] = useState<WebsiteTextStyle>(emptyTextStyle(theme, initial))
   const [previewBreakpoint, setPreviewBreakpoint] = useState<WebsiteBreakpoint>('lg')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [elementTab, setElementTab] = useState<WebsiteElementEditorTab>('preview')
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
       : null
+  const dialogSize = isEdit ? WEBSITE_PAGE_DIALOG_SIZE : TEXT_LIBRARY_DIALOG_SIZE
+  const choosing = !isEdit && source === null
+  const selected = textLibrary.items.find((item) => item.id === selectedId) ?? null
 
   const { isHosted } = useRequestPlatformPeerDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
@@ -64,8 +87,8 @@ export function ThemeTextStyleDialog({
       : `/embed/dialogs/website/themes/${theme.id}/texts/create`,
     title: isEdit ? t('editTextStyleTitle') : t('createTextStyleTitle'),
     description: isEdit ? undefined : t('createTextStyleDescription'),
-    submitLabel: isEdit ? tc('save') : t('create'),
-    ...WEBSITE_PAGE_DIALOG_SIZE,
+    submitLabel: isEdit ? tc('save') : choosing ? tc('next') : t('create'),
+    ...dialogSize,
     onResult: (payload) => {
       const parsed = websiteTextStyleSchema.safeParse(payload)
       if (parsed.success) onSubmit(parsed.data)
@@ -79,17 +102,99 @@ export function ThemeTextStyleDialog({
     setValues(emptyTextStyle(theme, initial))
     setPreviewBreakpoint('lg')
     setFieldErrors({})
-  }, [chrome, initial, open, theme]) // hydrate when the dialog opens; theme.id is stable
+    setChoice(null)
+    setSource(null)
+    setSelectedId(null)
+    setElementTab('preview')
+  }, [chrome, initial, open, theme])
+
+  useEffect(() => {
+    if (isEdit || source !== 'library' || (!open && chrome === 'dialog')) return
+    dispatch(websiteTextLibraryActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+  }, [chrome, dispatch, isEdit, open, source])
+
+  useEffect(() => {
+    if (!dialogRequestId || !parentOrigin) return
+    const waitingForChoice = choosing ? !choice : source === 'library' && !selected
+    sendPlatformPeerDialogBusy(
+      parentOrigin,
+      dialogRequestId,
+      waitingForChoice,
+      isEdit ? tc('save') : choosing ? tc('next') : t('create'),
+      { secondaryLabel: choosing || isEdit ? null : tc('previous') },
+    )
+  }, [choice, choosing, dialogRequestId, isEdit, parentOrigin, selected, source, t, tc])
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
     sendPlatformPeerDialogBusy(parentOrigin, dialogRequestId, false)
   }, [dialogRequestId, parentOrigin])
 
+  function confirmChoice() {
+    if (!choice) return
+    setSource(choice)
+    setFieldErrors({})
+  }
+
+  function backToChoice() {
+    setSource(null)
+    setFieldErrors({})
+  }
+
   function submit() {
+    if (isEdit) {
+      const snap = resolveTextStyle(theme, values, previewBreakpoint)
+      const customization = finalizeElementCustomization(
+        normalizeWebsiteElementCustomization(values.customization),
+        defaultElementHtml('text', values.id, {
+          color: snap.color,
+          fontFamily: snap.fontFamily,
+          fontSize: snap.size,
+        }),
+        values.id,
+      )
+      const parsed = websiteTextStyleSchema.safeParse({
+        ...values,
+        size: fallbackTextSize(values.sizeByBreakpoint),
+        customization: hasElementCustomization(customization) ? customization : undefined,
+      })
+      if (!parsed.success) {
+        setFieldErrors(mapThemeFieldErrors(parsed.error.issues))
+        return
+      }
+      setFieldErrors({})
+      onSubmit(parsed.data)
+      return
+    }
+
+    if (source === 'library') {
+      if (!selected) {
+        setFieldErrors({ library: t('pickTextStyleRequired') })
+        return
+      }
+      const { textStyle, patch } = materializeTextLibraryItem(theme, selected)
+      setFieldErrors({})
+      onSubmit(textStyle, patch)
+      onOpenChange(false)
+      return
+    }
+
+    if (source !== 'custom') return
+
+    const snap = resolveTextStyle(theme, values, previewBreakpoint)
+    const customization = finalizeElementCustomization(
+      normalizeWebsiteElementCustomization(values.customization),
+      defaultElementHtml('text', values.id, {
+        color: snap.color,
+        fontFamily: snap.fontFamily,
+        fontSize: snap.size,
+      }),
+      values.id,
+    )
     const parsed = websiteTextStyleSchema.safeParse({
       ...values,
       size: fallbackTextSize(values.sizeByBreakpoint),
+      customization: hasElementCustomization(customization) ? customization : undefined,
     })
     if (!parsed.success) {
       setFieldErrors(mapThemeFieldErrors(parsed.error.issues))
@@ -99,105 +204,76 @@ export function ThemeTextStyleDialog({
     onSubmit(parsed.data)
   }
 
+  function handlePrimary() {
+    if (choosing) {
+      confirmChoice()
+      return
+    }
+    submit()
+  }
+
   usePlatformPeerDialogSubmit({
     parentOrigin: dialogRequestId ? parentOrigin : null,
     requestId: dialogRequestId,
-    onSubmit: submit,
+    onSubmit: handlePrimary,
+    onSecondary: backToChoice,
   })
 
-  const snap = resolveTextStyle(theme, values, previewBreakpoint)
-
-  const body = (
-    <Form className="space-y-4">
-      <FormField label={t('styleName')} htmlFor="theme-text-name" required error={fieldErrors.name}>
-        <Input
-          id="theme-text-name"
-          value={values.name}
-          onChange={(event) => setValues({ ...values, name: event.target.value })}
-        />
-      </FormField>
-      <FormField label={t('fontType')} htmlFor="theme-text-font">
-        <ThemeTokenSelect
-          id="theme-text-font"
-          value={values.fontId}
-          noneLabel={tc('none')}
-          options={theme.fonts.map((font) => ({
-            id: font.id,
-            label: font.name || font.family,
-            fontFamily: font.family,
-            previewText: t('textPreviewSample'),
-          }))}
-          onChange={(fontId) => setValues({ ...values, fontId })}
-        />
-      </FormField>
-      <FormField label={t('fontColor')} htmlFor="theme-text-color">
-        <ThemeTokenSelect
-          id="theme-text-color"
-          value={values.colorId}
-          noneLabel={tc('none')}
-          options={theme.colors.map((color) => ({ id: color.id, label: color.name, swatch: color.value }))}
-          onChange={(colorId) => setValues({ ...values, colorId })}
-        />
-      </FormField>
-      <div className="grid grid-cols-5 gap-2">
-        {WEBSITE_BREAKPOINTS.map((breakpoint) => (
-          <FormField
-            key={breakpoint}
-            label={t(SIZE_LABEL_KEYS[breakpoint])}
-            htmlFor={`theme-text-size-${breakpoint}`}
-            error={fieldErrors[`sizeByBreakpoint.${breakpoint}`]}
-          >
-            <Input
-              type="number"
-              min={8}
-              max={200}
-              value={values.sizeByBreakpoint?.[breakpoint] ?? values.size}
-              onChange={(event) => {
-                const sizeByBreakpoint = {
-                  ...defaultSizeByBreakpoint(values.size),
-                  ...values.sizeByBreakpoint,
-                  [breakpoint]: Number(event.target.value) || 16,
-                }
-                setValues({
-                  ...values,
-                  sizeByBreakpoint,
-                  size: fallbackTextSize(sizeByBreakpoint),
-                })
-              }}
-            />
-          </FormField>
-        ))}
-      </div>
-      <div className="space-y-2 rounded-lg border border-[hsl(var(--glass-border))] p-3">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">{t('preview')}</p>
-          <Tabs
-            value={previewBreakpoint}
-            onValueChange={(value) => setPreviewBreakpoint(value as WebsiteBreakpoint)}
-          >
-            <TabsList className="h-8 w-auto min-w-0 px-0" aria-label={t('breakpoint')}>
-              {WEBSITE_BREAKPOINTS.map((item) => (
-                <TabsTrigger key={item} value={item} className="h-7 px-2 text-xs">
-                  {item}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
-        <p
-          className="truncate"
-          style={{
-            fontFamily: snap.fontFamily,
-            fontSize: snap.size,
-            color: snap.color,
-            backgroundColor: theme.pageBackground,
-          }}
-        >
-          {t('textPreviewSample')}
-        </p>
-      </div>
-    </Form>
+  const customBody = (
+    <ThemeTextStyleEditPanel
+      theme={theme}
+      values={values}
+      onValuesChange={setValues}
+      fieldErrors={fieldErrors}
+      elementTab={elementTab}
+      onElementTabChange={setElementTab}
+      previewBreakpoint={previewBreakpoint}
+      onPreviewBreakpointChange={setPreviewBreakpoint}
+    />
   )
+
+  const body = isEdit
+    ? customBody
+    : choosing
+      ? (
+          <ThemeStyleLibraryChoice
+            ariaLabel={t('addTextSource')}
+            libraryTitle={t('addTextFromLibrary')}
+            libraryHint={t('addTextLibraryHint')}
+            customTitle={t('addTextCustom')}
+            customHint={t('addTextCustomHint')}
+            choice={choice}
+            onChoice={setChoice}
+          />
+        )
+      : source === 'library'
+        ? (
+            <ThemeStyleLibraryList
+              hint={t('pickTextStyleHint')}
+              fieldError={fieldErrors.library}
+              listStatus={textLibrary.listStatus}
+              listError={textLibrary.listError}
+              items={textLibrary.items}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              emptyLabel={t('textLibraryEmptySuperAdmin')}
+              renderItem={(item, selectedRow) => (
+                <div className="flex w-full items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-medium">{item.name}</p>
+                    <p
+                      className="truncate text-sm text-muted-foreground"
+                      style={themeFontFamilyStyle(item.definition.family)}
+                    >
+                      {item.definition.fontName} · {item.definition.size}px
+                    </p>
+                  </div>
+                  {selectedRow ? <Check className="h-4 w-4 shrink-0 text-primary" aria-hidden /> : null}
+                </div>
+              )}
+            />
+          )
+        : customBody
 
   if (chrome === 'embed-page') {
     return <div className="flex w-full flex-col gap-4 p-4 sm:p-6">{body}</div>
@@ -210,15 +286,26 @@ export function ThemeTextStyleDialog({
       onOpenChange={onOpenChange}
       title={isEdit ? t('editTextStyleTitle') : t('createTextStyleTitle')}
       description={isEdit ? undefined : t('createTextStyleDescription')}
-      sizeWidth={WEBSITE_PAGE_DIALOG_SIZE.sizeWidth}
-      sizeHeight={WEBSITE_PAGE_DIALOG_SIZE.sizeHeight}
+      sizeWidth={dialogSize.sizeWidth}
+      sizeHeight={dialogSize.sizeHeight}
       footer={
         <>
-          <Button type="button" variant="outline" className="h-10 px-4" onClick={() => onOpenChange(false)}>
-            {tc('cancel')}
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 px-4"
+            onClick={() => {
+              if (!isEdit && source !== null) {
+                backToChoice()
+                return
+              }
+              onOpenChange(false)
+            }}
+          >
+            {!isEdit && source !== null ? tc('previous') : tc('cancel')}
           </Button>
-          <Button type="button" className="h-10 px-4" onClick={submit}>
-            {isEdit ? tc('save') : t('create')}
+          <Button type="button" className={cn('h-10 px-4')} onClick={handlePrimary}>
+            {isEdit ? tc('save') : choosing ? tc('next') : t('create')}
           </Button>
         </>
       }
@@ -236,6 +323,7 @@ function emptyTextStyle(theme: WebsiteTheme, initial?: WebsiteTextStyle): Websit
         ...defaultSizeByBreakpoint(initial.size),
         ...initial.sizeByBreakpoint,
       },
+      customization: normalizeWebsiteElementCustomization(initial.customization),
     }
   }
   const sizeByBreakpoint = defaultSizeByBreakpoint(16)
@@ -246,5 +334,6 @@ function emptyTextStyle(theme: WebsiteTheme, initial?: WebsiteTextStyle): Websit
     size: fallbackTextSize(sizeByBreakpoint),
     sizeByBreakpoint,
     colorId: theme.colors[0]?.id ?? '',
+    customization: emptyWebsiteElementCustomization(),
   }
 }

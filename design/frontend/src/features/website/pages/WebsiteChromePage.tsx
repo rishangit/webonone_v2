@@ -30,7 +30,8 @@ import { WebsiteChromeDialog } from '../components/WebsiteEntityDialogs'
 import type { WebsiteChrome } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
 import type { RootState } from '@/app/store'
-import { WebsiteLibraryCopyControl } from '../components/WebsiteLibraryPickerDialog'
+import { WebsiteAddItemControl } from '../components/WebsiteAddItemControl'
+import { useWebsiteLibraryRevert, WebsiteLibrarySourceTag } from '../components/WebsiteLibraryRevert'
 
 export function WebsiteHeadersPage() {
   return <WebsiteChromePage kind="headers" />
@@ -52,6 +53,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [awaitingCreate, setAwaitingCreate] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
+  const revert = useWebsiteLibraryRevert()
   const actions = kind === 'headers' ? websiteHeadersActions : websiteFootersActions
   const select = (s: RootState) => (kind === 'headers' ? s.websiteHeaders : s.websiteFooters)
   const list = useEpicCatalogList(select, actions)
@@ -97,7 +99,14 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
             onAdd={() => setDialogOpen(true)}
             compactAddLabel={tc('add')}
             extra={
-              user?.role === 'company_admin' ? <WebsiteLibraryCopyControl kind={kind} /> : undefined
+              user?.role === 'company_admin' ? (
+                <WebsiteAddItemControl
+                  kind={kind}
+                  addLabel={kind === 'headers' ? t('addHeader') : t('addFooter')}
+                  compactAddLabel={tc('add')}
+                  onCreate={() => setDialogOpen(true)}
+                />
+              ) : undefined
             }
           />
         }
@@ -127,6 +136,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                         <p className="font-medium">{item.name}</p>
                         {item.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
                         {item.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
+                        <WebsiteLibrarySourceTag sourceLibraryId={item.sourceLibraryId} />
                       </div>
                     </a>
                   </ItemListContent>
@@ -154,6 +164,14 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                       >
                         {t('duplicate')}
                       </DropdownMenuItem>
+                      {item.sourceLibraryId && !item.isLocked ? (
+                        <DropdownMenuItem
+                          disabled={revert.reverting}
+                          onClick={() => revert.ask({ kind, id: item.id, name: item.name })}
+                        >
+                          {t('downloadUpdatedFromLibrary')}
+                        </DropdownMenuItem>
+                      ) : null}
                       {!item.isDefault && !item.isLocked ? (
                         <DropdownMenuItem
                           onClick={() => {
@@ -211,6 +229,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
           }
         }}
       />
+      {revert.dialog}
     </FeaturePage>
   )
 }

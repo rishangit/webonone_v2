@@ -8,6 +8,8 @@ alwaysApply: false
 
 Every service frontend (`identity`, `webonone-v2`, `media`, `email`, and future `*/frontend`) must use **`@webonone/ui-kit`** for interactive UI — not raw HTML controls, not third-party component libraries, and not local copies of kit primitives.
 
+Before adding feature UI, run [ui-consistency](../skills/ui-consistency/SKILL.md): search this app for the same screen, reuse it, and extract copied markup into one component first.
+
 Related: [ui-kit-project.mdc](ui-kit-project.mdc) (package/build), [feature-page-layout.mdc](feature-page-layout.mdc), [details-page-cards.mdc](details-page-cards.mdc), [dialog-windows.mdc](dialog-windows.mdc), [toast-notifications.mdc](toast-notifications.mdc), [image-preview.mdc](image-preview.mdc), [form-creation skill](../skills/form-creation/SKILL.md), [item-list skill](../skills/item-list/SKILL.md), [toast-notifications skill](../skills/toast-notifications/SKILL.md).
 
 ## Dependency and wiring

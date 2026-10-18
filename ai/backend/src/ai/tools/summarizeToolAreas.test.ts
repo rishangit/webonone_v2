@@ -96,4 +96,56 @@ describe('summarizeToolAreas', () => {
     assert.equal(areas[0]?.requiresCompany, true)
     assert.deepEqual(areas[0]?.operations, ['list', 'create', 'update'])
   })
+
+  it('groups website font tools separately from company pages', () => {
+    const tools = [
+      tool({
+        name: 'create_design_font',
+        service: 'design',
+        riskLevel: 'write',
+        invoke: { method: 'POST', path: '/api/v1/website/font-library' },
+      }),
+      tool({
+        name: 'create_design_website_page',
+        service: 'design',
+        riskLevel: 'write',
+        invoke: { method: 'POST', path: '/api/v1/website/pages' },
+      }),
+      tool({
+        name: 'list_design_library_themes',
+        service: 'design',
+        invoke: { method: 'GET', path: '/api/v1/website/library/themes' },
+      }),
+    ]
+    const areas = summarizeToolAreas(tools)
+    assert.deepEqual(
+      areas.map((area) => area.id),
+      ['design.fonts', 'design.libraryThemes', 'design.websitePages'],
+    )
+    assert.equal(areas.find((area) => area.id === 'design.fonts')?.requiresCompany, false)
+    assert.equal(areas.find((area) => area.id === 'design.websitePages')?.requiresCompany, true)
+  })
+
+  it('groups button and text library design tools', () => {
+    const tools = [
+      tool({
+        name: 'update_design_button_library',
+        service: 'design',
+        riskLevel: 'write',
+        invoke: { method: 'PATCH', path: '/api/v1/website/button-library/:id' },
+      }),
+      tool({
+        name: 'get_design_text_library',
+        service: 'design',
+        invoke: { method: 'GET', path: '/api/v1/website/text-library/:id' },
+      }),
+    ]
+    const areas = summarizeToolAreas(tools)
+    assert.deepEqual(
+      areas.map((area) => area.id),
+      ['design.buttonLibrary', 'design.textLibrary'],
+    )
+    assert.equal(areas.find((area) => area.id === 'design.buttonLibrary')?.requiresCompany, false)
+    assert.equal(areas.find((area) => area.id === 'design.textLibrary')?.requiresCompany, false)
+  })
 })

@@ -31,12 +31,15 @@ Read [AGENTS.md](../../../AGENTS.md).
 
 Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code redirect → often **Identity + WebOnOne** or **platform-shell-navigation** rule. Media picker embed → **Media + consumer FE**. Dialog box / dialog window / create-edit dialog / wizard dialog from an embedded peer → **core-hosted-peer-dialog** + `dialog-windows.mdc` + requesting peer FE (or **media-dialog-*** for Media picker/crop). AI tool schemas / `argCompletion` → **owning service** (`data/`, `webonone-v2/`); generic completer only → **AI**. See [ai-capabilities.mdc](../../rules/ai-capabilities.mdc). User-visible WebOnOne (or shell) pages, nav, or workflows → also **support-agent** after the product change ([help-articles](../help-articles/SKILL.md)).
 
+**UI features (mandatory, before implementation):** any new or changed page, dialog, list, form, or control → launch **ui-consistency-agent** first and wait ([skill](../ui-consistency/SKILL.md)). Pass its reuse report into the product-agent prompt. The product agent reuses the named component or kit export and extracts duplicated markup before adding the feature. Backend-only work skips this.
+
 **Parent handles directly:** root `package.json`, workspace wiring, non-service `.cursor/` config.
 
 ## Step 2 — Routing table
 
 | Task touches | Action | Subagent type |
 |--------------|--------|---------------|
+| New or changed UI | **First** ui-consistency-agent (report only). Then the owning product agent with that report | `generalPurpose` |
 | `identity/**` only | Delegate identity-agent | `generalPurpose` |
 | `ui-kit/**` only | Delegate ui-kit-agent | `generalPurpose` |
 | `webonone-v2/**` only | Delegate webonone-agent; if user-visible, then support-agent | `generalPurpose` |
@@ -45,7 +48,7 @@ Keywords: iframe, postMessage, JWT handoff, embed login, platform nav, auth-code
 | `media/**` or `packages/media-embed/**` only | Delegate media-agent | `generalPurpose` |
 | Media embed in consumer | Sequential: media then consumer FE agent | `generalPurpose` × 2 |
 | iframe/postMessage/JWT across services | Sequential: identity then webonone | `generalPurpose` × 2 |
-| User-visible product change (new page/nav/workflow) | Sequential: product agent then **support-agent** | `generalPurpose` × 2 |
+| User-visible product change (new page/nav/workflow) | Sequential: **ui-consistency-agent**, then product agent, then **support-agent** | `generalPurpose` × 3 |
 | `ui-kit/package/**` + consumer styling | Sequential: ui-kit then affected FE agent | `generalPurpose` × 2 |
 | `mobile/**` or `packages/mobile-ui/**` only | Delegate mobile-agent | `generalPurpose` |
 | New nav item in platform-nav + native screen + web FE | Sequential: owning service agent then mobile-agent | `generalPurpose` × 2 |
@@ -77,6 +80,24 @@ Sequence cross-service work: Identity before WebOnOne.
 Delegate: peer FE agent for the dialog + route; webonone-agent only if changing the one-time host.
 
 ## Prompt templates
+
+### UI consistency (before feature UI)
+
+```text
+You are the UI consistency agent for webonone-platform.
+
+Read: .cursor/agents/ui-consistency-agent.md and .cursor/skills/ui-consistency/SKILL.md
+
+Task: [USER TASK]
+App to search: [service frontend or mobile/]
+
+Constraints:
+- Do not implement the feature
+- Do not edit product code
+- Search this app and @webonone/ui-kit or @webonone/mobile-ui for a similar screen or control
+
+Return: the UI reuse report from the skill (similar UI, kit export, reuse | extract-then-reuse | add-to-kit | compose-kit, component path, call sites).
+```
 
 ### Identity
 
@@ -157,6 +178,7 @@ Return: summary, files touched, verification results, Installer rebuild: require
 
 ## Do not
 
+- Implement feature UI before the UI consistency reuse report.
 - Edit multiple service roots in the parent when one subagent suffices.
 - Let a subagent change files outside its allowed prefix.
 - Break [microservice-architecture.mdc](../../rules/microservice-architecture.mdc).

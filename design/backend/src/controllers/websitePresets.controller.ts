@@ -9,6 +9,7 @@ import {
   updateWebsitePreset,
 } from '../services/websitePreset.service.js'
 import { createWebsitePresetSchema, updateWebsitePresetSchema } from '../schemas/websitePresets.schema.js'
+import { readNamesQuery } from '../utils/namesQuery.js'
 
 function companyIdOrThrow(req: AuthenticatedRequest): string {
   const companyId = req.user?.companyId
@@ -21,7 +22,15 @@ export async function listWebsitePresetsHandler(req: AuthenticatedRequest, res: 
     const page = req.query.page ? Number(req.query.page) : undefined
     const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
     const q = typeof req.query.q === 'string' ? req.query.q : undefined
-    res.json(await listWebsitePresets({ companyId: companyIdOrThrow(req), page, pageSize, q }))
+    res.json(
+      await listWebsitePresets({
+        companyId: companyIdOrThrow(req),
+        page,
+        pageSize,
+        q,
+        names: readNamesQuery(req.query.names),
+      }),
+    )
   } catch (err) {
     next(err)
   }

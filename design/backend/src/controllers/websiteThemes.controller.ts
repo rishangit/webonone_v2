@@ -10,6 +10,7 @@ import {
   updateWebsiteTheme,
 } from '../services/websiteTheme.service.js'
 import { createWebsiteThemeSchema, updateWebsiteThemeSchema } from '../schemas/websiteThemes.schema.js'
+import { readNamesQuery } from '../utils/namesQuery.js'
 
 function companyIdOrThrow(req: AuthenticatedRequest): string {
   const companyId = req.user?.companyId
@@ -22,7 +23,15 @@ export async function listWebsiteThemesHandler(req: AuthenticatedRequest, res: R
     const page = req.query.page ? Number(req.query.page) : undefined
     const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
     const q = typeof req.query.q === 'string' ? req.query.q : undefined
-    res.json(await listWebsiteThemes({ companyId: companyIdOrThrow(req), page, pageSize, q }))
+    res.json(
+      await listWebsiteThemes({
+        companyId: companyIdOrThrow(req),
+        page,
+        pageSize,
+        q,
+        names: readNamesQuery(req.query.names),
+      }),
+    )
   } catch (err) {
     next(err)
   }

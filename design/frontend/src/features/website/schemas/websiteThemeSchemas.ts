@@ -6,6 +6,22 @@ const breakpointSizeSchema = z
   .min(8, 'Size must be at least 8')
   .max(200, 'Size must be at most 200')
 
+export const createFontLibrarySchema = z
+  .object({
+    name: z.string().trim().min(1, 'Style name is required').max(128),
+    googleFontUrl: z.string().trim().min(1, 'Google Font URL is required').max(2048),
+    family: z.string().trim().min(1, 'Font family is required').max(255),
+  })
+  .superRefine((font, ctx) => {
+    if (font.googleFontUrl && !parseGoogleFontFamily(font.googleFontUrl)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Enter a valid Google Font URL',
+        path: ['googleFontUrl'],
+      })
+    }
+  })
+
 export const websiteFontTokenSchema = z
   .object({
     id: z.string().min(1).max(64),
@@ -22,6 +38,79 @@ export const websiteFontTokenSchema = z
       })
     }
   })
+
+const colorLibraryPaletteHex = z
+  .string()
+  .trim()
+  .regex(/^#[0-9A-Fa-f]{6}$/, 'Enter a valid hex color (#RRGGBB)')
+
+export const websiteColorLibraryPaletteSchema = z.object({
+  color_1: colorLibraryPaletteHex,
+  color_2: colorLibraryPaletteHex,
+  color_3: colorLibraryPaletteHex,
+  color_4: colorLibraryPaletteHex,
+  color_5: colorLibraryPaletteHex,
+  color_6: colorLibraryPaletteHex,
+})
+
+export const createColorLibrarySchema = z.object({
+  name: z.string().trim().min(1, 'Palette name is required').max(128),
+  palette: websiteColorLibraryPaletteSchema,
+})
+
+export const websiteElementCustomizationSchema = z.object({
+  html: z.string().max(50000).optional().default(''),
+  styles: z.string().max(50000).optional().default(''),
+  scripts: z.string().max(50000).optional().default(''),
+})
+
+const textLibraryDefinitionSchema = z.object({
+  fontName: z.string().trim().min(1).max(128),
+  googleFontUrl: z.string().trim().min(1).max(2048),
+  family: z.string().trim().min(1).max(255),
+  colorName: z.string().trim().min(1).max(128),
+  colorValue: z.string().trim().min(1).max(32),
+  size: z.number().min(8).max(200),
+  sizeByBreakpoint: z
+    .object({
+      sm: breakpointSizeSchema.optional(),
+      md: breakpointSizeSchema.optional(),
+      lg: breakpointSizeSchema.optional(),
+      xl: breakpointSizeSchema.optional(),
+      '2xl': breakpointSizeSchema.optional(),
+    })
+    .optional(),
+  customization: websiteElementCustomizationSchema.optional(),
+})
+
+export const createTextLibrarySchema = z.object({
+  name: z.string().trim().min(1, 'Text style name is required').max(128),
+  definition: textLibraryDefinitionSchema,
+})
+
+const buttonLibraryDefinitionSchema = z.object({
+  backgroundColorName: z.string().trim().min(1).max(128),
+  backgroundColorValue: z.string().trim().min(1).max(32),
+  textColorName: z.string().trim().min(1).max(128),
+  textColorValue: z.string().trim().min(1).max(32),
+  borderColorName: z.string().trim().min(1).max(128),
+  borderColorValue: z.string().trim().min(1).max(32),
+  borderWidth: z.number().min(0).max(16),
+  radius: z.number().min(0).max(999),
+  textStyleName: z.string().trim().min(1).max(128),
+  textFontName: z.string().trim().min(1).max(128),
+  textGoogleFontUrl: z.string().trim().min(1).max(2048),
+  textFontFamily: z.string().trim().min(1).max(255),
+  textSize: z.number().min(8).max(200),
+  labelColorName: z.string().trim().min(1).max(128),
+  labelColorValue: z.string().trim().min(1).max(32),
+  customization: websiteElementCustomizationSchema.optional(),
+})
+
+export const createButtonLibrarySchema = z.object({
+  name: z.string().trim().min(1, 'Button style name is required').max(128),
+  definition: buttonLibraryDefinitionSchema,
+})
 
 export const websiteColorTokenSchema = z.object({
   id: z.string().min(1).max(64),
@@ -44,6 +133,8 @@ export const websiteTextStyleSchema = z.object({
     })
     .optional(),
   colorId: z.string().max(64).default(''),
+  sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
+  customization: websiteElementCustomizationSchema.optional(),
 })
 
 export const websiteButtonStyleSchema = z.object({
@@ -55,6 +146,8 @@ export const websiteButtonStyleSchema = z.object({
   borderColorId: z.string().max(64).default(''),
   borderWidth: z.number().min(0).max(16).default(0),
   radius: z.number({ invalid_type_error: 'Border radius is required' }).min(0).max(999).default(6),
+  sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
+  customization: websiteElementCustomizationSchema.optional(),
 })
 
 export const websiteThemeEditorSchema = z.object({

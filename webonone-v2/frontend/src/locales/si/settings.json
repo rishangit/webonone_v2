@@ -261,6 +261,76 @@
             "title": "SMS — Templates",
             "detail": "SMS access ඇති role සඳහා templates ලැයිස්තුගත කිරීම සහ බැලීම."
           }
+        },
+        "design": {
+          "forms": {
+            "title": "Design — Forms",
+            "detail": "Company forms ලැයිස්තුගත කර සෑදීම, පසුව controls එකතු කිරීම හෝ යාවත්කාලීන කිරීම. සක්‍රිය company අවශ්‍යයි."
+          },
+          "fonts": {
+            "title": "Website — Font library",
+            "detail": "Platform Font library එකට Google fonts යෝජනා කර එකතු කරන්න. Super admin පමණි. Company පරිශීලකයින්ට fonts ලැයිස්තුගත කළ හැක."
+          },
+          "buttonLibrary": {
+            "title": "Website — Button library",
+            "detail": "බෙදාගත් button විලාසය නැවත නිර්මාණය කරන්න. Super admin: Copy to AI එකින් button එක attach කර, basic settings, HTML, styles, හෝ script වෙනස් කරන්නැයි අසන්න. Confirm කළ පසු live preview යාවත්කාලීන වේ."
+          },
+          "textLibrary": {
+            "title": "Website — Text library",
+            "detail": "බෙදාගත් text විලාසය නැවත නිර්මාණය කරන්න. Super admin: Copy to AI එකින් text style එක attach කර, basic settings, HTML, styles, හෝ script වෙනස් කරන්නැයි අසන්න. Confirm කළ පසු live preview යාවත්කාලීන වේ."
+          },
+          "websitePages": {
+            "title": "Website — Pages",
+            "detail": "සක්‍රිය company වෙබ් අඩවියට pages යෝජනා කර එකතු කරන්න."
+          },
+          "websitePresets": {
+            "title": "Website — Presets",
+            "detail": "සක්‍රිය company වෙබ් අඩවියට presets යෝජනා කර එකතු කරන්න."
+          },
+          "websiteLayouts": {
+            "title": "Website — Layouts",
+            "detail": "සක්‍රිය company වෙබ් අඩවියට layouts යෝජනා කර එකතු කරන්න."
+          },
+          "websiteThemes": {
+            "title": "Website — Themes",
+            "detail": "පිටු පසුබිම සහ අකුරු වර්ණය සමඟ themes යෝජනා කර එකතු කරන්න."
+          },
+          "websiteHeaders": {
+            "title": "Website — Headers",
+            "detail": "සක්‍රිය company වෙබ් අඩවියට headers යෝජනා කර එකතු කරන්න."
+          },
+          "websiteFooters": {
+            "title": "Website — Footers",
+            "detail": "සක්‍රිය company වෙබ් අඩවියට footers යෝජනා කර එකතු කරන්න."
+          },
+          "websiteDatasets": {
+            "title": "Website — Data sets",
+            "detail": "වෙබ් අඩවි blocks බඳින data sets යෝජනා කර එකතු කරන්න."
+          },
+          "libraryPages": {
+            "title": "Website library — Pages",
+            "detail": "සමාගම් පිටපත් කළ හැකි platform library pages යෝජනා කර එකතු කරන්න. Super admin පමණි."
+          },
+          "libraryPresets": {
+            "title": "Website library — Presets",
+            "detail": "Platform library presets යෝජනා කර එකතු කරන්න. Super admin පමණි."
+          },
+          "libraryLayouts": {
+            "title": "Website library — Layouts",
+            "detail": "Platform library layouts යෝජනා කර එකතු කරන්න. Super admin පමණි."
+          },
+          "libraryThemes": {
+            "title": "Website library — Themes",
+            "detail": "Platform library themes යෝජනා කර එකතු කරන්න. Super admin පමණි."
+          },
+          "libraryHeaders": {
+            "title": "Website library — Headers",
+            "detail": "Platform library headers යෝජනා කර එකතු කරන්න. Super admin පමණි."
+          },
+          "libraryFooters": {
+            "title": "Website library — Footers",
+            "detail": "Platform library footers යෝජනා කර එකතු කරන්න. Super admin පමණි."
+          }
         }
       }
     }

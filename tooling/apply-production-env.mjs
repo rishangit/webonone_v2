@@ -333,6 +333,7 @@ function main() {
         `DESIGN_SERVICE_API_KEY=${designKey}`,
         '',
         `WEBONONE_SERVICE_API_KEY=${webononeKey}`,
+        `WEBSITE_ORIGIN=${originWebsite}`,
         `COMPANY_SITE_HOST=${companySiteHost(master)}`,
         `EXPO_ACCESS_TOKEN=${get(master, 'EXPO_ACCESS_TOKEN')}`,
       ]),

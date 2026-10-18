@@ -5,6 +5,9 @@ export function formatEntityTag(ref: PlatformAiEntityRef): string {
   if (ref.service === 'webonone') {
     return `[Company ${ref.kind}: ${label}]`
   }
+  if (ref.service === 'design') {
+    return `[Design ${ref.kind}: ${label}]`
+  }
   return `[Data ${ref.kind}: ${label}]`
 }
 

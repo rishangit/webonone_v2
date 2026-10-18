@@ -127,6 +127,43 @@ function areaIdFromTool(tool: ToolDefinition): string {
     return 'design.forms'
   }
 
+  if (name === 'list_design_fonts' || name === 'create_design_font') {
+    return 'design.fonts'
+  }
+
+  if (name.includes('design_button_library')) {
+    return 'design.buttonLibrary'
+  }
+
+  if (name.includes('design_text_library')) {
+    return 'design.textLibrary'
+  }
+
+  const designWebsite = name.match(/^(?:list|get|create|update|delete)_design_(website|library)_([a-z]+)$/)
+  if (designWebsite) {
+    const scope = designWebsite[1]
+    const raw = designWebsite[2] ?? ''
+    const plural: Record<string, string> = {
+      page: 'pages',
+      pages: 'pages',
+      preset: 'presets',
+      presets: 'presets',
+      layout: 'layouts',
+      layouts: 'layouts',
+      theme: 'themes',
+      themes: 'themes',
+      header: 'headers',
+      headers: 'headers',
+      footer: 'footers',
+      footers: 'footers',
+      dataset: 'datasets',
+      datasets: 'datasets',
+    }
+    const resource = plural[raw] ?? raw
+    const camel = resource.charAt(0).toUpperCase() + resource.slice(1)
+    return `design.${scope}${camel}`
+  }
+
   return `${tool.service}.other`
 }
 

@@ -11,8 +11,8 @@ When you are signed in, a **chat** button appears in the header.
 
 1. Click it to open the assistant panel.
 2. On a desktop screen, use the **expand** icon (left of Close) to widen the chat until it meets the left navigation. Use it again to return to the narrow panel. On phones the chat is already full width.
-3. Ask in plain language (for example, help finding a setting or listing catalog items).
-4. From **staff**, **events**, **companies**, or **catalog** lists and detail pages, use **Copy to AI** to attach that record to the chat.
+3. Ask in plain language (for example, help finding a setting, listing catalog items, or suggesting fonts to add to the Font library).
+4. From **staff**, **events**, **companies**, **catalog**, or Design **button** and **text** library lists and detail pages, use **Copy to AI** to attach that record to the chat.
 5. If the assistant wants to create or change something, review each suggestion (item type at the top) and choose **Confirm** or **Cancel**.
 
 The assistant needs a working API key. Configure it under [AI API key](/docs/app-preferences/ai-api-key). The same setup enables the [sparkle on text fields](/docs/app-preferences/field-ai-polish). Guests on the public website use a separate [catalog assistant](/docs/public-catalog/guest-assistant).
@@ -44,6 +44,11 @@ Depending on your account, the card may include areas such as:
 | **Payment — Invoices** | Read-only subscription invoices when you can open Payment |
 | **SMS — Templates** | List and view SMS templates when your role includes SMS access |
 | **Design — Forms** | Create a form with its controls, add a control, or change a control’s label, required setting, placeholder, or options. Needs an active company. Confirm before anything is saved |
+| **Website — Font library** | Super admin: ask the assistant to suggest fonts to add. Each suggestion is a Google font (name, family, and stylesheet URL). Fonts already in the library are skipped. Confirm before they are saved. Company users can ask for a list of fonts |
+| **Website — Button library** | Super admin: attach a button with Copy to AI, then ask to change basic settings, HTML, styles, or script. Confirm to update the live preview. See [Website button library](/docs/website-forms/website-button-library) |
+| **Website — Text library** | Super admin: attach a text style with Copy to AI, then ask to change basic settings, HTML, styles, or script. Confirm to update the live preview. See [Website text library](/docs/website-forms/website-text-library) |
+| **Website — company site** | Company admin with an active company: ask to suggest pages, presets, layouts, themes, headers, footers, or data sets. The designer starts blank; you lay out the item after confirm |
+| **Website library** | Super admin: the same kinds of items in the shared library that companies copy from |
 
 Rows marked **Needs active company** require that you are logged into a company, not only signed in as a platform user.
 

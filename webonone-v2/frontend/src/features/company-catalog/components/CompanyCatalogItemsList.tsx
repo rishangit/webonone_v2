@@ -67,6 +67,7 @@ type CompanyCatalogItemsListProps = {
   canManage?: boolean
   onOpen: (id: string) => void
   onRemove?: (item: HydratedCatalogItem) => void
+  onShare?: (item: HydratedCatalogItem) => void
 }
 
 export function CompanyCatalogItemsList({
@@ -78,6 +79,7 @@ export function CompanyCatalogItemsList({
   canManage = false,
   onOpen,
   onRemove,
+  onShare,
 }: CompanyCatalogItemsListProps) {
   const { t } = useTranslation('catalog')
   const { t: tc } = useTranslation('common')
@@ -573,8 +575,13 @@ export function CompanyCatalogItemsList({
 
   function renderRowMenu(item: HydratedCatalogItem) {
     if (previewMode) return null
+    const canShare =
+      Boolean(onShare) && resolveWebPublishStatus(item.webPublishStatus) === 'published'
     return (
       <ItemListMenu ariaLabel={`${tc('actions')} ${item.displayName}`}>
+        {canShare && onShare ? (
+          <DropdownMenuItem onClick={() => onShare(item)}>{t('share.action')}</DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onClick={() => onOpen(item.id)}>{tc('details')}</DropdownMenuItem>
         <CompanyCatalogAiMenuItem kind={kind} id={item.id} label={item.displayName} />
         {canManage && onRemove ? (

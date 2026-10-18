@@ -107,6 +107,7 @@ const SESSION_COMPANY_PLATFORM_SLUGS = [
   'appointment_reminder_24h',
   'sale_bill_completed',
   'catalog_review_request',
+  'catalog_item_share',
 ] as const
 
 /** Platform slugs company owners may see/customize as defaults (1.13.6). */

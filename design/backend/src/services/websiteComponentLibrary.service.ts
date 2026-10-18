@@ -17,7 +17,9 @@ import type {
   WebsiteTextStyle,
 } from '../schemas/websiteThemes.schema.js'
 import { detachCompanyDocumentRefs } from './websiteLibraryDocument.js'
+import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
 import type { WebsiteChromeKind } from './websiteChrome.service.js'
+import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 
 type Sql = Knex | Knex.Transaction
 
@@ -47,12 +49,6 @@ function chromeTable(kind: WebsiteChromeKind): ChromeTable {
 
 function companyChromeTable(kind: WebsiteChromeKind): typeof COMPANY.headers | typeof COMPANY.footers {
   return kind === 'headers' ? COMPANY.headers : COMPANY.footers
-}
-
-function pageWindow(page?: number, pageSize?: number) {
-  const safePage = Math.max(1, page ?? 1)
-  const safeSize = Math.min(100, Math.max(1, pageSize ?? 20))
-  return { page: safePage, pageSize: safeSize, offset: (safePage - 1) * safeSize }
 }
 
 function toBool(value: number | boolean | null | undefined): boolean {
@@ -160,11 +156,13 @@ export async function listLibraryPages(input: {
   page?: number
   pageSize?: number
   q?: string
+  names?: string | string[]
   status?: WebsitePageStatus
 }) {
-  const window = pageWindow(input.page, input.pageSize)
+  const window = namedListWindow(input, 20)
   let query = pageQuery()
   if (input.status) query = query.andWhere('p.status', input.status)
+  applyNamesFilter(query, 'p.name', window.names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
     query = query.andWhere((builder) => {
@@ -285,9 +283,11 @@ export async function listLibraryChrome(input: {
   page?: number
   pageSize?: number
   q?: string
+  names?: string | string[]
 }) {
-  const window = pageWindow(input.page, input.pageSize)
+  const window = namedListWindow(input, 20)
   const query = likeName(db<ChromeRow>(chromeTable(input.kind)), 'name', input.q)
+  applyNamesFilter(query, 'name', window.names)
   const total = await countOf(query)
   const rows = await query
     .clone()
@@ -382,9 +382,15 @@ function toPresetDto(row: PresetRow): LibraryPresetDto {
   }
 }
 
-export async function listLibraryPresets(input: { page?: number; pageSize?: number; q?: string }) {
-  const window = pageWindow(input.page, input.pageSize)
+export async function listLibraryPresets(input: {
+  page?: number
+  pageSize?: number
+  q?: string
+  names?: string | string[]
+}) {
+  const window = namedListWindow(input, 20)
   const query = likeName(db<PresetRow>(LIB.presets), 'name', input.q)
+  applyNamesFilter(query, 'name', window.names)
   const total = await countOf(query)
   const rows = await query.clone().orderBy('updated_at', 'desc').limit(window.pageSize).offset(window.offset)
   return { items: rows.map(toPresetDto), total, page: window.page, pageSize: window.pageSize }
@@ -477,9 +483,15 @@ function toThemeDto(row: ThemeRow): LibraryThemeDto {
   }
 }
 
-export async function listLibraryThemes(input: { page?: number; pageSize?: number; q?: string }) {
-  const window = pageWindow(input.page, input.pageSize)
+export async function listLibraryThemes(input: {
+  page?: number
+  pageSize?: number
+  q?: string
+  names?: string | string[]
+}) {
+  const window = namedListWindow(input, 20)
   const query = likeName(db<ThemeRow>(LIB.themes), 'name', input.q)
+  applyNamesFilter(query, 'name', window.names)
   const total = await countOf(query)
   const rows = await query
     .clone()
@@ -610,9 +622,15 @@ function toLayoutDto(row: LayoutRow, pages: LibraryLayoutPageDto[]): LibraryLayo
   }
 }
 
-export async function listLibraryLayouts(input: { page?: number; pageSize?: number; q?: string }) {
-  const window = pageWindow(input.page, input.pageSize)
+export async function listLibraryLayouts(input: {
+  page?: number
+  pageSize?: number
+  q?: string
+  names?: string | string[]
+}) {
+  const window = namedListWindow(input, 20)
   const query = likeName(db<LayoutRow>(LIB.layouts), 'name', input.q)
+  applyNamesFilter(query, 'name', window.names)
   const total = await countOf(query)
   const rows = (await query
     .clone()
@@ -874,4 +892,220 @@ export async function copyLibraryPage(input: { companyId: string; userId: string
   })
   const { getWebsitePage } = await import('./websitePage.service.js')
   return getWebsitePage({ companyId: input.companyId, id })
+}
+
+type CompanySourceRow = {
+  id: string
+  company_id: string
+  source_library_id: string | null
+  is_locked: number | boolean
+}
+
+function libraryMissing(code: string): HttpError {
+  return new HttpError(404, 'Library item not found', code)
+}
+
+async function requireLibraryCopy(
+  conn: Sql,
+  table: string,
+  companyId: string,
+  id: string,
+  notFoundCode: string,
+): Promise<string> {
+  const row = await conn<CompanySourceRow>(table).where({ id, company_id: companyId }).first()
+  if (!row) throw new HttpError(404, 'Not found', notFoundCode)
+  assertWebsiteUnlocked(row.is_locked)
+  if (!row.source_library_id) {
+    throw new HttpError(409, 'This item was not added from the library', 'WEBSITE_LIBRARY_SOURCE_MISSING')
+  }
+  return row.source_library_id
+}
+
+function documentJson(raw: unknown): string {
+  return JSON.stringify(detachCompanyDocumentRefs(parseDocument(raw)))
+}
+
+async function findCompanyCopyId(
+  conn: Sql,
+  table: string,
+  companyId: string,
+  libraryId: string,
+  preferredId: string | null,
+): Promise<string | null> {
+  if (preferredId) {
+    const preferred = await conn<CompanySourceRow>(table).where({ id: preferredId, company_id: companyId }).first()
+    if (preferred?.source_library_id === libraryId && !isLockedFlag(preferred.is_locked)) return preferred.id
+  }
+  const existing = await conn<CompanySourceRow>(table)
+    .where({ company_id: companyId, source_library_id: libraryId })
+    .orderBy('updated_at', 'desc')
+    .first()
+  if (!existing || isLockedFlag(existing.is_locked)) return null
+  return existing.id
+}
+
+async function restoreCompanyChrome(
+  conn: Sql,
+  input: {
+    kind: WebsiteChromeKind
+    companyId: string
+    userId: string
+    libraryId: string | null
+    preferredId: string | null
+  },
+): Promise<string | null> {
+  if (!input.libraryId) return null
+  const source = await conn<ChromeRow>(chromeTable(input.kind)).where({ id: input.libraryId }).first()
+  if (!source) return null
+  const existingId = await findCompanyCopyId(
+    conn,
+    companyChromeTable(input.kind),
+    input.companyId,
+    input.libraryId,
+    input.preferredId,
+  )
+  if (!existingId) {
+    return copyChromeRow(conn, {
+      kind: input.kind,
+      companyId: input.companyId,
+      userId: input.userId,
+      libraryId: input.libraryId,
+    })
+  }
+  await conn(companyChromeTable(input.kind)).where({ id: existingId }).update({
+    document: documentJson(source.document),
+    updated_at: db.fn.now(3),
+  })
+  return existingId
+}
+
+async function restoreCompanyTheme(
+  conn: Sql,
+  input: { companyId: string; userId: string; libraryId: string | null; preferredId: string | null },
+): Promise<string | null> {
+  if (!input.libraryId) return null
+  const source = await conn<ThemeRow>(LIB.themes).where({ id: input.libraryId }).first()
+  if (!source) return null
+  const existingId = await findCompanyCopyId(conn, COMPANY.themes, input.companyId, input.libraryId, input.preferredId)
+  if (!existingId) {
+    return copyThemeRow(conn, { companyId: input.companyId, userId: input.userId, libraryId: input.libraryId })
+  }
+  await conn(COMPANY.themes).where({ id: existingId }).update({
+    page_background: source.page_background,
+    body_text_color: source.body_text_color,
+    fonts: JSON.stringify(parseJsonArray(source.fonts)),
+    colors: JSON.stringify(parseJsonArray(source.colors)),
+    text_styles: JSON.stringify(parseJsonArray(source.text_styles)),
+    button_styles: JSON.stringify(parseJsonArray(source.button_styles)),
+    updated_at: db.fn.now(3),
+  })
+  return existingId
+}
+
+export async function revertLibraryPage(input: { companyId: string; id: string }) {
+  await getCompanyFromWebOnOne(input.companyId)
+  await db.transaction(async (trx) => {
+    const libraryId = await requireLibraryCopy(trx, COMPANY.pages, input.companyId, input.id, 'WEBSITE_PAGE_NOT_FOUND')
+    const source = await trx<PageRow>(LIB.pages).where({ id: libraryId }).first()
+    if (!source) throw libraryMissing('WEBSITE_PAGE_NOT_FOUND')
+    await trx(COMPANY.pages).where({ id: input.id }).update({
+      document: documentJson(source.document),
+      updated_at: db.fn.now(3),
+    })
+  })
+  const { getWebsitePage } = await import('./websitePage.service.js')
+  return getWebsitePage({ companyId: input.companyId, id: input.id })
+}
+
+export async function revertLibraryChrome(input: { kind: WebsiteChromeKind; companyId: string; id: string }) {
+  await getCompanyFromWebOnOne(input.companyId)
+  const notFound = input.kind === 'headers' ? 'WEBSITE_HEADER_NOT_FOUND' : 'WEBSITE_FOOTER_NOT_FOUND'
+  await db.transaction(async (trx) => {
+    const libraryId = await requireLibraryCopy(trx, companyChromeTable(input.kind), input.companyId, input.id, notFound)
+    const source = await trx<ChromeRow>(chromeTable(input.kind)).where({ id: libraryId }).first()
+    if (!source) throw libraryMissing(notFound)
+    await trx(companyChromeTable(input.kind)).where({ id: input.id }).update({
+      document: documentJson(source.document),
+      updated_at: db.fn.now(3),
+    })
+  })
+  const { getWebsiteChrome } = await import('./websiteChrome.service.js')
+  return getWebsiteChrome({ kind: input.kind, companyId: input.companyId, id: input.id })
+}
+
+export async function revertLibraryPreset(input: { companyId: string; id: string }) {
+  await getCompanyFromWebOnOne(input.companyId)
+  await db.transaction(async (trx) => {
+    const libraryId = await requireLibraryCopy(trx, COMPANY.presets, input.companyId, input.id, 'WEBSITE_PRESET_NOT_FOUND')
+    const source = await trx<PresetRow>(LIB.presets).where({ id: libraryId }).first()
+    if (!source) throw libraryMissing('WEBSITE_PRESET_NOT_FOUND')
+    await trx(COMPANY.presets).where({ id: input.id }).update({
+      document: documentJson(source.document),
+      updated_at: db.fn.now(3),
+    })
+  })
+  const { getWebsitePreset } = await import('./websitePreset.service.js')
+  return getWebsitePreset({ companyId: input.companyId, id: input.id })
+}
+
+export async function revertLibraryTheme(input: { companyId: string; id: string }) {
+  await getCompanyFromWebOnOne(input.companyId)
+  await db.transaction(async (trx) => {
+    const libraryId = await requireLibraryCopy(trx, COMPANY.themes, input.companyId, input.id, 'WEBSITE_THEME_NOT_FOUND')
+    const source = await trx<ThemeRow>(LIB.themes).where({ id: libraryId }).first()
+    if (!source) throw libraryMissing('WEBSITE_THEME_NOT_FOUND')
+    await trx(COMPANY.themes).where({ id: input.id }).update({
+      page_background: source.page_background,
+      body_text_color: source.body_text_color,
+      fonts: JSON.stringify(parseJsonArray(source.fonts)),
+      colors: JSON.stringify(parseJsonArray(source.colors)),
+      text_styles: JSON.stringify(parseJsonArray(source.text_styles)),
+      button_styles: JSON.stringify(parseJsonArray(source.button_styles)),
+      updated_at: db.fn.now(3),
+    })
+  })
+  const { getWebsiteTheme } = await import('./websiteTheme.service.js')
+  return getWebsiteTheme({ companyId: input.companyId, id: input.id })
+}
+
+export async function revertLibraryLayout(input: { companyId: string; userId: string; id: string }) {
+  await getCompanyFromWebOnOne(input.companyId)
+  await db.transaction(async (trx) => {
+    const libraryId = await requireLibraryCopy(trx, COMPANY.layouts, input.companyId, input.id, 'WEBSITE_LAYOUT_NOT_FOUND')
+    const source = await trx<LayoutRow>(LIB.layouts).where({ id: libraryId }).first()
+    if (!source) throw libraryMissing('WEBSITE_LAYOUT_NOT_FOUND')
+    const current = await trx<{ id: string; header_id: string | null; footer_id: string | null; theme_id: string | null }>(
+      COMPANY.layouts,
+    )
+      .where({ id: input.id })
+      .first()
+    const headerId = await restoreCompanyChrome(trx, {
+      kind: 'headers',
+      companyId: input.companyId,
+      userId: input.userId,
+      libraryId: source.header_id,
+      preferredId: current?.header_id ?? null,
+    })
+    const footerId = await restoreCompanyChrome(trx, {
+      kind: 'footers',
+      companyId: input.companyId,
+      userId: input.userId,
+      libraryId: source.footer_id,
+      preferredId: current?.footer_id ?? null,
+    })
+    const themeId = await restoreCompanyTheme(trx, {
+      companyId: input.companyId,
+      userId: input.userId,
+      libraryId: source.theme_id,
+      preferredId: current?.theme_id ?? null,
+    })
+    await trx(COMPANY.layouts).where({ id: input.id }).update({
+      header_id: headerId,
+      footer_id: footerId,
+      theme_id: themeId,
+      updated_at: db.fn.now(3),
+    })
+  })
+  const { getWebsiteLayout } = await import('./websiteLayout.service.js')
+  return getWebsiteLayout({ companyId: input.companyId, id: input.id })
 }

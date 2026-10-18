@@ -33,9 +33,10 @@ type SendEmailParams = {
   scheduledAt?: string
 }
 
-export async function sendTransactionalEmail(params: SendEmailParams): Promise<void> {
+/** Enqueue a transactional email. Returns false when the request or template send did not queue. */
+export async function sendTransactionalEmail(params: SendEmailParams): Promise<boolean> {
   const url = resolveInternalEmailUrl('/api/v1/internal/send')
-  if (!url) return
+  if (!url) return false
 
   try {
     const response = await fetch(url, {
@@ -57,9 +58,18 @@ export async function sendTransactionalEmail(params: SendEmailParams): Promise<v
     if (!response.ok) {
       const text = await response.text()
       console.error(`[emailClient] send failed (${response.status}): ${text}`)
+      return false
     }
+
+    const data = (await response.json().catch(() => null)) as { status?: string } | null
+    if (data?.status === 'skipped') {
+      console.error('[emailClient] send skipped (template inactive)')
+      return false
+    }
+    return true
   } catch (err) {
     console.error('[emailClient] send error:', err)
+    return false
   }
 }
 

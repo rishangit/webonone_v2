@@ -26,9 +26,11 @@ import { websiteThemesActions } from '../store'
 import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
+import { WebsiteAddItemControl } from '../components/WebsiteAddItemControl'
 import { WebsiteThemeDialog } from '../components/WebsiteEntityDialogs'
 import type { WebsiteTheme } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
+import { useWebsiteLibraryRevert, WebsiteLibrarySourceTag } from '../components/WebsiteLibraryRevert'
 
 export function WebsiteThemesPage() {
   const { t } = useTranslation('website')
@@ -43,6 +45,7 @@ export function WebsiteThemesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [awaitingCreate, setAwaitingCreate] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
+  const revert = useWebsiteLibraryRevert()
   const list = useEpicCatalogList((s) => s.websiteThemes, websiteThemesActions)
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websiteThemes)
   usePlatformLoading(list.loading ? t('loading') : null)
@@ -78,10 +81,20 @@ export function WebsiteThemesPage() {
             onSearchChange={list.setQ}
             searchPlaceholder={t('searchThemes')}
             searchAriaLabel={t('searchThemes')}
-            canManage={canManage}
+            canManage={user?.role === 'super_admin'}
             addLabel={t('addTheme')}
             onAdd={() => setDialogOpen(true)}
             compactAddLabel={tc('add')}
+            extra={
+              user?.role === 'company_admin' ? (
+                <WebsiteAddItemControl
+                  kind="themes"
+                  addLabel={t('addTheme')}
+                  compactAddLabel={tc('add')}
+                  onCreate={() => setDialogOpen(true)}
+                />
+              ) : undefined
+            }
           />
         }
       />
@@ -109,6 +122,7 @@ export function WebsiteThemesPage() {
                         <p className="font-medium">{theme.name}</p>
                         {theme.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
                         {theme.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
+                        <WebsiteLibrarySourceTag sourceLibraryId={theme.sourceLibraryId} />
                         {!theme.isActive ? <StatusTag variant="pending">{t('inactive')}</StatusTag> : null}
                       </div>
                     </button>
@@ -138,6 +152,14 @@ export function WebsiteThemesPage() {
                       >
                         {t('duplicate')}
                       </DropdownMenuItem>
+                      {theme.sourceLibraryId && !theme.isLocked ? (
+                        <DropdownMenuItem
+                          disabled={revert.reverting}
+                          onClick={() => revert.ask({ kind: 'themes', id: theme.id, name: theme.name })}
+                        >
+                          {t('downloadUpdatedFromLibrary')}
+                        </DropdownMenuItem>
+                      ) : null}
                       {theme.isLocked ? null : (
                         <DropdownMenuItem onClick={() => goToWebsite(`/website/themes/${theme.id}`)}>
                           {t('common:edit')}
@@ -211,6 +233,7 @@ export function WebsiteThemesPage() {
           }
         }}
       />
+      {revert.dialog}
     </FeaturePage>
   )
 }

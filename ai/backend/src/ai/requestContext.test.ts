@@ -40,6 +40,12 @@ describe('permissionsForRole', () => {
     const superAdmin = permissionsForRole('super_admin', 'company00000000000001')
     assert.equal(superAdmin.includes('ai:design:read'), true)
     assert.equal(superAdmin.includes('ai:design:write'), true)
+    assert.equal(permissionsForRole('super_admin', null).includes('ai:design:platform:write'), true)
+    assert.equal(admin.includes('ai:design:platform:read'), true)
+    assert.equal(admin.includes('ai:design:platform:write'), false)
+    assert.equal(permissionsForRole('member', 'company00000000000001').includes('ai:design:platform:read'), true)
+    assert.equal(permissionsForRole('member', null).includes('ai:design:platform:read'), false)
+    assert.equal(permissionsForRole('company_admin', null).includes('ai:design:platform:read'), false)
   })
 
   it('gives super_admin company register and write', () => {

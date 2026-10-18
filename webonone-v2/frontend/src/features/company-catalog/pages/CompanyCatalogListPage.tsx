@@ -14,6 +14,7 @@ import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeCont
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
+import { CatalogShareDialog } from '../components/CatalogShareDialog'
 import { CompanyCatalogItemsList } from '../components/CompanyCatalogItemsList'
 import { ProductFormDialog } from '../components/ProductFormDialog'
 import { SpaceFormDialog } from '../components/SpaceFormDialog'
@@ -38,6 +39,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
   const [search, setSearch] = useState('')
   const [addOpen, setAddOpen] = useState(false)
   const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null)
+  const [shareItem, setShareItem] = useState<{ id: string; name: string } | null>(null)
 
   const entity = t(`entities.${kind}`)
   const noun = t(`entities.${CATALOG_ENTITY_SINGULAR_KEYS[kind]}`)
@@ -119,6 +121,7 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
               canManage={canManage}
               onOpen={(id) => navigate(`/data/${kind}/${id}`)}
               onRemove={(item) => setPendingRemove({ id: item.id, name: item.displayName })}
+              onShare={(item) => setShareItem({ id: item.id, name: item.displayName })}
             />
           ) : null}
         </div>
@@ -151,6 +154,16 @@ export function CompanyCatalogListPage({ kind }: CompanyCatalogListPageProps) {
           onSaved={() => setAddOpen(false)}
         />
       ) : null}
+
+      <CatalogShareDialog
+        open={shareItem !== null}
+        kind={kind}
+        id={shareItem?.id ?? ''}
+        itemName={shareItem?.name ?? ''}
+        onOpenChange={(open) => {
+          if (!open) setShareItem(null)
+        }}
+      />
 
       <PlatformAlertConfirmDialog
         open={pendingRemove !== null}

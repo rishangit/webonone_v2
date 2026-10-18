@@ -24,6 +24,11 @@ import { ContentContainerSettingsDialog } from '../components/ContentContainerSe
 import { ContentBlockSettingsDialog } from '../components/ContentBlockSettingsDialog'
 import { AddonSettingsDialog } from '../components/AddonSettingsDialog'
 import { WebsitePresetDialog } from '../components/WebsiteEntityDialogs'
+import {
+  useWebsiteLibraryRevert,
+  WebsiteLibraryDownloadUpdateButton,
+  WebsiteLibrarySourceTag,
+} from '../components/WebsiteLibraryRevert'
 import { websiteLiveUrl } from '../components/WebsiteHubTabs'
 import { useWebsiteLiveOrigin } from '../hooks/useWebsiteLiveOrigin'
 import { minContainerHeightForDesignerKind } from '../document/layout'
@@ -83,6 +88,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const embedParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const dispatch = useAppDispatch()
   const { toast } = useToast()
+  const revert = useWebsiteLibraryRevert()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const user = useAppSelector((s) => s.auth.user)
   const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
@@ -105,6 +111,8 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const lockedDocument = Boolean(
     feature.detail && feature.detail.id === id && feature.detail.isLocked,
   )
+  const sourceLibraryId =
+    feature.detail && feature.detail.id === id ? feature.detail.sourceLibraryId : null
   const [document, setDocument] = useState<WebsiteDocumentV1>(emptyWebsiteDocument())
   const [saved, setSaved] = useState(() => JSON.stringify(emptyWebsiteDocument()))
   const [mode, setMode] = useState<DesignerMode>('edit')
@@ -787,6 +795,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           <h1 className="min-w-0 shrink truncate text-sm font-semibold text-foreground md:text-base">
             {name ?? t('designer')}
           </h1>
+          <WebsiteLibrarySourceTag sourceLibraryId={sourceLibraryId} />
           <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scrollbar-themed">
             <div className="flex shrink-0 items-center gap-2">
               <SegmentedSwitch
@@ -838,6 +847,13 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                   </SegmentedSwitchItem>
                 ))}
               </SegmentedSwitch>
+              {canManage && sourceLibraryId && id && !lockedDocument ? (
+                <WebsiteLibraryDownloadUpdateButton
+                  size="sm"
+                  disabled={revert.reverting}
+                  onClick={() => revert.ask({ kind, id, name: name ?? t('designer') })}
+                />
+              ) : null}
               {canManage ? (
                 <Button type="button" size="sm" onClick={save} disabled={lockedDocument || feature.detailStatus === 'saving'}>
                   {feature.detailStatus === 'saving' ? t('saving') : t('save')}
@@ -1135,6 +1151,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         }}
         onSubmit={handleSaveAsPreset}
       />
+      {revert.dialog}
     </div>
   )
 }

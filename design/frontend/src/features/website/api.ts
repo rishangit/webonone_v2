@@ -16,7 +16,10 @@ import type {
   WebsiteDatasetStatus,
   WebsiteSiteSettings,
   WebsiteTheme,
+  WebsiteButtonLibraryItem,
+  WebsiteColorLibraryItem,
   WebsiteFontLibraryItem,
+  WebsiteTextLibraryItem,
 } from './types'
 
 type ListQuery = { page?: number; pageSize?: number; q?: string; status?: string }
@@ -317,6 +320,91 @@ export const websiteApi = {
     })
     return data.item
   },
+  async updateFontLibrary(id: string, body: { name: string; googleFontUrl: string; family: string }) {
+    const data = await apiClient<{ item: WebsiteFontLibraryItem }>(
+      `/website/font-library/${encodeURIComponent(id)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    )
+    return data.item
+  },
+  deleteFontLibrary(id: string) {
+    return apiClient<void>(`/website/font-library/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  },
+
+  listColorLibrary(query: ListQuery = {}) {
+    return apiClient<PaginatedResult<WebsiteColorLibraryItem>>(`/website/color-library${toQueryString(query)}`)
+  },
+  async createColorLibrary(body: { name: string; palette: WebsiteColorLibraryItem['palette'] }) {
+    const data = await apiClient<{ item: WebsiteColorLibraryItem }>('/website/color-library', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.item
+  },
+  async updateColorLibrary(id: string, body: { name: string; palette: WebsiteColorLibraryItem['palette'] }) {
+    const data = await apiClient<{ item: WebsiteColorLibraryItem }>(
+      `/website/color-library/${encodeURIComponent(id)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    )
+    return data.item
+  },
+  deleteColorLibrary(id: string) {
+    return apiClient<void>(`/website/color-library/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  },
+
+  listTextLibrary(query: ListQuery = {}) {
+    return apiClient<PaginatedResult<WebsiteTextLibraryItem>>(`/website/text-library${toQueryString(query)}`)
+  },
+  async getTextLibrary(id: string) {
+    const data = await apiClient<{ item: WebsiteTextLibraryItem }>(
+      `/website/text-library/${encodeURIComponent(id)}`,
+    )
+    return data.item
+  },
+  async createTextLibrary(body: { name: string; definition: WebsiteTextLibraryItem['definition'] }) {
+    const data = await apiClient<{ item: WebsiteTextLibraryItem }>('/website/text-library', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.item
+  },
+  async updateTextLibrary(id: string, body: { name: string; definition: WebsiteTextLibraryItem['definition'] }) {
+    const data = await apiClient<{ item: WebsiteTextLibraryItem }>(
+      `/website/text-library/${encodeURIComponent(id)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    )
+    return data.item
+  },
+  deleteTextLibrary(id: string) {
+    return apiClient<void>(`/website/text-library/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  },
+
+  listButtonLibrary(query: ListQuery = {}) {
+    return apiClient<PaginatedResult<WebsiteButtonLibraryItem>>(`/website/button-library${toQueryString(query)}`)
+  },
+  async getButtonLibrary(id: string) {
+    const data = await apiClient<{ item: WebsiteButtonLibraryItem }>(
+      `/website/button-library/${encodeURIComponent(id)}`,
+    )
+    return data.item
+  },
+  async createButtonLibrary(body: { name: string; definition: WebsiteButtonLibraryItem['definition'] }) {
+    const data = await apiClient<{ item: WebsiteButtonLibraryItem }>('/website/button-library', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+    return data.item
+  },
+  async updateButtonLibrary(id: string, body: { name: string; definition: WebsiteButtonLibraryItem['definition'] }) {
+    const data = await apiClient<{ item: WebsiteButtonLibraryItem }>(
+      `/website/button-library/${encodeURIComponent(id)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    )
+    return data.item
+  },
+  deleteButtonLibrary(id: string) {
+    return apiClient<void>(`/website/button-library/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  },
 
   listThemes(query: ListQuery = {}) {
     return websiteClient<PaginatedResult<WebsiteTheme>>(`/website-themes${toQueryString(query)}`)
@@ -354,6 +442,14 @@ export const websiteApi = {
         path: 'path' in item && typeof item.path === 'string' ? item.path : undefined,
       })),
     }))
+  },
+
+  revertLibraryCopy(kind: WebsiteLibraryKind, id: string) {
+    const path =
+      kind === 'themes'
+        ? `/website-themes/${encodeURIComponent(id)}/revert-library`
+        : `/website/${kind}/${encodeURIComponent(id)}/revert-library`
+    return apiClient<unknown>(path, { method: 'POST' })
   },
 
   copyFromLibrary(kind: WebsiteLibraryKind, libraryId: string) {

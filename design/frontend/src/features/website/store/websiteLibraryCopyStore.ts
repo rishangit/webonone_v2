@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { createPaginatedFeatureStore } from '@webonone/store-kit'
 import { ofType, type Epic } from 'redux-observable'
-import { from, of } from 'rxjs'
+import { from, merge, of } from 'rxjs'
 import { catchError, exhaustMap, mergeMap } from 'rxjs/operators'
 import { websiteApi, type WebsiteLibraryBrowseItem, type WebsiteLibraryKind } from '../api'
 import {
@@ -23,9 +23,17 @@ type CopyState = {
   status: 'idle' | 'saving' | 'succeeded' | 'error'
   error: string | null
   kind: WebsiteLibraryKind | null
+  revertStatus: 'idle' | 'saving' | 'succeeded' | 'error'
+  revertError: string | null
 }
 
-const initialState: CopyState = { status: 'idle', error: null, kind: null }
+const initialState: CopyState = {
+  status: 'idle',
+  error: null,
+  kind: null,
+  revertStatus: 'idle',
+  revertError: null,
+}
 
 export const websiteLibraryCopySlice = createSlice({
   name: 'websiteLibraryCopy',
@@ -48,6 +56,22 @@ export const websiteLibraryCopySlice = createSlice({
       state.status = 'idle'
       state.error = null
       state.kind = null
+    },
+    revertRequested(state, _action: PayloadAction<{ kind: WebsiteLibraryKind; id: string }>) {
+      state.revertStatus = 'saving'
+      state.revertError = null
+    },
+    revertSucceeded(state) {
+      state.revertStatus = 'succeeded'
+      state.revertError = null
+    },
+    revertFailed(state, action: PayloadAction<string>) {
+      state.revertStatus = 'error'
+      state.revertError = action.payload
+    },
+    revertReset(state) {
+      state.revertStatus = 'idle'
+      state.revertError = null
     },
   },
 })
@@ -87,7 +111,51 @@ const copyEpic: Epic = (action$) =>
     }),
   )
 
-export const websiteLibraryCopyEpics = copyEpic
+function refreshDetail(kind: WebsiteLibraryKind, id: string) {
+  const request = { id, force: true } as const
+  switch (kind) {
+    case 'pages':
+      return websitePagesActions.fetchDetailRequested(request)
+    case 'headers':
+      return websiteHeadersActions.fetchDetailRequested(request)
+    case 'footers':
+      return websiteFootersActions.fetchDetailRequested(request)
+    case 'layouts':
+      return websiteLayoutsActions.fetchDetailRequested(request)
+    case 'presets':
+      return websitePresetsActions.fetchDetailRequested(request)
+    case 'themes':
+      return websiteThemesActions.fetchDetailRequested(request)
+  }
+}
+
+const revertEpic: Epic = (action$) =>
+  action$.pipe(
+    ofType(websiteLibraryCopyActions.revertRequested.type),
+    exhaustMap((action) => {
+      const { kind, id } = (action as ReturnType<typeof websiteLibraryCopyActions.revertRequested>).payload
+      return from(websiteApi.revertLibraryCopy(kind, id)).pipe(
+        mergeMap(() =>
+          of(
+            websiteLibraryCopyActions.revertSucceeded(),
+            reloadList(kind),
+            refreshDetail(kind, id),
+            ...(kind === 'layouts'
+              ? [
+                  websiteHeadersActions.loadListRequested({ force: true, page: 1 }),
+                  websiteFootersActions.loadListRequested({ force: true, page: 1 }),
+                  websiteThemesActions.loadListRequested({ force: true, page: 1 }),
+                ]
+              : []),
+          ),
+        ),
+        catchError((err: Error) => of(websiteLibraryCopyActions.revertFailed(err.message))),
+      )
+    }),
+  )
+
+export const websiteLibraryCopyEpics: Epic = (action$, state$, dependencies) =>
+  merge(copyEpic(action$, state$, dependencies), revertEpic(action$, state$, dependencies))
 
 export const websiteLibraryBrowseStore = createPaginatedFeatureStore<WebsiteLibraryBrowseItem>({
   name: 'websiteLibraryBrowse',

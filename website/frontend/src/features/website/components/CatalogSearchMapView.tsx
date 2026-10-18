@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ItemListEmpty } from '@webonone/ui-kit'
 import type { CatalogSearchItem } from '@/features/catalog/types/catalog.types'
+import { publicCatalogItemPath } from '@/features/catalog/utils/publicCatalogItemPath'
 import type { UserLocationCoords } from '@/features/website/hooks/useUserLocation'
 import { getGoogleMapsApiKey } from '@/features/website/utils/googleMapsConfig'
 
@@ -161,7 +162,7 @@ function infoWindowHtml(
     item.distanceKm != null
       ? `<div style="margin-top:4px;color:#666;font-size:12px">${formatDistanceKm(item.distanceKm, t)}</div>`
       : ''
-  const detailHref = `/catalog/${encodeURIComponent(item.kind)}/${encodeURIComponent(item.id)}`
+  const detailHref = publicCatalogItemPath(item.companyId, item.kind, item.id)
   return `<div style="max-width:220px;padding:2px 0">
     <div style="font-weight:600;font-size:13px">${escapeHtml(item.name)}</div>
     <div style="color:#555;font-size:12px;margin-top:2px">${escapeHtml(item.companyName)}</div>
