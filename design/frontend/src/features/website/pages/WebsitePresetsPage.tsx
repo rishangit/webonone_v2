@@ -91,7 +91,7 @@ export function WebsitePresetsPage() {
             onSearchChange={list.setQ}
             searchPlaceholder={t('searchPresets')}
             searchAriaLabel={t('searchPresets')}
-            canManage={canManage}
+            canManage={user?.role === 'super_admin'}
             addLabel={t('addPreset')}
             onAdd={() => setDialog({})}
             compactAddLabel={tc('add')}

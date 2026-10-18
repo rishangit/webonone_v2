@@ -43,7 +43,7 @@ export function WebsitePagesScreen() {
   const { t: tc } = useTranslation('common')
   const router = useRouter()
   const { toast } = useToast()
-  const { canManage, hasCompany } = useDesignPermissions()
+  const { canManage, hasCompany, isSuperAdmin } = useDesignPermissions()
   const [dialog, setDialog] = useState<{ initial?: PageMetaValues; id?: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [dialogError, setDialogError] = useState<string | null>(null)
@@ -139,7 +139,7 @@ export function WebsitePagesScreen() {
             onPress={() => setFilterOpen(true)}
             accessibilityLabel={t('filterPages')}
           />
-          {canManage ? (
+          {isSuperAdmin ? (
             <ListAddButton compactLabel={tc('add')} onPress={() => setDialog({})}>
               {t('addPage')}
             </ListAddButton>

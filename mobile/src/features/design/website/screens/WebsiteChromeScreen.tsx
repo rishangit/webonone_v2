@@ -33,7 +33,7 @@ export function WebsiteChromeScreen({ kind }: { kind: 'headers' | 'footers' }) {
   const { t: tc } = useTranslation('common')
   const router = useRouter()
   const { toast } = useToast()
-  const { canManage, hasCompany } = useDesignPermissions()
+  const { canManage, hasCompany, isSuperAdmin } = useDesignPermissions()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [dialogError, setDialogError] = useState<string | null>(null)
@@ -121,7 +121,7 @@ export function WebsiteChromeScreen({ kind }: { kind: 'headers' | 'footers' }) {
             onClear={list.searchQuery ? () => list.setSearchQuery('') : undefined}
             accessibilityLabel={searchPlaceholder}
           />
-          {canManage ? (
+          {isSuperAdmin ? (
             <ListAddButton compactLabel={tc('add')} onPress={() => setDialogOpen(true)}>
               {addLabel}
             </ListAddButton>

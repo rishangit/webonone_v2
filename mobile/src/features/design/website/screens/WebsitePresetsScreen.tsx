@@ -32,7 +32,7 @@ export function WebsitePresetsScreen() {
   const { t: tc } = useTranslation('common')
   const router = useRouter()
   const { toast } = useToast()
-  const { canManage, hasCompany } = useDesignPermissions()
+  const { canManage, hasCompany, isSuperAdmin } = useDesignPermissions()
   const [dialog, setDialog] = useState<{ id?: string; initialName?: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [dialogError, setDialogError] = useState<string | null>(null)
@@ -106,7 +106,7 @@ export function WebsitePresetsScreen() {
             onClear={list.searchQuery ? () => list.setSearchQuery('') : undefined}
             accessibilityLabel={t('searchPresets')}
           />
-          {canManage ? (
+          {isSuperAdmin ? (
             <ListAddButton compactLabel={tc('add')} onPress={() => setDialog({})}>
               {t('addPreset')}
             </ListAddButton>

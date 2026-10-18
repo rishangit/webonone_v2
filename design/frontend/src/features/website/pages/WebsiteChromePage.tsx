@@ -92,7 +92,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
             onSearchChange={list.setQ}
             searchPlaceholder={kind === 'headers' ? t('searchHeaders') : t('searchFooters')}
             searchAriaLabel={kind === 'headers' ? t('searchHeaders') : t('searchFooters')}
-            canManage={canManage}
+            canManage={user?.role === 'super_admin'}
             addLabel={kind === 'headers' ? t('addHeader') : t('addFooter')}
             onAdd={() => setDialogOpen(true)}
             compactAddLabel={tc('add')}

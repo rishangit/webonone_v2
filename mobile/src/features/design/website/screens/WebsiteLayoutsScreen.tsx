@@ -30,7 +30,7 @@ export function WebsiteLayoutsScreen() {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const { toast } = useToast()
-  const { canManage, hasCompany } = useDesignPermissions()
+  const { canManage, hasCompany, isSuperAdmin } = useDesignPermissions()
   const [dialog, setDialog] = useState<{ initial?: LayoutMetaValues; id?: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [dialogError, setDialogError] = useState<string | null>(null)
@@ -138,7 +138,7 @@ export function WebsiteLayoutsScreen() {
             onClear={list.searchQuery ? () => list.setSearchQuery('') : undefined}
             accessibilityLabel={t('searchLayouts')}
           />
-          {canManage ? (
+          {isSuperAdmin ? (
             <ListAddButton compactLabel={tc('add')} onPress={() => setDialog({})}>
               {t('addLayout')}
             </ListAddButton>

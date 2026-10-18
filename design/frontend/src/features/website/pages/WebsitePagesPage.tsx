@@ -190,7 +190,7 @@ export function WebsitePagesPage() {
 
             filterAriaLabel={t('filterPages')}
 
-            canManage={canManage}
+            canManage={user?.role === 'super_admin'}
 
             addLabel={t('addPage')}
 

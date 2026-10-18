@@ -8,7 +8,7 @@ summary: "Create named header, footer, and theme shells and assign pages so Home
 ---
 
 1. Open **Website → Layouts**.
-2. Add a layout. Give it a name, pick a **header**, **footer**, and **theme**, and optionally mark it as the default.
+2. Copy a layout with **Duplicate** or **Add from library**, then give the copy a name, pick a **header**, **footer**, and **theme**, and optionally mark it as the default. The blank **Add layout** button is only for Super Admin.
 3. On each **page**, choose that layout (Home and About can share Main; Help can use a different layout).
 4. On the layout, use **Menu order** to set the order of links in the header nav.
 

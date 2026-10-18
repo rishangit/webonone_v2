@@ -8,7 +8,7 @@ summary: "Save reusable content-element layouts and insert them while designing 
 ---
 
 1. Open **Website → Presets**.
-2. Add a preset, give it a name, then design it in the same webpage designer used for pages (content elements and add-ons).
+2. Copy a preset with **Duplicate** or **Add from library**, give it a name, then design it in the same webpage designer used for pages (content elements and add-ons). The blank **Add preset** button is only for Super Admin.
 3. Save the preset.
 4. Or, in a page, header, or footer designer, open a content element’s menu and choose **Save as preset** (unavailable while you are already editing a preset).
 5. In a page, header, or footer designer, select a content element and click **Add add-on**.

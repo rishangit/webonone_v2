@@ -92,7 +92,7 @@ export function WebsiteLayoutsPage() {
             onSearchChange={list.setQ}
             searchPlaceholder={t('searchLayouts')}
             searchAriaLabel={t('searchLayouts')}
-            canManage={canManage}
+            canManage={user?.role === 'super_admin'}
             addLabel={t('addLayout')}
             onAdd={() => setDialog({})}
             compactAddLabel={tc('add')}
