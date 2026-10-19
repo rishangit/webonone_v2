@@ -1,4 +1,4 @@
-import { Pressable, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import {
   ImagePreview,
   ItemList,
@@ -24,7 +24,7 @@ export function PendingCompaniesList({ items, onOpen }: PendingCompaniesListProp
     return <ItemListEmpty>{t('pendingCompaniesEmpty')}</ItemListEmpty>
   }
 
-  return (
+  const list = (
     <ItemList>
       {items.map((item) => (
         <ItemListItem key={item.id}>
@@ -41,5 +41,13 @@ export function PendingCompaniesList({ items, onOpen }: PendingCompaniesListProp
         </ItemListItem>
       ))}
     </ItemList>
+  )
+
+  if (items.length <= 3) return list
+
+  return (
+    <ScrollView className="max-h-[16.5rem]" nestedScrollEnabled>
+      {list}
+    </ScrollView>
   )
 }

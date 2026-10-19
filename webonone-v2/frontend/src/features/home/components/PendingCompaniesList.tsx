@@ -24,7 +24,7 @@ export function PendingCompaniesList({ items }: PendingCompaniesListProps) {
     return <ItemListEmpty>{t('pendingCompaniesEmpty')}</ItemListEmpty>
   }
 
-  return (
+  const list = (
     <ItemList>
       {items.map((item) => (
         <ItemListItem key={item.id}>
@@ -57,4 +57,8 @@ export function PendingCompaniesList({ items }: PendingCompaniesListProps) {
       ))}
     </ItemList>
   )
+
+  if (items.length <= 3) return list
+
+  return <div className="max-h-[16.5rem] overflow-y-auto scrollbar-themed">{list}</div>
 }

@@ -17,12 +17,10 @@ import { DashboardEventList } from '@/features/home/components/DashboardEventLis
 import { PendingCompaniesList } from '@/features/home/components/PendingCompaniesList'
 import {
   homeDashboardActions,
-  selectCompanyStatusCounts,
   selectPendingCompanies,
   selectTodayOccurrences,
   selectUpcomingOccurrences,
 } from '@/features/home/store'
-import { StatCard } from '@/shared/components/StatCard'
 import {
   dashboardEventAudience,
   dashboardOccurrenceRange,
@@ -59,12 +57,11 @@ export function HomePage() {
 
   const isSuperAdmin = activeRole === 'super_admin'
   const canBrowse = canBrowseCalendar(activeRole)
-  const canViewSmsCredits = activeRole === 'company_admin' || isSuperAdmin
+  const canViewSmsCredits = activeRole === 'company_admin'
   const audience = dashboardEventAudience(activeRole, activeCompanyId)
   const range = dashboardOccurrenceRange()
   const todayItems = selectTodayOccurrences(items, range.today)
   const upcomingItems = selectUpcomingOccurrences(items, range.today)
-  const statusCounts = selectCompanyStatusCounts(companies)
   const pendingCompanies = selectPendingCompanies(companies)
   const awaitingFirstLoad = canBrowse && lastFetchedAt === null && !error
   const awaitingCompanies = isSuperAdmin && companiesLastFetchedAt === null && !companiesError
@@ -104,26 +101,14 @@ export function HomePage() {
       ) : null}
 
       {isSuperAdmin ? (
-        <div className="grid items-start gap-6 lg:grid-cols-3">
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <StatCard title={t('statusPending')} value={statusCounts.pending} />
-              <StatCard title={t('statusApproved')} value={statusCounts.approved} />
-              <StatCard title={t('statusRejected')} value={statusCounts.rejected} />
-            </div>
-            <Card variant="list">
-              <CardHeader>
-                <CardTitle className="text-lg">{t('pendingCompaniesTitle')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!awaitingCompanies ? <PendingCompaniesList items={pendingCompanies} /> : null}
-              </CardContent>
-            </Card>
-          </div>
-          <div className="flex flex-col gap-6 lg:col-span-1">
-            {canViewSmsCredits ? <SmsCreditsFrame /> : null}
-          </div>
-        </div>
+        <Card variant="list">
+          <CardHeader>
+            <CardTitle className="text-lg">{t('pendingCompaniesTitle')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!awaitingCompanies ? <PendingCompaniesList items={pendingCompanies} /> : null}
+          </CardContent>
+        </Card>
       ) : null}
 
       {!isSuperAdmin && (audience || canViewSmsCredits) ? (

@@ -13,9 +13,6 @@
   "staffName": "{{name}}",
   "metaWithAttendee": "{{staff}} · {{attendee}}",
   "smsCreditsFrameTitle": "SMS ණය ඒකක",
-  "statusPending": "බලා සිටින",
-  "statusApproved": "අනුමත",
-  "statusRejected": "ප්‍රතික්ෂේප",
   "pendingCompaniesTitle": "බලා සිටින සමාගම්",
   "pendingCompaniesEmpty": "බලා සිටින සමාගම් නැත."
 }

@@ -145,18 +145,6 @@ export function selectUpcomingOccurrences(
     .slice(0, DASHBOARD_UPCOMING_LIMIT)
 }
 
-export function selectCompanyStatusCounts(companies: DashboardCompany[]): {
-  pending: number
-  approved: number
-  rejected: number
-} {
-  return {
-    pending: companies.filter((item) => item.status === 'pending').length,
-    approved: companies.filter((item) => item.status === 'approved').length,
-    rejected: companies.filter((item) => item.status === 'rejected').length,
-  }
-}
-
 export function selectPendingCompanies(companies: DashboardCompany[]): DashboardCompany[] {
   return companies
     .filter((item) => item.status === 'pending')

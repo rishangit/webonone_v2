@@ -1,7 +1,6 @@
 export {
   homeDashboardReducer,
   homeDashboardActions,
-  selectCompanyStatusCounts,
   selectPendingCompanies,
   selectTodayOccurrences,
   selectUpcomingOccurrences,

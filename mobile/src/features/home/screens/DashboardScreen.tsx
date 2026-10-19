@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { View } from 'react-native'
 import { useRouter, type Href } from 'expo-router'
 import {
   Alert,
@@ -29,7 +28,6 @@ import { eventsApi } from '@/features/calendar/services/eventsApi'
 import type { CompanyEventOccurrence } from '@/features/calendar/types/event.types'
 import { canBrowseCalendar } from '@/features/calendar/utils/calendarAccess'
 import { sessionDetailPath } from '@/features/calendar/utils/calendarPaths'
-import { StatCard } from '@/shared/components/StatCard'
 import { formatCalendarYmd } from '@/shared/utils/formatDisplayDate'
 
 function emptyTodayMessage(audience: DashboardEventAudience, t: (key: string) => string): string {
@@ -123,11 +121,6 @@ export function DashboardScreen() {
   const pendingCompanies = companies
     .filter((item) => item.status === 'pending')
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  const statusCounts = {
-    pending: companies.filter((item) => item.status === 'pending').length,
-    approved: companies.filter((item) => item.status === 'approved').length,
-    rejected: companies.filter((item) => item.status === 'rejected').length,
-  }
 
   function openSession(item: CompanyEventOccurrence) {
     router.push(sessionDetailPath(item.id, item.occurrenceDate) as Href)
@@ -144,20 +137,13 @@ export function DashboardScreen() {
       {awaitingFirstLoad || awaitingCompanies ? <Spinner label={t('loading')} /> : null}
 
       {isSuperAdmin && !awaitingCompanies ? (
-        <>
-          <View className="flex-row flex-wrap gap-3">
-            <StatCard title={t('statusPending')} value={statusCounts.pending} />
-            <StatCard title={t('statusApproved')} value={statusCounts.approved} />
-            <StatCard title={t('statusRejected')} value={statusCounts.rejected} />
-          </View>
-          <Card className="gap-2">
-            <Subheading>{t('pendingCompaniesTitle')}</Subheading>
-            <PendingCompaniesList
-              items={pendingCompanies}
-              onOpen={(companyId) => router.push(`/companies/${companyId}` as Href)}
-            />
-          </Card>
-        </>
+        <Card className="gap-2">
+          <Subheading>{t('pendingCompaniesTitle')}</Subheading>
+          <PendingCompaniesList
+            items={pendingCompanies}
+            onOpen={(companyId) => router.push(`/companies/${companyId}` as Href)}
+          />
+        </Card>
       ) : null}
 
       {audience && !isSuperAdmin && !awaitingFirstLoad ? (
