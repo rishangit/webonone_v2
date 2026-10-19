@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { nanoid } from 'nanoid'
@@ -14,14 +14,6 @@ import {
 import {
   Button,
   CustomDialog,
-  Form,
-  FormField,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   mapZodIssuesToFieldErrors,
   useToast,
 } from '@webonone/ui-kit'
@@ -38,7 +30,10 @@ import type { WebsiteButtonLibraryItem } from '../types'
 import {
   findColorOptionId,
   flattenColorLibraryPalettes,
-  type FlattenedLibraryColor,
+  formatPaletteScopedColorLabel,
+  inferLibraryPaletteId,
+  libraryPaletteColorValues,
+  remapLibraryColorOptionId,
 } from '../utils/colorLibraryPalette'
 import { buttonLabelTypography } from '../document/theme'
 import {
@@ -47,17 +42,15 @@ import {
   finalizeElementCustomization,
   hasElementCustomization,
   normalizeWebsiteElementCustomization,
+  withPaletteColors,
 } from '../utils/websiteElementCustomization'
+import { ButtonStyleBasicSettingsFields } from './ButtonStyleBasicSettingsFields'
 import { WebsiteElementCustomizationPreview } from './WebsiteElementCustomizationPreview'
 import {
   WebsiteElementEditorTabs,
   type WebsiteElementEditorTab,
 } from './WebsiteElementEditorTabs'
 import { WEBSITE_PAGE_DIALOG_SIZE } from './WebsiteEntityDialogs'
-
-function colorOptionLabel(color: FlattenedLibraryColor, slotLabel: string) {
-  return `${color.paletteName} · ${slotLabel} (${color.value})`
-}
 
 function buttonLibraryDialogPath(itemId?: string, tab?: WebsiteElementEditorTab) {
   const path = itemId
@@ -96,10 +89,10 @@ export function ButtonLibraryAddDialog({
   const colorOptions = useMemo(() => flattenColorLibraryPalettes(colorLibrary.items), [colorLibrary.items])
   const [name, setName] = useState('')
   const [fontId, setFontId] = useState('')
+  const [colorPaletteId, setColorPaletteId] = useState('')
   const [backgroundColorId, setBackgroundColorId] = useState('')
   const [textColorId, setTextColorId] = useState('')
   const [borderColorId, setBorderColorId] = useState('')
-  const [labelColorId, setLabelColorId] = useState('')
   const [textSize, setTextSize] = useState(18)
   const [borderWidth, setBorderWidth] = useState(0)
   const [radius, setRadius] = useState(6)
@@ -131,15 +124,27 @@ export function ButtonLibraryAddDialog({
     onCancel: () => onOpenChange(false),
   })
 
+  const editSessionRef = useRef<string | null>(null)
+
   useEffect(() => {
     if (!open && chrome === 'dialog') return
+    if (!open) {
+      editSessionRef.current = null
+      return
+    }
+
+    const sessionKey = `${item?.id ?? 'create'}:${initialTab ?? 'preview'}`
+    if (editSessionRef.current === sessionKey) return
+    editSessionRef.current = sessionKey
+
     const next = item?.definition
+
     setName(item?.name ?? '')
     setFontId('')
+    setColorPaletteId('')
     setBackgroundColorId('')
     setTextColorId('')
     setBorderColorId('')
-    setLabelColorId('')
     setTextSize(next?.textSize ?? 18)
     setBorderWidth(next?.borderWidth ?? 0)
     setRadius(next?.radius ?? 6)
@@ -153,22 +158,48 @@ export function ButtonLibraryAddDialog({
     dispatch(websiteButtonLibraryUpdateActions.updateReset())
     dispatch(websiteFontLibraryActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
     dispatch(websiteColorLibraryActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
-  }, [chrome, dispatch, initialTab, item, open])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when the edit session opens, not when the list refreshes the same item
+  }, [chrome, dispatch, initialTab, item?.id, open])
 
   useEffect(() => {
-    if (!item) return
+    if (open && !item && !colorPaletteId && colorLibrary.items[0]) {
+      setColorPaletteId(colorLibrary.items[0].id)
+    }
+    if (!open || !item?.id) return
+    if (editSessionRef.current !== `${item.id}:${initialTab ?? 'preview'}`) return
+    if (fontId && backgroundColorId && textColorId && borderColorId) return
     const d = item.definition
     const font = fonts.items.find(
       (entry) => entry.googleFontUrl === d.textGoogleFontUrl || entry.family === d.textFontFamily,
     )
-    if (font) setFontId(font.id)
+    if (font && !fontId) setFontId(font.id)
     if (colorOptions.length > 0) {
-      setBackgroundColorId(findColorOptionId(d.backgroundColorValue, colorOptions))
-      setTextColorId(findColorOptionId(d.textColorValue, colorOptions))
-      setBorderColorId(findColorOptionId(d.borderColorValue, colorOptions))
-      setLabelColorId(findColorOptionId(d.labelColorValue, colorOptions))
+      const nextBackground = backgroundColorId || findColorOptionId(d.backgroundColorValue, colorOptions)
+      const nextText =
+        textColorId ||
+        findColorOptionId(d.labelColorValue, colorOptions) ||
+        findColorOptionId(d.textColorValue, colorOptions)
+      const nextBorder = borderColorId || findColorOptionId(d.borderColorValue, colorOptions)
+      if (!backgroundColorId) setBackgroundColorId(nextBackground)
+      if (!textColorId) setTextColorId(nextText)
+      if (!borderColorId) setBorderColorId(nextBorder)
+      if (!colorPaletteId) {
+        setColorPaletteId(inferLibraryPaletteId(colorOptions, [nextBackground, nextText, nextBorder]))
+      }
     }
-  }, [colorOptions, fonts.items, item])
+  }, [
+    backgroundColorId,
+    borderColorId,
+    colorLibrary.items,
+    colorOptions,
+    colorPaletteId,
+    fontId,
+    fonts.items,
+    initialTab,
+    item,
+    open,
+    textColorId,
+  ])
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
@@ -217,11 +248,14 @@ export function ButtonLibraryAddDialog({
     const background = colorOptions.find((entry) => entry.optionId === backgroundColorId)
     const textColor = colorOptions.find((entry) => entry.optionId === textColorId)
     const borderColor = colorOptions.find((entry) => entry.optionId === borderColorId)
-    const labelColor = colorOptions.find((entry) => entry.optionId === labelColorId)
-    if (!font || !background || !textColor || !borderColor || !labelColor) {
-      setFieldErrors({ library: t('pickButtonLibraryFieldsRequired') })
+    if (!font || !background || !textColor || !borderColor) {
+      const message = t('pickButtonLibraryFieldsRequired')
+      setFieldErrors({ library: message })
+      setElementTab('general')
+      toast({ title: t('saveFailed'), description: message, variant: 'destructive' })
       return
     }
+    const textColorName = `${textColor.paletteName} (${t('paletteColorSlot', { index: textColor.slot })})`
     const finalizedCustomization = finalizeElementCustomization(
       customization,
       defaultElementHtml('button', scopeId, {
@@ -240,7 +274,7 @@ export function ButtonLibraryAddDialog({
       definition: {
         backgroundColorName: `${background.paletteName} (${t('paletteColorSlot', { index: background.slot })})`,
         backgroundColorValue: background.value,
-        textColorName: `${textColor.paletteName} (${t('paletteColorSlot', { index: textColor.slot })})`,
+        textColorName,
         textColorValue: textColor.value,
         borderColorName: `${borderColor.paletteName} (${t('paletteColorSlot', { index: borderColor.slot })})`,
         borderColorValue: borderColor.value,
@@ -251,13 +285,20 @@ export function ButtonLibraryAddDialog({
         textGoogleFontUrl: font.googleFontUrl,
         textFontFamily: font.family,
         textSize,
-        labelColorName: `${labelColor.paletteName} (${t('paletteColorSlot', { index: labelColor.slot })})`,
-        labelColorValue: labelColor.value,
+        labelColorName: textColorName,
+        labelColorValue: textColor.value,
         ...(hasElementCustomization(finalizedCustomization) ? { customization: finalizedCustomization } : {}),
       },
     })
     if (!parsed.success) {
-      setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
+      const errors = mapZodIssuesToFieldErrors(parsed.error.issues)
+      setFieldErrors(errors)
+      setElementTab('general')
+      toast({
+        title: t('saveFailed'),
+        description: Object.values(errors)[0] ?? t('buttonLibrarySaveFailed'),
+        variant: 'destructive',
+      })
       return
     }
     setFieldErrors({})
@@ -288,128 +329,81 @@ export function ButtonLibraryAddDialog({
     fontFamily: font?.family ?? 'inherit',
     fontSize: textSize,
   }
-  const elementVisual = {
-    background: previewBaseStyle.background,
-    color: previewBaseStyle.color,
-    border: previewBaseStyle.border,
-    borderRadius: previewBaseStyle.borderRadius,
-    fontFamily: previewBaseStyle.fontFamily,
-    fontSize: previewBaseStyle.fontSize,
-    lineHeight: 1,
-  }
+  const elementVisual = withPaletteColors(
+    {
+      background: previewBaseStyle.background,
+      color: previewBaseStyle.color,
+      border: previewBaseStyle.border,
+      borderRadius: previewBaseStyle.borderRadius,
+      fontFamily: previewBaseStyle.fontFamily,
+      fontSize: previewBaseStyle.fontSize,
+      lineHeight: 1,
+    },
+    libraryPaletteColorValues(colorLibrary.items, colorPaletteId),
+  )
   const defaultHtml = defaultElementHtml('button', scopeId, elementVisual)
 
   const generalFields = (
-    <Form className="space-y-4">
-      <FormField label={t('styleName')} htmlFor="library-button-name" required error={fieldErrors.name}>
-        <Input id="library-button-name" value={name} onChange={(event) => setName(event.target.value)} />
-      </FormField>
-      {fieldErrors.library ? (
-        <p className="text-sm text-destructive" role="alert">{fieldErrors.library}</p>
-      ) : null}
-      <FormField label={t('fontType')} htmlFor="library-button-font" required>
-        <Select value={fontId} onValueChange={setFontId}>
-          <SelectTrigger id="library-button-font">
-            <SelectValue placeholder={t('pickFontRequired')} />
-          </SelectTrigger>
-          <SelectContent>
-            {fonts.items.map((fontItem) => (
-              <SelectItem key={fontItem.id} value={fontItem.id}>
-                {fontItem.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormField>
-      <FormField label={t('backgroundColor')} htmlFor="library-button-bg" required>
-        <Select value={backgroundColorId} onValueChange={setBackgroundColorId}>
-          <SelectTrigger id="library-button-bg">
-            <SelectValue placeholder={t('pickColorRequired')} />
-          </SelectTrigger>
-          <SelectContent>
-            {colorOptions.map((color) => (
-              <SelectItem key={color.optionId} value={color.optionId}>
-                {colorOptionLabel(color, t('paletteColorSlot', { index: color.slot }))}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormField>
-      <FormField label={t('textColor')} htmlFor="library-button-text" required>
-        <Select value={textColorId} onValueChange={setTextColorId}>
-          <SelectTrigger id="library-button-text">
-            <SelectValue placeholder={t('pickColorRequired')} />
-          </SelectTrigger>
-          <SelectContent>
-            {colorOptions.map((color) => (
-              <SelectItem key={color.optionId} value={color.optionId}>
-                {colorOptionLabel(color, t('paletteColorSlot', { index: color.slot }))}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormField>
-      <FormField label={t('labelTextColor')} htmlFor="library-button-label" required>
-        <Select value={labelColorId} onValueChange={setLabelColorId}>
-          <SelectTrigger id="library-button-label">
-            <SelectValue placeholder={t('pickColorRequired')} />
-          </SelectTrigger>
-          <SelectContent>
-            {colorOptions.map((color) => (
-              <SelectItem key={color.optionId} value={color.optionId}>
-                {colorOptionLabel(color, t('paletteColorSlot', { index: color.slot }))}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormField>
-      <FormField label={t('borderColor')} htmlFor="library-button-border" required>
-        <Select value={borderColorId} onValueChange={setBorderColorId}>
-          <SelectTrigger id="library-button-border">
-            <SelectValue placeholder={t('pickColorRequired')} />
-          </SelectTrigger>
-          <SelectContent>
-            {colorOptions.map((color) => (
-              <SelectItem key={color.optionId} value={color.optionId}>
-                {colorOptionLabel(color, t('paletteColorSlot', { index: color.slot }))}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormField>
-      <div className="grid grid-cols-3 gap-3">
-        <FormField label={t('textSize')} htmlFor="library-button-size">
-          <Input
-            id="library-button-size"
-            type="number"
-            min={8}
-            max={200}
-            value={textSize}
-            onChange={(event) => setTextSize(Number(event.target.value) || 18)}
-          />
-        </FormField>
-        <FormField label={t('borderWidth')} htmlFor="library-button-border-width">
-          <Input
-            id="library-button-border-width"
-            type="number"
-            min={0}
-            max={16}
-            value={borderWidth}
-            onChange={(event) => setBorderWidth(Number(event.target.value) || 0)}
-          />
-        </FormField>
-        <FormField label={t('radius')} htmlFor="library-button-radius">
-          <Input
-            id="library-button-radius"
-            type="number"
-            min={0}
-            max={999}
-            value={radius}
-            onChange={(event) => setRadius(Number(event.target.value) || 0)}
-          />
-        </FormField>
-      </div>
-    </Form>
+    <ButtonStyleBasicSettingsFields
+      mode="edit"
+      idPrefix="library-button"
+      values={{
+        name,
+        fontId,
+        colorPaletteId,
+        backgroundColorId,
+        textColorId,
+        borderColorId,
+        textSize,
+        borderWidth,
+        radius,
+      }}
+      onChange={(next) => {
+        const paletteId = next.colorPaletteId || colorPaletteId
+        setName(next.name)
+        setFontId(next.fontId)
+        setColorPaletteId(paletteId)
+        setBackgroundColorId(
+          paletteId === colorPaletteId
+            ? next.backgroundColorId
+            : remapLibraryColorOptionId(colorOptions, paletteId, next.backgroundColorId),
+        )
+        setTextColorId(
+          paletteId === colorPaletteId
+            ? next.textColorId
+            : remapLibraryColorOptionId(colorOptions, paletteId, next.textColorId),
+        )
+        setBorderColorId(
+          paletteId === colorPaletteId
+            ? next.borderColorId
+            : remapLibraryColorOptionId(colorOptions, paletteId, next.borderColorId),
+        )
+        setTextSize(next.textSize)
+        setBorderWidth(next.borderWidth)
+        setRadius(next.radius)
+      }}
+      fieldErrors={fieldErrors}
+      extraError={fieldErrors.library}
+      fontOptions={fonts.items.map((fontItem) => ({
+        id: fontItem.id,
+        label: fontItem.name,
+        fontFamily: fontItem.family,
+      }))}
+      paletteOptions={colorLibrary.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        palette: item.palette,
+      }))}
+      colorOptions={colorOptions
+        .filter((color) => !colorPaletteId || color.paletteId === colorPaletteId)
+        .map((color) => ({
+          id: color.optionId,
+          label: formatPaletteScopedColorLabel(color, t('paletteColorSlot', { index: color.slot })),
+          swatch: color.value,
+        }))}
+      fontPlaceholder={t('pickFontRequired')}
+      colorPlaceholder={t('pickColorRequired')}
+    />
   )
 
   const body = (

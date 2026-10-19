@@ -68,10 +68,15 @@ export function buttonLabelTypography(): CSSProperties {
 export function resolveButtonStyle(theme: WebsiteTheme | null, style: WebsiteButtonStyle | undefined) {
   const labelStyle = theme?.textStyles.find((item) => item.id === style?.textStyleId)
   const labelSnap = textStyleSnapshot(theme, labelStyle)
+  const labelTextColor = colorValue(
+    theme?.colors ?? [],
+    labelStyle?.colorId ?? '',
+    colorValue(theme?.colors ?? [], style?.textColorId ?? '', '#ffffff'),
+  )
   return {
     ...buttonLabelTypography(),
     background: colorValue(theme?.colors ?? [], style?.backgroundColorId ?? '', '#111827'),
-    textColor: colorValue(theme?.colors ?? [], style?.textColorId ?? '', '#ffffff'),
+    textColor: labelTextColor,
     borderColor: colorValue(theme?.colors ?? [], style?.borderColorId ?? '', 'transparent'),
     borderWidth: style?.borderWidth ?? 0,
     radius: style?.radius ?? 6,
@@ -103,21 +108,20 @@ function snapshotAddon(addon: WebsiteAddon, theme: WebsiteTheme | null): Website
   }
   if (addon.type === 'button') {
     const button = theme?.buttonStyles.find((item) => item.id === addon.props.buttonStyleId)
-    const labelStyle = theme?.textStyles.find((item) => item.id === button?.textStyleId)
-    const labelSnap = textStyleSnapshot(theme, labelStyle)
+    const snap = resolveButtonStyle(theme, button)
     return {
       ...addon,
       props: {
         ...addon.props,
         snapshot: {
-          background: colorValue(theme?.colors ?? [], button?.backgroundColorId ?? '', '#111827'),
-          textColor: colorValue(theme?.colors ?? [], button?.textColorId ?? '', '#ffffff'),
-          borderColor: colorValue(theme?.colors ?? [], button?.borderColorId ?? '', 'transparent'),
-          borderWidth: button?.borderWidth ?? 0,
-          radius: button?.radius ?? 6,
-          fontFamily: labelSnap.fontFamily,
-          googleFontUrl: labelSnap.googleFontUrl,
-          fontSize: labelSnap.size,
+          background: snap.background,
+          textColor: snap.textColor,
+          borderColor: snap.borderColor,
+          borderWidth: snap.borderWidth,
+          radius: snap.radius,
+          fontFamily: snap.fontFamily,
+          googleFontUrl: snap.googleFontUrl,
+          fontSize: snap.fontSize,
         },
       },
     }

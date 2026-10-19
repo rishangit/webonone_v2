@@ -177,6 +177,7 @@ export type ElementChrome = {
 const addonBaseFields = {
   id: z.string().min(1).max(64),
   zIndex: z.number().int().default(0),
+  name: z.string().trim().max(64).optional(),
   layout: layoutByBreakpointSchema,
   dataBinding: addonDataBindingSchema,
   ...elementChromeFields,
@@ -222,6 +223,7 @@ export type SliderAddonProps = {
 type WebsiteAddonBase = {
   id: string
   zIndex: number
+  name?: string
   layout: z.infer<typeof layoutByBreakpointSchema>
   dataBinding?: z.infer<typeof addonDataBindingSchema>
 } & ElementChrome
@@ -251,7 +253,9 @@ export type WebsiteAddon =
 export type WebsiteBlock = {
   id: string
   zIndex: number
+  name?: string
   groupName?: string
+  place?: 'start' | 'center' | 'end'
   dataBinding?: {
     datasetId: string | null
     itemGroup?: string | null
@@ -268,7 +272,9 @@ export const websiteBlockSchema: z.ZodType<WebsiteBlock> = z.lazy(() =>
     id: z.string().min(1).max(64),
     zIndex: z.number().int().default(0),
     ...elementChromeFields,
+    name: z.string().trim().max(64).optional(),
     groupName: z.string().trim().max(64).optional(),
+    place: z.enum(['start', 'center', 'end']).optional(),
     dataBinding: blockDataBindingSchema,
     layout: layoutByBreakpointSchema,
     addons: z.array(websiteAddonSchema).max(80).default([]),
@@ -418,7 +424,7 @@ export const websiteDocumentSchema = z.preprocess(
       if (stats.total > MAX_TOTAL_BLOCKS) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Document exceeds max of ${MAX_TOTAL_BLOCKS} content elements`,
+          message: `Document exceeds max of ${MAX_TOTAL_BLOCKS} blocks`,
           path: ['blocks'],
         })
       }

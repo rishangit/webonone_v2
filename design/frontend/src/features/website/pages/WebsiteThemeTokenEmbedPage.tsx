@@ -82,8 +82,20 @@ export function WebsiteThemeTokenEmbedPage({ kind }: { kind: ThemeTokenKind }) {
         themeId={theme.id}
         initial={initial}
         takenColorValues={theme.colors.map((color) => color.value)}
+        appliedLibraryPaletteIds={(theme.colorPalettes ?? [])
+          .map((palette) => palette.sourceLibraryPaletteId)
+          .filter((id): id is string => Boolean(id))}
         onOpenChange={onOpenChange}
         onSubmit={complete}
+        onApplyPalette={(swatches, colorNames, meta) => {
+          complete({
+            kind: 'libraryPalette',
+            swatches,
+            colorNames,
+            sourceLibraryPaletteId: meta?.sourceLibraryPaletteId ?? null,
+            paletteName: meta?.paletteName ?? null,
+          })
+        }}
       />
     )
   }
@@ -113,7 +125,7 @@ export function WebsiteThemeTokenEmbedPage({ kind }: { kind: ThemeTokenKind }) {
       initial={initial}
       initialTab={parseElementEditorTab(searchParams.get('tab'))}
       onOpenChange={onOpenChange}
-      onSubmit={complete}
+      onSubmit={(style, patch) => complete({ style, patch })}
     />
   )
 }

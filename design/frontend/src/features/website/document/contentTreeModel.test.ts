@@ -128,6 +128,13 @@ describe('blockTreeLabel', () => {
   it('includes group name when set', () => {
     assert.equal(blockTreeLabel(blockWith('x', { groupName: 'product-item-2' }), 'Block'), 'Block · product-item-2')
   })
+
+  it('prefers the element name over the group name', () => {
+    assert.equal(
+      blockTreeLabel(blockWith('x', { name: 'Contact', groupName: 'product-item-2' }), 'Block'),
+      'Contact',
+    )
+  })
 })
 
 describe('collapseKeysForTemplateSelection', () => {

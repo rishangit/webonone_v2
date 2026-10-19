@@ -1,7 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Menu, X } from 'lucide-react'
+import { Menu, MessageCircle, X } from 'lucide-react'
 import {
   Alert,
   AlertDescription,
@@ -19,6 +19,8 @@ import { openWebsiteDesigner } from '@/features/shell/utils/navigateDesign'
 import { websiteFootersActions, websiteHeadersActions, websiteLayoutsActions, websitePagesActions, websitePresetsActions, websiteThemesActions } from '../store'
 import { websiteApi } from '../api'
 import { ContentTree } from '../components/ContentTree'
+import { DesignerAssistantPanel } from '../components/DesignerAssistantPanel'
+import { applyCanvasOperations } from '../document/applyCanvas'
 import { DesignerCanvas } from '../components/DesignerCanvas'
 import { ContentContainerSettingsDialog } from '../components/ContentContainerSettingsDialog'
 import { ContentBlockSettingsDialog } from '../components/ContentBlockSettingsDialog'
@@ -63,8 +65,8 @@ import {
   duplicateAddon,
   duplicateBlock,
   findBlock,
-  reorderAddons,
-  reorderBlocks,
+  moveAddon,
+  moveBlock,
   snapshotDocument,
   updateAddon,
   updateBlockById,
@@ -114,10 +116,15 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const sourceLibraryId =
     feature.detail && feature.detail.id === id ? feature.detail.sourceLibraryId : null
   const [document, setDocument] = useState<WebsiteDocumentV1>(emptyWebsiteDocument())
+  const documentRef = useRef(document)
+  documentRef.current = document
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const [assistantFocus, setAssistantFocus] = useState<DesignerSelection | null>(null)
   const [saved, setSaved] = useState(() => JSON.stringify(emptyWebsiteDocument()))
   const [mode, setMode] = useState<DesignerMode>('edit')
   const [breakpoint, setBreakpoint] = useState<WebsiteBreakpoint>('2xl')
   const [selection, setSelection] = useState<DesignerSelection>({ kind: 'container' })
+  const [treeHover, setTreeHover] = useState<DesignerSelection | null>(null)
   const dirty = JSON.stringify(document) !== saved
   const [containerSettingsOpen, setContainerSettingsOpen] = useState(false)
   const [blockSettings, setBlockSettings] = useState<{
@@ -834,6 +841,19 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               ) : null}
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
+              {canManage && !lockedDocument ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={cn('h-9 w-9 shrink-0', assistantOpen && 'border-primary text-primary')}
+                  aria-label={t('designerAssistant.open')}
+                  aria-pressed={assistantOpen}
+                  onClick={() => setAssistantOpen((open) => !open)}
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden />
+                </Button>
+              ) : null}
               <SegmentedSwitch
                 value={breakpoint}
                 onValueChange={(value) => setBreakpoint(value as WebsiteBreakpoint)}
@@ -887,9 +907,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               selection={selection}
               canManage={canManage}
               onSelect={selectFromTree}
-              onReorderAddon={(blockId, from, to) => setDocument(reorderAddons(document, blockId, from, to))}
-              onReorderBlock={(parentBlockId, from, to) =>
-                setDocument(reorderBlocks(document, from, to, parentBlockId))
+              onMoveAddon={(fromBlockId, addonId, toBlockId, toIndex) =>
+                setDocument(moveAddon(document, fromBlockId, addonId, toBlockId, toIndex))
+              }
+              onMoveBlock={(blockId, toParentId, toIndex) =>
+                setDocument(moveBlock(document, blockId, toParentId, toIndex))
               }
               onLayer={(target, direction) => setDocument(changeLayer(document, target, direction))}
               onDeleteBlock={(blockId) => {
@@ -976,6 +998,18 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                 setTreeOpen(false)
               }}
               saveAsPresetDisabled={kind === 'presets'}
+              onHover={setTreeHover}
+              onCopyToAi={
+                canManage && !lockedDocument
+                  ? (next) => {
+                      selectFromTree(next)
+                      setAssistantFocus(next)
+                      setAssistantOpen(true)
+                      setMode('edit')
+                      setTreeOpen(false)
+                    }
+                  : undefined
+              }
             />
           </aside>
         ) : null}
@@ -993,6 +1027,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             canvasWidth={WEBSITE_CANVAS_WIDTH[breakpoint]}
             mode={mode}
             selection={selection}
+            highlight={treeHover}
             theme={theme ?? null}
             pages={pagesState.items}
             currentPageId={kind === 'pages' ? pagesState.detail?.id ?? null : null}
@@ -1058,6 +1093,29 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             }}
           />
         </main>
+        {assistantOpen && id && canManage && !lockedDocument ? (
+          <DesignerAssistantPanel
+            kind={kind}
+            entityId={id}
+            entityName={name ?? t('designer')}
+            document={document}
+            focus={assistantFocus}
+            onClearFocus={() => setAssistantFocus(null)}
+            onClose={() => setAssistantOpen(false)}
+            onApplyCanvas={(args) => {
+              const result = applyCanvasOperations(documentRef.current, args)
+              if (result.applied === 0) {
+                toast({ title: t('designerAssistant.nothingApplied'), variant: 'destructive' })
+                return result
+              }
+              setDocument(result.document)
+              if (result.selection) setSelection(result.selection)
+              setMode('edit')
+              toast({ title: t('designerAssistant.applied') })
+              return result
+            }}
+          />
+        ) : null}
       </div>
       <ContentContainerSettingsDialog
         open={containerSettingsOpen}
@@ -1089,6 +1147,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                   boxShadow: patch.boxShadow,
                   padding: patch.padding,
                   margin: patch.margin,
+                  name: patch.name,
                   groupName: patch.groupName,
                   dataBinding: patch.dataBinding,
                 }),
@@ -1105,6 +1164,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               boxShadow: patch.boxShadow,
               padding: patch.padding,
               margin: patch.margin,
+              name: patch.name,
               groupName: patch.groupName,
               dataBinding: patch.dataBinding,
             })),

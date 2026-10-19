@@ -23,6 +23,7 @@ export const elementChromeSchema = z.object({
 })
 
 export const blockSettingsSchema = elementChromeSchema.extend({
+  name: z.string().trim().max(64).optional(),
   groupName: z.string().trim().max(64).optional(),
   dataBinding: z
     .object({

@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { parseGoogleFontFamily } from '../utils/parseGoogleFontFamily'
+import { resolveOwnedButtonLabelStyle } from '../utils/ownedButtonLabelStyle'
 import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription, FeaturePage, LoadingState } from '@webonone/ui-kit'
@@ -56,6 +58,17 @@ export function WebsiteThemeButtonStyleDetailPage() {
     [styleId, theme?.buttonStyles],
   )
   const values = useMemo(() => (style ? hydrateButtonStyle(style) : null), [style])
+  const labelStyle = useMemo(
+    () => (theme && values ? resolveOwnedButtonLabelStyle(theme, values) : null),
+    [theme, values],
+  )
+  const fontUrls = useMemo(
+    () =>
+      (theme?.fonts ?? [])
+        .map((font) => font.googleFontUrl)
+        .filter((url) => Boolean(url) && parseGoogleFontFamily(url)),
+    [theme?.fonts],
+  )
   const canEdit = canManage && Boolean(theme) && !theme?.isLocked
 
   if (!accessToken) return <Navigate to="/login" replace />
@@ -77,7 +90,7 @@ export function WebsiteThemeButtonStyleDetailPage() {
     )
   }
 
-  if (!style || !values) {
+  if (!style || !values || !labelStyle) {
     return (
       <FeaturePage title={t('editButtonStyleTitle')} onBack={back} backLabel={tc('back')}>
         <Alert variant="destructive">
@@ -102,6 +115,9 @@ export function WebsiteThemeButtonStyleDetailPage() {
         ) : null
       }
     >
+      {fontUrls.map((url) => (
+        <link key={url} rel="stylesheet" href={url} />
+      ))}
       {theme.isLocked ? (
         <Alert>
           <AlertDescription>{t('defaultLocked')}</AlertDescription>
@@ -112,7 +128,8 @@ export function WebsiteThemeButtonStyleDetailPage() {
       <ThemeButtonStyleEditPanel
         theme={theme}
         values={values}
-        onValuesChange={() => undefined}
+        labelStyle={labelStyle}
+        onDraftChange={() => undefined}
         fieldErrors={{}}
         elementTab={elementTab}
         onElementTabChange={setElementTab}
@@ -130,7 +147,9 @@ export function WebsiteThemeButtonStyleDetailPage() {
         }}
         onSubmit={(nextStyle, patch) => {
           const base = applyThemeTokenPatch(theme, patch)
-          persistTheme({ ...base, buttonStyles: upsertById(base.buttonStyles, nextStyle) })
+          if (!persistTheme({ ...base, buttonStyles: upsertById(base.buttonStyles, nextStyle) })) {
+            return
+          }
           setEditTab(null)
         }}
       />

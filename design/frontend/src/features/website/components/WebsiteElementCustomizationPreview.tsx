@@ -8,6 +8,8 @@ import {
   normalizeWebsiteElementCustomization,
   queryWebsiteElementRoot,
   runElementScript,
+  scopedElementVisualOverrideCss,
+  stripPaintPropertiesFromStyles,
   substituteElementPlaceholders,
   WEBSITE_ELEMENT_ROOT_VISUAL_CSS,
   type ElementVisualStyle,
@@ -50,11 +52,13 @@ export function WebsiteElementCustomizationPreview({
     )
   }, [defaultHtml, kind, normalized, placeholderKey, scopeId, visual])
   const styles = effectiveElementStyles(normalized, defaultElementStyles(scopeId), scopeId).trim()
-  const remountKey = `${normalized.scripts}|${normalized.styles}|${html}`
+  const previewStyles = visual ? stripPaintPropertiesFromStyles(styles) : styles
+  const scopedVisualCss = visual ? scopedElementVisualOverrideCss(scopeId, visual) : ''
+  const remountKey = `${normalized.scripts}|${normalized.styles}|${html}|${scopedVisualCss}`
 
   useEffect(() => {
     const parsed = JSON.parse(placeholderKey) as Record<string, string>
-    runElementScript(queryWebsiteElementRoot(hostRef.current), normalized, {
+    return runElementScript(queryWebsiteElementRoot(hostRef.current), normalized, {
       kind,
       placeholders: parsed,
       scopeClass,
@@ -62,12 +66,14 @@ export function WebsiteElementCustomizationPreview({
   }, [kind, normalized, placeholderKey, remountKey, scopeClass])
 
   const visualCss = <style>{WEBSITE_ELEMENT_ROOT_VISUAL_CSS}</style>
-  const customCss = styles ? <style>{styles}</style> : null
+  const scopedVisualStyle = scopedVisualCss ? <style>{scopedVisualCss}</style> : null
+  const customCss = previewStyles ? <style>{previewStyles}</style> : null
 
   if (!html.trim()) {
     return (
       <div className={className}>
         {visualCss}
+        {scopedVisualStyle}
         {customCss}
         <div
           key={remountKey}
@@ -85,6 +91,7 @@ export function WebsiteElementCustomizationPreview({
   return (
     <div className={className}>
       {visualCss}
+      {scopedVisualStyle}
       {customCss}
       <div
         key={remountKey}

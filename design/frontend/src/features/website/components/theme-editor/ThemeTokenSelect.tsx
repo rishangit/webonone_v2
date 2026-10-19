@@ -14,7 +14,9 @@ type ThemeTokenSelectProps = {
   id: string
   value: string
   options: ThemeTokenOption[]
-  noneLabel: string
+  noneLabel?: string
+  allowNone?: boolean
+  placeholder?: string
   onChange: (id: string) => void
   disabled?: boolean
   'aria-required'?: boolean
@@ -27,21 +29,23 @@ export function ThemeTokenSelect({
   value,
   options,
   noneLabel,
+  allowNone = true,
+  placeholder,
   onChange,
   disabled,
   ...triggerProps
 }: ThemeTokenSelectProps) {
   return (
     <Select
-      value={value || THEME_TOKEN_NONE}
+      value={allowNone ? value || THEME_TOKEN_NONE : value || undefined}
       onValueChange={(next) => onChange(next === THEME_TOKEN_NONE ? '' : next)}
       disabled={disabled}
     >
       <SelectTrigger id={id} {...triggerProps}>
-        <SelectValue />
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={THEME_TOKEN_NONE}>{noneLabel}</SelectItem>
+        {allowNone ? <SelectItem value={THEME_TOKEN_NONE}>{noneLabel}</SelectItem> : null}
         {options.map((option) => (
           <SelectItem key={option.id} value={option.id}>
             {option.fontFamily ? (

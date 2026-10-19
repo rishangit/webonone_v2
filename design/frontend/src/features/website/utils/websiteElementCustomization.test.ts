@@ -11,6 +11,8 @@ import {
   hasElementCustomization,
   isDefaultElementStyles,
   isSkeletonElementHtml,
+  scopedElementVisualOverrideCss,
+  stripPaintPropertiesFromStyles,
 } from './websiteElementCustomization'
 
 describe('websiteElementCustomization', () => {
@@ -131,6 +133,49 @@ describe('websiteElementCustomization', () => {
     )
     assert.match(styles, /^\.website-el-lib-button-primary \{\n\}\n/)
     assert.match(styles, /button \{ box-shadow: none; \}/)
+  })
+
+  it('scopes live preview paint and CSS variables on the element root class', () => {
+    const css = scopedElementVisualOverrideCss('btn1', {
+      background: '#344CE2',
+      color: '#ffffff',
+      border: '0px solid transparent',
+      borderRadius: 6,
+    })
+    assert.match(css, /button\.website-element-root\.website-el-btn1/)
+    assert.match(css, /background-color: #344CE2/)
+    assert.match(css, /--el-bg: #344CE2/)
+    assert.match(css, /--el-color: #ffffff/)
+  })
+
+  it('exposes palette slots as --el-color-1 … --el-color-6', () => {
+    const css = scopedElementVisualOverrideCss('heading', {
+      color: '#111827',
+      paletteColors: ['#111111', '#222222', '#333333', '#444444', '#555555', '#666666'],
+    })
+    assert.match(css, /--el-color-1: #111111/)
+    assert.match(css, /--el-color-4: #444444/)
+    assert.match(css, /--el-color-5: #555555/)
+    assert.match(css, /--el-color-6: #666666/)
+  })
+
+  it('pads a short palette so --el-color-4 through --el-color-6 still resolve', () => {
+    const css = scopedElementVisualOverrideCss('heading', {
+      color: '#111827',
+      paletteColors: ['#111111', '#222222', '#333333'],
+    })
+    assert.match(css, /--el-color-3: #333333/)
+    assert.match(css, /--el-color-4: #333333/)
+    assert.match(css, /--el-color-6: #333333/)
+  })
+
+  it('strips paint properties from custom element styles for live preview', () => {
+    const cleaned = stripPaintPropertiesFromStyles(
+      '.website-el-btn1 { background-color: #000; color: #fff; box-shadow: none; }',
+    )
+    assert.match(cleaned, /box-shadow: none/)
+    assert.doesNotMatch(cleaned, /background-color/)
+    assert.doesNotMatch(cleaned, /color:\s*#fff/)
   })
 
   it('strips default HTML and empty id-class styles on save', () => {

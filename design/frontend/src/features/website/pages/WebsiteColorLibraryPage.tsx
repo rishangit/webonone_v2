@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import { useTranslation } from 'react-i18next'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
 import {
@@ -9,9 +10,7 @@ import {
   DropdownMenuSeparator,
   FeaturePage,
   ItemList,
-  ItemListContent,
   ItemListEmpty,
-  ItemListItem,
   ItemListMenu,
   ListPageBody,
   useToast,
@@ -20,7 +19,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { ColorLibraryAddDialog } from '../components/ColorLibraryAddDialog'
-import { ColorPaletteSwatchStrip } from '../components/ColorPaletteSwatchStrip'
+import { ColorPaletteHubListItem } from '../components/ColorPaletteHubListItem'
 import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
@@ -31,6 +30,7 @@ export function WebsiteColorLibraryPage() {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const dispatch = useAppDispatch()
+  const { goToWebsite } = useNavigateDesign()
   const { toast } = useToast()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const user = useAppSelector((s) => s.auth.user)
@@ -38,7 +38,6 @@ export function WebsiteColorLibraryPage() {
   const deleteState = useAppSelector((s) => s.websiteColorLibraryDelete)
   const [searchQuery, setSearchQuery] = useState('')
   const [addOpen, setAddOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<WebsiteColorLibraryItem | null>(null)
   const [pendingDelete, setPendingDelete] = useState<WebsiteColorLibraryItem | null>(null)
 
   const initialLoading = library.listStatus === 'loading' && library.items.length === 0
@@ -143,30 +142,31 @@ export function WebsiteColorLibraryPage() {
               {library.items.map((paletteItem) => {
                 const deleting = deleteState.pendingId === paletteItem.id
                 return (
-                  <ItemListItem key={paletteItem.id}>
-                    <ItemListContent>
-                      <div className="flex items-center gap-3">
-                        <ColorPaletteSwatchStrip palette={paletteItem.palette} sizeClassName="h-9 w-9" />
-                        <div className="min-w-0">
-                          <p className="font-medium">{paletteItem.name}</p>
-                          <p className="truncate text-sm text-muted-foreground">{t('colorPaletteSixColors')}</p>
-                        </div>
-                      </div>
-                    </ItemListContent>
-                    <ItemListMenu ariaLabel={t('actionsFor', { name: paletteItem.name })}>
-                      <DropdownMenuItem disabled={deleting} onClick={() => setEditingItem(paletteItem)}>
-                        {tc('edit')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        disabled={deleting}
-                        onClick={() => setPendingDelete(paletteItem)}
-                      >
-                        {tc('delete')}
-                      </DropdownMenuItem>
-                    </ItemListMenu>
-                  </ItemListItem>
+                  <ColorPaletteHubListItem
+                    key={paletteItem.id}
+                    name={paletteItem.name}
+                    palette={paletteItem.palette}
+                    colorCountLabel={t('colorPaletteColorCount', { count: paletteItem.palette.colors.length })}
+                    onOpen={() => goToWebsite(`/website/colors/${paletteItem.id}`)}
+                    menu={
+                      <ItemListMenu ariaLabel={t('actionsFor', { name: paletteItem.name })}>
+                        <DropdownMenuItem
+                          disabled={deleting}
+                          onClick={() => goToWebsite(`/website/colors/${paletteItem.id}`)}
+                        >
+                          {tc('edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          disabled={deleting}
+                          onClick={() => setPendingDelete(paletteItem)}
+                        >
+                          {tc('delete')}
+                        </DropdownMenuItem>
+                      </ItemListMenu>
+                    }
+                  />
                 )
               })}
             </ItemList>
@@ -174,13 +174,19 @@ export function WebsiteColorLibraryPage() {
         </div>
         <WebsiteListPageFooter list={listController} />
       </ListPageBody>
-      <ColorLibraryAddDialog open={addOpen} onOpenChange={setAddOpen} />
       <ColorLibraryAddDialog
-        open={editingItem !== null}
-        item={editingItem}
-        onOpenChange={(open) => {
-          if (!open) setEditingItem(null)
-        }}
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onSaved={() =>
+          dispatch(
+            websiteColorLibraryActions.loadListRequested({
+              page: 1,
+              pageSize: library.pageSize,
+              force: true,
+              extra: { q: searchQuery.trim() || undefined },
+            }),
+          )
+        }
       />
       <PlatformAlertConfirmDialog
         open={pendingDelete !== null}

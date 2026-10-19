@@ -44,13 +44,16 @@ const colorLibraryPaletteHex = z
   .trim()
   .regex(/^#[0-9A-Fa-f]{6}$/, 'Enter a valid hex color (#RRGGBB)')
 
+const websiteColorLibraryColorSchema = z.object({
+  name: z.string().trim().min(1, 'Color name is required').max(128),
+  value: colorLibraryPaletteHex,
+})
+
 export const websiteColorLibraryPaletteSchema = z.object({
-  color_1: colorLibraryPaletteHex,
-  color_2: colorLibraryPaletteHex,
-  color_3: colorLibraryPaletteHex,
-  color_4: colorLibraryPaletteHex,
-  color_5: colorLibraryPaletteHex,
-  color_6: colorLibraryPaletteHex,
+  colors: z
+    .array(websiteColorLibraryColorSchema)
+    .min(1, 'Add at least one color')
+    .max(6, 'A palette can have at most six colors'),
 })
 
 export const createColorLibrarySchema = z.object({
@@ -118,6 +121,13 @@ export const websiteColorTokenSchema = z.object({
   value: z.string().trim().min(1, 'Color value is required').max(32),
 })
 
+export const websiteThemeColorPaletteSchema = z.object({
+  id: z.string().min(1).max(64),
+  name: z.string().trim().min(1, 'Palette name is required').max(128),
+  sourceLibraryPaletteId: z.string().min(1).max(64).nullable().optional(),
+  colorIds: z.array(z.string().min(1).max(64)).max(80),
+})
+
 export const websiteTextStyleSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1, 'Text style name is required').max(128),
@@ -150,12 +160,22 @@ export const websiteButtonStyleSchema = z.object({
   customization: websiteElementCustomizationSchema.optional(),
 })
 
+export const websiteThemeColorRolesSchema = z.object({
+  pageBackgroundColorId: z.string().max(64).optional().default(''),
+  surfaceColorId: z.string().max(64).optional().default(''),
+  bodyTextColorId: z.string().max(64).optional().default(''),
+  accentColor1Id: z.string().max(64).optional().default(''),
+  accentColor2Id: z.string().max(64).optional().default(''),
+})
+
 export const websiteThemeEditorSchema = z.object({
   name: z.string().trim().min(1, 'Theme name is required').max(255),
   pageBackground: z.string().max(32),
   bodyTextColor: z.string().max(32),
+  colorRoles: websiteThemeColorRolesSchema,
   fonts: z.array(websiteFontTokenSchema).max(40),
   colors: z.array(websiteColorTokenSchema).max(80),
+  colorPalettes: z.array(websiteThemeColorPaletteSchema).max(24),
   textStyles: z.array(websiteTextStyleSchema).max(40),
   buttonStyles: z.array(websiteButtonStyleSchema).max(40),
 })

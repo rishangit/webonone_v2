@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { nanoid } from 'nanoid'
 import { Check } from 'lucide-react'
+import { z } from 'zod'
 import {
   PLATFORM_EMBED_QUERY,
   resolvePlatformEmbedParentOrigin,
@@ -10,29 +10,48 @@ import {
   usePlatformPeerDialogSubmit,
   useRequestPlatformPeerDialog,
 } from '@webonone/platform-embed'
-import { Button, CustomDialog, cn, mapZodIssuesToFieldErrors } from '@webonone/ui-kit'
+import { Button, CustomDialog, cn, useToast } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { resolveButtonStyle } from '../../document/theme'
-import { websiteButtonStyleSchema } from '../../schemas/websiteThemeSchemas'
+import {
+  websiteButtonStyleSchema,
+  websiteColorTokenSchema,
+  websiteFontTokenSchema,
+  websiteTextStyleSchema,
+} from '../../schemas/websiteThemeSchemas'
 import { websiteButtonLibraryActions } from '../../store'
-import type { WebsiteButtonStyle, WebsiteTheme } from '../../types'
+import type { WebsiteButtonStyle, WebsiteTextStyle, WebsiteTheme } from '../../types'
+import { emptyButtonDraft } from '../../utils/ownedButtonLabelStyle'
 import {
   materializeButtonLibraryItem,
   type ThemeTokenPatch,
 } from '../../utils/themeLibraryMaterialize'
+import { upsertById } from '../../utils/upsertById'
 import { WEBSITE_PAGE_DIALOG_SIZE } from '../WebsiteEntityDialogs'
 import {
   buttonVisualFromResolved,
   defaultElementHtml,
-  emptyWebsiteElementCustomization,
   finalizeElementCustomization,
   hasElementCustomization,
   normalizeWebsiteElementCustomization,
 } from '../../utils/websiteElementCustomization'
 import type { WebsiteElementEditorTab } from '../WebsiteElementEditorTabs'
 import { ThemeButtonStyleEditPanel } from './ThemeButtonStyleEditPanel'
+import { mapThemeFieldErrors } from '../../utils/mapThemeFieldErrors'
 import { ThemeStyleLibraryChoice, ThemeStyleLibraryList } from './ThemeStyleLibraryCreateShell'
+
+const BUTTON_BASIC_FIELD_KEYS = new Set([
+  'name',
+  'fontId',
+  'backgroundColorId',
+  'textColorId',
+  'borderColorId',
+  'textSize',
+  'borderWidth',
+  'radius',
+  'library',
+])
 
 function themeButtonDialogPath(themeId: string, styleId?: string, tab?: WebsiteElementEditorTab) {
   const path = styleId
@@ -46,6 +65,48 @@ type ButtonSource = 'library' | 'custom'
 const BUTTON_LIBRARY_DIALOG_SIZE = {
   sizeWidth: 'medium' as const,
   sizeHeight: 'large' as const,
+}
+
+const themeTokenPatchSchema = z.object({
+  fonts: z.array(websiteFontTokenSchema).optional(),
+  colors: z.array(websiteColorTokenSchema).optional(),
+  textStyles: z.array(websiteTextStyleSchema).optional(),
+})
+
+const themeButtonDialogPayloadSchema = z.object({
+  style: websiteButtonStyleSchema,
+  patch: themeTokenPatchSchema.optional(),
+})
+
+export function parseThemeButtonDialogPayload(
+  payload: unknown,
+): { style: WebsiteButtonStyle; patch?: ThemeTokenPatch } | null {
+  const wrapped = themeButtonDialogPayloadSchema.safeParse(payload)
+  if (wrapped.success) return wrapped.data
+  const style = websiteButtonStyleSchema.safeParse(payload)
+  return style.success ? { style: style.data } : null
+}
+
+function remapLabelFieldErrors(issues: { path: PropertyKey[]; message: string }[]) {
+  const mapped: Partial<Record<string, string>> = {}
+  for (const issue of issues) {
+    const key = String(issue.path[0] ?? '')
+    if (key === 'colorId') mapped.textColorId = issue.message
+    else if (key === 'size') mapped.textSize = issue.message
+    else if (key === 'fontId') mapped.fontId = issue.message
+    else if (key === 'name' && !mapped.name) mapped.name = issue.message
+    else if (key && !(key in mapped)) mapped[key] = issue.message
+  }
+  return mapped
+}
+
+function focusButtonStyleFieldErrors(
+  errors: Record<string, string>,
+  setElementTab: (tab: WebsiteElementEditorTab) => void,
+) {
+  if (Object.keys(errors).some((key) => BUTTON_BASIC_FIELD_KEYS.has(key))) {
+    setElementTab('general')
+  }
 }
 
 export function ThemeButtonStyleDialog({
@@ -67,6 +128,7 @@ export function ThemeButtonStyleDialog({
 }) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
+  const { toast } = useToast()
   const dispatch = useAppDispatch()
   const buttonLibrary = useAppSelector((state) => state.websiteButtonLibrary)
   const [searchParams] = useSearchParams()
@@ -75,7 +137,10 @@ export function ThemeButtonStyleDialog({
   const [choice, setChoice] = useState<ButtonSource | null>(null)
   const [source, setSource] = useState<ButtonSource | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [values, setValues] = useState<WebsiteButtonStyle>(emptyButtonStyle(theme, initial))
+  const [values, setValues] = useState<WebsiteButtonStyle>(() => emptyButtonDraft(theme, initial).button)
+  const [labelStyle, setLabelStyle] = useState<WebsiteTextStyle>(
+    () => emptyButtonDraft(theme, initial).labelStyle,
+  )
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
   const [elementTab, setElementTab] = useState<WebsiteElementEditorTab>(initialTab ?? 'preview')
   const dialogRequestId =
@@ -95,16 +160,29 @@ export function ThemeButtonStyleDialog({
     submitLabel: isEdit ? tc('save') : choosing ? tc('next') : t('create'),
     ...dialogSize,
     onResult: (payload) => {
-      const parsed = websiteButtonStyleSchema.safeParse(payload)
-      if (parsed.success) onSubmit(parsed.data)
+      const parsed = parseThemeButtonDialogPayload(payload)
+      if (parsed) onSubmit(parsed.style, parsed.patch)
       onOpenChange(false)
     },
     onCancel: () => onOpenChange(false),
   })
 
+  const editSessionRef = useRef<string | null>(null)
+
   useEffect(() => {
     if (!open && chrome === 'dialog') return
-    setValues(emptyButtonStyle(theme, initial))
+    if (!open) {
+      editSessionRef.current = null
+      return
+    }
+
+    const sessionKey = `${theme.id}:${initial?.id ?? 'create'}:${initialTab ?? 'preview'}`
+    if (editSessionRef.current === sessionKey) return
+    editSessionRef.current = sessionKey
+
+    const draft = emptyButtonDraft(theme, initial)
+    setValues(draft.button)
+    setLabelStyle(draft.labelStyle)
     setFieldErrors({})
     setChoice(null)
     setSource(null)
@@ -145,23 +223,67 @@ export function ThemeButtonStyleDialog({
     setFieldErrors({})
   }
 
+  function submitCustom() {
+    const missing: Partial<Record<string, string>> = {}
+    if (!labelStyle.fontId) missing.fontId = t('pickFontRequired')
+    if (!values.backgroundColorId) missing.backgroundColorId = t('pickColorRequired')
+    const textColorId = labelStyle.colorId || values.textColorId
+    if (!textColorId) missing.textColorId = t('pickColorRequired')
+    if (values.borderWidth > 0 && !values.borderColorId) {
+      missing.borderColorId = t('pickColorRequired')
+    }
+    const customization = finalizeElementCustomization(
+      normalizeWebsiteElementCustomization(values.customization),
+      defaultElementHtml(
+        'button',
+        values.id,
+        buttonVisualFromResolved(
+          resolveButtonStyle(
+            { ...theme, textStyles: upsertById(theme.textStyles, { ...labelStyle, colorId: textColorId }) },
+            { ...values, textColorId, textStyleId: labelStyle.id },
+          ),
+        ),
+      ),
+      values.id,
+    )
+    const parsed = websiteButtonStyleSchema.safeParse({
+      ...values,
+      textColorId,
+      textStyleId: labelStyle.id,
+      customization: hasElementCustomization(customization) ? customization : undefined,
+    })
+    const labelParsed = websiteTextStyleSchema.safeParse({
+      ...labelStyle,
+      colorId: textColorId,
+      name: values.name.trim() || labelStyle.name || 'Button',
+    })
+    const fieldErrors: Record<string, string> = {}
+    for (const [key, message] of Object.entries({
+      ...missing,
+      ...(parsed.success ? {} : mapThemeFieldErrors(parsed.error.issues)),
+      ...(labelParsed.success ? {} : remapLabelFieldErrors(labelParsed.error.issues)),
+    })) {
+      if (message) fieldErrors[key] = message
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      setFieldErrors(fieldErrors)
+      focusButtonStyleFieldErrors(fieldErrors, setElementTab)
+      toast({
+        title: t('saveFailed'),
+        description: Object.values(fieldErrors)[0],
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!parsed.success || !labelParsed.success) return
+    setFieldErrors({})
+    onSubmit(parsed.data, { textStyles: [labelParsed.data] })
+    onOpenChange(false)
+  }
+
   function submit() {
     if (isEdit) {
-      const customization = finalizeElementCustomization(
-        normalizeWebsiteElementCustomization(values.customization),
-        defaultElementHtml('button', values.id, buttonVisualFromResolved(resolveButtonStyle(theme, values))),
-        values.id,
-      )
-      const parsed = websiteButtonStyleSchema.safeParse({
-        ...values,
-        customization: hasElementCustomization(customization) ? customization : undefined,
-      })
-      if (!parsed.success) {
-        setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
-        return
-      }
-      setFieldErrors({})
-      onSubmit(parsed.data)
+      submitCustom()
       return
     }
 
@@ -178,22 +300,7 @@ export function ThemeButtonStyleDialog({
     }
 
     if (source !== 'custom') return
-
-    const customization = finalizeElementCustomization(
-      normalizeWebsiteElementCustomization(values.customization),
-      defaultElementHtml('button', values.id, buttonVisualFromResolved(resolveButtonStyle(theme, values))),
-      values.id,
-    )
-    const parsed = websiteButtonStyleSchema.safeParse({
-      ...values,
-      customization: hasElementCustomization(customization) ? customization : undefined,
-    })
-    if (!parsed.success) {
-      setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
-      return
-    }
-    setFieldErrors({})
-    onSubmit(parsed.data)
+    submitCustom()
   }
 
   function handlePrimary() {
@@ -215,7 +322,11 @@ export function ThemeButtonStyleDialog({
     <ThemeButtonStyleEditPanel
       theme={theme}
       values={values}
-      onValuesChange={setValues}
+      labelStyle={labelStyle}
+      onDraftChange={(button, nextLabel) => {
+        setValues(button)
+        setLabelStyle(nextLabel)
+      }}
       fieldErrors={fieldErrors}
       elementTab={elementTab}
       onElementTabChange={setElementTab}
@@ -311,24 +422,4 @@ export function ThemeButtonStyleDialog({
       {body}
     </CustomDialog>
   )
-}
-
-function emptyButtonStyle(theme: WebsiteTheme, initial?: WebsiteButtonStyle): WebsiteButtonStyle {
-  if (initial) {
-    return {
-      ...initial,
-      customization: normalizeWebsiteElementCustomization(initial.customization),
-    }
-  }
-  return {
-    id: nanoid(8),
-    name: '',
-    backgroundColorId: theme.colors[0]?.id ?? '',
-    textColorId: theme.colors[1]?.id ?? theme.colors[0]?.id ?? '',
-    textStyleId: theme.textStyles[0]?.id ?? '',
-    borderColorId: '',
-    borderWidth: 0,
-    radius: 6,
-    customization: emptyWebsiteElementCustomization(),
-  }
 }

@@ -12,6 +12,8 @@ import { requireInternalAuth } from '../middleware/internalAuth.js'
 import * as library from '../controllers/websiteLibrary.controller.js'
 import * as componentLibrary from '../controllers/websiteComponentLibrary.controller.js'
 import { validateBody } from '../middleware/validateBody.js'
+import { applyDesignCanvasSchema } from '../schemas/websiteCanvas.schema.js'
+import * as canvas from '../controllers/websiteCanvas.controller.js'
 import { updateWebsiteSettingsSchema } from '../schemas/websiteSettings.schema.js'
 import {
   createWebsiteDatasetSchema,
@@ -68,6 +70,15 @@ router.post(
   requireRole(...manageRoles),
   componentLibrary.revertLibraryPageHandler,
 )
+router.post(
+  '/website/designer/canvas',
+  requireAuth,
+  requireCompanyContextUnlessSuperAdmin,
+  requireRole(...manageRoles),
+  validateBody(applyDesignCanvasSchema),
+  canvas.applyDesignCanvasHandler,
+)
+
 router.get('/website/pages', requireAuth, requireCompanyContext, requireRole(...companyRoles), pages.listWebsitePagesHandler)
 router.get('/website/pages/:id', requireAuth, requireCompanyContext, requireRole(...companyRoles), pages.getWebsitePageHandler)
 router.post('/website/pages', requireAuth, requireCompanyContext, requireRole(...manageRoles), pages.createWebsitePageHandler)

@@ -33,6 +33,8 @@ export type ElementVisualStyle = {
   fontFamily?: string
   fontSize?: string | number
   lineHeight?: string | number
+  /** Selected palette swatches as --el-color-1 … --el-color-6 for styles and scripts. */
+  paletteColors?: string[]
 }
 
 function cssLength(value: string | number | undefined): string | undefined {
@@ -78,9 +80,18 @@ const ELEMENT_VISUAL_PAINT_PROPS = new Set([
 
 const BUTTON_ROOT_LAYOUT_CLASSES = 'inline-flex items-center justify-center px-4 py-2'
 
-/** Zero-specificity so Tailwind utilities on the same element win over basic settings. */
+/**
+ * Class + tag beats Tailwind preflight (`button { background-color: transparent }`).
+ * Tailwind utilities on the same node can still override when declared later in the sheet.
+ */
 export const WEBSITE_ELEMENT_ROOT_VISUAL_CSS = [
-  ':where(.website-element-root) {',
+  'button.website-element-root, .website-element-root {',
+  `  --el-color-1: var(${ELEMENT_VISUAL_VARS.color});`,
+  `  --el-color-2: var(${ELEMENT_VISUAL_VARS.color});`,
+  `  --el-color-3: var(${ELEMENT_VISUAL_VARS.color});`,
+  `  --el-color-4: var(${ELEMENT_VISUAL_VARS.color});`,
+  `  --el-color-5: var(${ELEMENT_VISUAL_VARS.color});`,
+  `  --el-color-6: var(${ELEMENT_VISUAL_VARS.color});`,
   `  background-color: var(${ELEMENT_VISUAL_VARS.background});`,
   `  color: var(${ELEMENT_VISUAL_VARS.color});`,
   `  border: var(${ELEMENT_VISUAL_VARS.border});`,
@@ -89,7 +100,23 @@ export const WEBSITE_ELEMENT_ROOT_VISUAL_CSS = [
   `  font-size: var(${ELEMENT_VISUAL_VARS.fontSize});`,
   `  line-height: var(${ELEMENT_VISUAL_VARS.lineHeight});`,
   '}',
+  '@keyframes website-el-slide-up {',
+  '  from { transform: translateY(1rem); opacity: 0; }',
+  '  to { transform: translateY(0); opacity: 1; }',
+  '}',
+  '.animate-slide-up {',
+  '  animation: website-el-slide-up 0.6s ease both;',
+  '}',
 ].join('\n')
+
+export function paletteColorCssVar(slot: number): string {
+  return `--el-color-${slot}`
+}
+
+export function withPaletteColors<T extends ElementVisualStyle>(visual: T, paletteColors: string[]): T {
+  const colors = paletteColors.map((value) => value.trim()).filter(Boolean)
+  return colors.length > 0 ? { ...visual, paletteColors: colors } : visual
+}
 
 export function visualStyleToCssVars(style: ElementVisualStyle): string {
   const decls: string[] = []
@@ -106,7 +133,61 @@ export function visualStyleToCssVars(style: ElementVisualStyle): string {
   if (style.lineHeight != null && style.lineHeight !== '') {
     add(ELEMENT_VISUAL_VARS.lineHeight, String(style.lineHeight))
   }
+  const paletteSlots = [...(style.paletteColors ?? [])]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .slice(0, 6)
+  if (paletteSlots.length > 0) {
+    const last = paletteSlots[paletteSlots.length - 1] ?? style.color?.trim() ?? '#111827'
+    while (paletteSlots.length < 6) paletteSlots.push(last)
+    paletteSlots.forEach((value, index) => add(paletteColorCssVar(index + 1), value))
+  }
   return decls.join('; ')
+}
+
+/** Longhand paint + CSS variables for scoped previews (beats preflight when vars alone are not enough). */
+export function visualStyleToPaintDeclarations(style: ElementVisualStyle): string {
+  const decls: string[] = []
+  const add = (property: string, value: string | undefined) => {
+    const trimmed = value?.trim()
+    if (trimmed) decls.push(`${property}: ${trimmed}`)
+  }
+  add('background-color', style.background)
+  add('color', style.color)
+  add('border', style.border)
+  add('border-radius', cssLength(style.borderRadius))
+  add('font-family', style.fontFamily)
+  add('font-size', cssLength(style.fontSize))
+  if (style.lineHeight != null && style.lineHeight !== '') {
+    add('line-height', String(style.lineHeight))
+  }
+  const vars = visualStyleToCssVars(style)
+  if (vars) decls.push(vars)
+  return decls.join('; ')
+}
+
+/** Scoped override so live previews always reflect current basic settings (theme color tokens). */
+export function scopedElementVisualOverrideCss(scopeId: string, visual: ElementVisualStyle): string {
+  const decls = visualStyleToPaintDeclarations(visual)
+  if (!decls) return ''
+  const scopeClass = elementScopeClass(scopeId)
+  return `button.website-element-root.${scopeClass}, .website-element-root.${scopeClass} { ${decls} }\n`
+}
+
+export function stripPaintPropertiesFromStyles(css: string): string {
+  if (!css.trim()) return css
+  return css.replace(/\{([^{}]*)\}/g, (_match, body: string) => {
+    const kept = body
+      .split(';')
+      .map((part) => part.trim())
+      .filter((part) => {
+        if (!part) return false
+        const prop = part.split(':')[0]?.trim().toLowerCase() ?? ''
+        return !ELEMENT_VISUAL_PAINT_PROPS.has(prop)
+      })
+    const inner = kept.length ? `${kept.join('; ')};` : ''
+    return `{ ${inner} }`
+  })
 }
 
 export function buttonVisualFromResolved(snap: {
@@ -427,21 +508,90 @@ export function hasElementCustomization(customization: WebsiteElementCustomizati
   return Boolean(customization.html.trim() || customization.styles.trim() || customization.scripts.trim())
 }
 
-/** Run optional element script once when mounted (designer + published page). */
+function resolveElementScriptQuery(root: HTMLElement, selector: string): Element | null {
+  try {
+    if (root.matches(selector)) return root
+  } catch {
+    return null
+  }
+  return (
+    root.querySelector(selector) ??
+    document.querySelector(selector) ??
+    (/\.website-el-[\w-]+/.test(selector) ? root : null)
+  )
+}
+
+function scopedElementDocument(root: HTMLElement): Document {
+  return new Proxy(document, {
+    get(target, prop, receiver) {
+      if (prop === 'querySelector') {
+        return (selector: string) => resolveElementScriptQuery(root, selector)
+      }
+      const value = Reflect.get(target, prop, receiver) as unknown
+      return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(target) : value
+    },
+  })
+}
+
+/** Run optional element script once when mounted (designer + published page). Returns a timer cleanup. */
 export function runElementScript(
   root: HTMLElement | null,
   customization: WebsiteElementCustomization,
   context: Record<string, unknown>,
-): void {
+): () => void {
   const source = customization.scripts.trim()
-  if (!source || !root) return
+  if (!source || !root) return () => undefined
+  const timeouts: number[] = []
+  const intervals: number[] = []
+  const trackedSetTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
+    const id = window.setTimeout(handler, timeout, ...args)
+    timeouts.push(id)
+    return id
+  }) as typeof setTimeout
+  const trackedSetInterval = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
+    const id = window.setInterval(handler, timeout, ...args)
+    intervals.push(id)
+    return id
+  }) as typeof setInterval
+  const trackedClearTimeout = ((id?: number) => {
+    if (id != null) window.clearTimeout(id)
+  }) as typeof clearTimeout
+  const trackedClearInterval = ((id?: number) => {
+    if (id != null) window.clearInterval(id)
+  }) as typeof clearInterval
   try {
-    const runner = new Function('root', 'context', source) as (
+    const runner = new Function(
+      'root',
+      'context',
+      'document',
+      'setTimeout',
+      'setInterval',
+      'clearTimeout',
+      'clearInterval',
+      source,
+    ) as (
       root: HTMLElement,
       context: Record<string, unknown>,
+      document: Document,
+      setTimeout: typeof window.setTimeout,
+      setInterval: typeof window.setInterval,
+      clearTimeout: typeof window.clearTimeout,
+      clearInterval: typeof window.clearInterval,
     ) => void
-    runner(root, context)
+    runner(
+      root,
+      context,
+      scopedElementDocument(root),
+      trackedSetTimeout,
+      trackedSetInterval,
+      trackedClearTimeout,
+      trackedClearInterval,
+    )
   } catch {
     // Invalid user script — skip without breaking the page
+  }
+  return () => {
+    for (const id of timeouts) window.clearTimeout(id)
+    for (const id of intervals) window.clearInterval(id)
   }
 }

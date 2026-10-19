@@ -10,6 +10,7 @@ import { documentContentHeight } from '../document/layout'
 import { emptyWebsiteDocument, getBreakpointFromWidth } from '../types'
 import type { PublicWebsiteSite, WebsiteBreakpoint } from '../types'
 import { getCompanyPublicHostSlug, publicPageHref } from '../utils/companyPublicHost'
+import { themeChromeCssVars } from '../utils/websitePalette'
 
 export function WebsitePublicPage() {
   const { t } = useTranslation('website')
@@ -131,7 +132,7 @@ export function WebsitePublicPage() {
   return (
     <div
       className="flex min-h-screen flex-col"
-      style={{ backgroundColor: site.theme?.pageBackground, color: site.theme?.bodyTextColor }}
+      style={themeChromeCssVars(site.theme)}
     >
       {fonts.map((url) => (
         <link key={url} rel="stylesheet" href={url} />

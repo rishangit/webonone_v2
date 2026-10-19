@@ -3,6 +3,7 @@ import { FormField, Input, Select, SelectContent, SelectItem, SelectTrigger, Sel
 import { nanoid } from 'nanoid'
 import { CustomWebsiteElementHost } from '../../components/CustomWebsiteElementHost'
 import { resolveTextStyle } from '../../document/theme'
+import { themePaletteColorValues } from '../../utils/websitePalette'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon } from '../../types'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
@@ -27,6 +28,7 @@ function TextAddonRenderer({ addon, breakpoint, theme, interactive }: AddonRende
       customization={style?.customization}
       placeholders={{ content }}
       baseStyle={baseStyle}
+      paletteColors={theme ? themePaletteColorValues(theme, style ? [style.colorId] : []) : undefined}
       className="h-full w-full overflow-hidden whitespace-pre-wrap p-2"
       fallback={<div style={baseStyle}>{content}</div>}
     />

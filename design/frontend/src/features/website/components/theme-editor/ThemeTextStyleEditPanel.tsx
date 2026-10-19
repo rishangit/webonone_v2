@@ -1,15 +1,29 @@
 import { useTranslation } from 'react-i18next'
-import { Form, FormField, Input, Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
+import { FormField, Input, Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { fallbackTextSize, resolveTextStyle } from '../../document/theme'
 import { WEBSITE_BREAKPOINTS, type WebsiteBreakpoint, type WebsiteTextStyle, type WebsiteTheme } from '../../types'
-import { defaultElementHtml, normalizeWebsiteElementCustomization } from '../../utils/websiteElementCustomization'
+import {
+  inferThemePaletteId,
+  remapColorIdToPalette,
+  themeColorOptionsForPalette,
+  themePaletteColorValues,
+  themePaletteSelectOptions,
+} from '../../utils/websitePalette'
+import {
+  defaultElementHtml,
+  normalizeWebsiteElementCustomization,
+  withPaletteColors,
+} from '../../utils/websiteElementCustomization'
+import {
+  TextStyleBasicSettingsFields,
+  type TextStyleBasicSettingsOption,
+} from '../TextStyleBasicSettingsFields'
 import { WebsiteElementCustomizationPreview } from '../WebsiteElementCustomizationPreview'
 import {
   WebsiteElementEditorTabs,
   type WebsiteElementEditorTab,
 } from '../WebsiteElementEditorTabs'
 import { defaultSizeByBreakpoint, SIZE_LABEL_KEYS } from './textStyleDefaults'
-import { ThemeTokenSelect } from './ThemeTokenSelect'
 
 type ThemeTextStyleEditPanelProps = {
   theme: WebsiteTheme
@@ -43,45 +57,66 @@ export function ThemeTextStyleEditPanel({
     color: snap.color,
     backgroundColor: theme.pageBackground,
   }
-  const elementVisual = {
-    color: snap.color,
-    fontFamily: snap.fontFamily,
-    fontSize: snap.size,
-  }
+  const elementVisual = withPaletteColors(
+    {
+      color: snap.color,
+      fontFamily: snap.fontFamily,
+      fontSize: snap.size,
+    },
+    themePaletteColorValues(theme, [values.colorId]),
+  )
   const defaultHtml = defaultElementHtml('text', values.id, elementVisual)
+  const paletteOptions = themePaletteSelectOptions(theme)
+  const colorPaletteId = inferThemePaletteId(theme, [values.colorId])
+  const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId)
+  const missingTokenLabel = t('themeTokenMissing')
+  const withTokenFallback = (options: TextStyleBasicSettingsOption[], id: string) =>
+    id && !options.some((entry) => entry.id === id)
+      ? [...options, { id, label: missingTokenLabel }]
+      : options
+  const fontOptions = withTokenFallback(
+    theme.fonts.map((font) => ({
+      id: font.id,
+      label: font.name || font.family,
+      fontFamily: font.family,
+      previewText: previewSample,
+    })),
+    values.fontId,
+  )
+  const colorOptionsWithFallback = withTokenFallback(colorOptions, values.colorId)
 
   const generalFields = (
-    <Form className="space-y-4">
-      <FormField label={t('styleName')} htmlFor="theme-text-name" required error={fieldErrors.name}>
-        <Input
-          id="theme-text-name"
-          value={values.name}
-          onChange={(event) => onValuesChange({ ...values, name: event.target.value })}
-        />
-      </FormField>
-      <FormField label={t('fontType')} htmlFor="theme-text-font">
-        <ThemeTokenSelect
-          id="theme-text-font"
-          value={values.fontId}
-          noneLabel={tc('none')}
-          options={theme.fonts.map((font) => ({
-            id: font.id,
-            label: font.name || font.family,
-            fontFamily: font.family,
-            previewText: previewSample,
-          }))}
-          onChange={(fontId) => onValuesChange({ ...values, fontId })}
-        />
-      </FormField>
-      <FormField label={t('fontColor')} htmlFor="theme-text-color">
-        <ThemeTokenSelect
-          id="theme-text-color"
-          value={values.colorId}
-          noneLabel={tc('none')}
-          options={theme.colors.map((color) => ({ id: color.id, label: color.name, swatch: color.value }))}
-          onChange={(colorId) => onValuesChange({ ...values, colorId })}
-        />
-      </FormField>
+    <TextStyleBasicSettingsFields
+      mode="edit"
+      idPrefix="theme-text"
+      values={{
+        name: values.name,
+        fontId: values.fontId,
+        colorPaletteId,
+        colorId: values.colorId,
+        size: values.size,
+      }}
+      onChange={(next) => {
+        const paletteChanged = next.colorPaletteId !== colorPaletteId
+        onValuesChange({
+          ...values,
+          name: next.name,
+          fontId: next.fontId,
+          colorId: paletteChanged
+            ? remapColorIdToPalette(theme, colorPaletteId, next.colorPaletteId, next.colorId)
+            : next.colorId,
+        })
+      }}
+      fieldErrors={fieldErrors}
+      fontOptions={fontOptions}
+      paletteOptions={paletteOptions}
+      colorOptions={colorOptionsWithFallback}
+      allowNone
+      noneLabel={tc('none')}
+      fontPlaceholder={t('pickFontRequired')}
+      colorPlaceholder={t('pickColorRequired')}
+      showSize={false}
+    >
       <div className="grid grid-cols-5 gap-2">
         {WEBSITE_BREAKPOINTS.map((breakpoint) => (
           <FormField
@@ -126,7 +161,7 @@ export function ThemeTextStyleEditPanel({
           </TabsList>
         </Tabs>
       </div>
-    </Form>
+    </TextStyleBasicSettingsFields>
   )
 
   return (

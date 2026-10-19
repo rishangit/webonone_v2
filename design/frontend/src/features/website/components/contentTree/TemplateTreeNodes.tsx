@@ -5,11 +5,12 @@ import { DropdownMenuItem, DropdownMenuSeparator, cn } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../../addons/registry'
 import {
   addonCollapseKey,
-  blockTreeLabel,
+  elementTreeTitle,
   listSlideTemplateTreeChildren,
   templateCollapseKey,
 } from '../../document/contentTreeModel'
 import type { DesignerSelection, WebsiteAddon, WebsiteBlock } from '../../types'
+import { CopyCanvasElementToAiMenuItem } from '../CopyCanvasElementToAiMenuItem'
 import { ADDON_ICONS, TREE_NEST, TreeNavRow, TreeRowMenu } from './treeUi'
 
 export type TemplateTreeCallbacks = {
@@ -54,6 +55,7 @@ export type TemplateTreeCallbacks = {
     templateBlockId: string,
     templateAddonId: string,
   ) => void
+  onCopyToAi?: (selection: DesignerSelection) => void
 }
 
 type TemplateTreeContext = TemplateTreeCallbacks & {
@@ -116,10 +118,12 @@ export function TemplateContextAddonTreeNode({
     onOpenTemplateAddonSettings,
     onLayerTemplateAddon,
     onDeleteTemplateAddon,
+    onCopyToAi,
   } = context
 
   const module = getAddonModuleByType(addon.type)
-  const label = module ? t(module.labelKey) : addon.type
+  const typeLabel = module ? t(module.labelKey) : addon.type
+  const label = elementTreeTitle(addon.name, typeLabel)
   const AddonIcon = ADDON_ICONS[addon.type]
   const slideTemplate = addon.type === 'slider' ? addon.props.slideTemplate : null
   const hasTemplate = slideTemplate != null
@@ -171,6 +175,18 @@ export function TemplateContextAddonTreeNode({
             treeId={`template-addon:${addon.id}`}
             icon={AddonIcon}
             label={label}
+            subtitle={typeLabel}
+            hoverTarget={
+              hostBlockId && hostAddonId
+                ? {
+                    kind: 'templateAddon',
+                    hostBlockId,
+                    sliderAddonId: hostAddonId,
+                    templateBlockId: parentTemplateBlockId,
+                    templateAddonId: addon.id,
+                  }
+                : undefined
+            }
             active={addonSelected}
             onSelect={() =>
               onSelect({
@@ -217,6 +233,19 @@ export function TemplateContextAddonTreeNode({
                   >
                     {t('layerDown')}
                   </DropdownMenuItem>
+                  {onCopyToAi ? (
+                    <CopyCanvasElementToAiMenuItem
+                      onCopy={() =>
+                        onCopyToAi({
+                          kind: 'templateAddon',
+                          hostBlockId,
+                          sliderAddonId: hostAddonId,
+                          templateBlockId: parentTemplateBlockId,
+                          templateAddonId: addon.id,
+                        })
+                      }
+                    />
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
@@ -262,6 +291,7 @@ export function TemplateBlockTreeNode({
     onLayerTemplateBlock,
     onDeleteTemplateBlock,
     onDuplicateTemplateBlock,
+    onCopyToAi,
   } = context
 
   const collapseKey = templateCollapseKey(block.id)
@@ -299,7 +329,18 @@ export function TemplateBlockTreeNode({
           <TreeNavRow
             treeId={`template-block:${block.id}`}
             icon={Box}
-            label={blockTreeLabel(block, t('block'))}
+            label={elementTreeTitle(block.name, block.groupName?.trim() || t('block'))}
+            subtitle={t('block')}
+            hoverTarget={
+              context.hostBlockId && context.hostAddonId
+                ? {
+                    kind: 'templateBlock',
+                    hostBlockId: context.hostBlockId,
+                    sliderAddonId: context.hostAddonId,
+                    templateBlockId: block.id,
+                  }
+                : { kind: 'block', blockId: block.id }
+            }
             active={blockSelected}
             onSelect={() =>
               onSelect({
@@ -348,6 +389,18 @@ export function TemplateBlockTreeNode({
                   >
                     {t('layerDown')}
                   </DropdownMenuItem>
+                  {onCopyToAi ? (
+                    <CopyCanvasElementToAiMenuItem
+                      onCopy={() =>
+                        onCopyToAi({
+                          kind: 'templateBlock',
+                          hostBlockId,
+                          sliderAddonId: hostAddonId,
+                          templateBlockId: block.id,
+                        })
+                      }
+                    />
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
@@ -388,7 +441,7 @@ export function PageSliderAddonTreeNode({
   context,
   drag,
   setDrag,
-  onReorderAddon,
+  onMoveAddon,
   onLayer,
   onDeleteAddon,
   onDuplicateAddon,
@@ -398,9 +451,9 @@ export function PageSliderAddonTreeNode({
   hostBlockId: string
   addonIndex: number
   context: TemplateTreeContext
-  drag: { kind: 'addon'; blockId: string; index: number } | null
-  setDrag: (drag: { kind: 'addon'; blockId: string; index: number } | null) => void
-  onReorderAddon: (blockId: string, from: number, to: number) => void
+  drag: { kind: 'addon'; blockId: string; addonId: string; index: number } | null
+  setDrag: (drag: { kind: 'addon'; blockId: string; addonId: string; index: number } | null) => void
+  onMoveAddon: (fromBlockId: string, addonId: string, toBlockId: string, toIndex: number) => void
   onLayer: (target: { blockId: string; addonId?: string }, direction: 'up' | 'down') => void
   onDeleteAddon: (blockId: string, addonId: string) => void
   onDuplicateAddon?: (blockId: string, addonId: string) => void
@@ -413,7 +466,8 @@ export function PageSliderAddonTreeNode({
   const collapseKey = addonCollapseKey(addon.id)
   const open = !collapsed[collapseKey]
   const module = getAddonModuleByType(addon.type)
-  const label = module ? t(module.labelKey) : addon.type
+  const typeLabel = module ? t(module.labelKey) : addon.type
+  const label = elementTreeTitle(addon.name, typeLabel)
   const AddonIcon = ADDON_ICONS[addon.type]
 
   const addonSelected = selection?.kind === 'addon' && selection.addonId === addon.id
@@ -455,13 +509,16 @@ export function PageSliderAddonTreeNode({
             treeId={`addon:${addon.id}`}
             icon={AddonIcon}
             label={label}
+            subtitle={typeLabel}
+            hoverTarget={{ kind: 'addon', blockId: hostBlockId, addonId: addon.id }}
             active={addonSelected}
             draggable={canManage}
             onSelect={() => onSelect({ kind: 'addon', blockId: hostBlockId, addonId: addon.id })}
-            onDragStart={() => setDrag({ kind: 'addon', blockId: hostBlockId, index: addonIndex })}
+            onDragStart={() => setDrag({ kind: 'addon', blockId: hostBlockId, addonId: addon.id, index: addonIndex })}
+            onDragEnd={() => setDrag(null)}
             onDrop={() => {
-              if (drag?.kind === 'addon' && drag.blockId === hostBlockId) {
-                onReorderAddon(hostBlockId, drag.index, addonIndex)
+              if (drag?.kind === 'addon' && drag.addonId !== addon.id) {
+                onMoveAddon(drag.blockId, drag.addonId, hostBlockId, addonIndex)
               }
               setDrag(null)
             }}
@@ -490,6 +547,13 @@ export function PageSliderAddonTreeNode({
                   <DropdownMenuItem onClick={() => onLayer({ blockId: hostBlockId, addonId: addon.id }, 'down')}>
                     {t('layerDown')}
                   </DropdownMenuItem>
+                  {context.onCopyToAi ? (
+                    <CopyCanvasElementToAiMenuItem
+                      onCopy={() =>
+                        context.onCopyToAi?.({ kind: 'addon', blockId: hostBlockId, addonId: addon.id })
+                      }
+                    />
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"

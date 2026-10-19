@@ -16,6 +16,7 @@ function emptyTheme(): WebsiteTheme {
     sourceLibraryId: null,
     fonts: [],
     colors: [],
+    colorPalettes: [],
     textStyles: [],
     buttonStyles: [],
     createdBy: null,

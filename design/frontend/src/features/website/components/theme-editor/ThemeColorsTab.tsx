@@ -1,303 +1,112 @@
-import { useState } from 'react'
-
+import { useMemo, useState } from 'react'
 import {
-
   DropdownMenuItem,
-
   DropdownMenuSeparator,
-
   ItemList,
-
-  ItemListContent,
-
   ItemListEmpty,
-
-  ItemListItem,
-
   ItemListMenu,
-
 } from '@webonone/ui-kit'
-
 import { useTranslation } from 'react-i18next'
-
-import type { WebsiteColorToken } from '../../types'
-
-import { pageChromeFromTokens, mergeImportedSwatches, WEBSITE_PALETTE_SLOT_NAME_KEYS } from '../../utils/websitePalette'
-
+import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
+import { ColorPaletteHubListItem } from '../ColorPaletteHubListItem'
+import type { WebsiteColorLibraryItem } from '../../types'
+import {
+  applyLibraryPaletteGroupToTheme,
+  removeThemeColorPaletteGroup,
+  themePaletteRefsToLibraryPalette,
+} from '../../utils/websitePalette'
 import { writeThemeDraft } from '../../utils/themeDraftStorage'
-
-import { upsertById } from '../../utils/upsertById'
-
-import { ThemeColorDialog } from './ThemeColorDialog'
-
-import { ThemeCssImportDialog } from './ThemeCssImportDialog'
-
+import { ThemeColorPaletteAddDialog } from './ThemeColorPaletteAddDialog'
 import { ThemeEditorListHeader } from './ThemeEditorListHeader'
-
-import { ThemePaletteImportCallout } from './ThemePaletteImportCallout'
-
 import type { ThemeEditorTabProps } from './types'
 
-
-
-type ThemeColorsTabProps = ThemeEditorTabProps & {
-
-  onColorInUse: () => void
-
-}
-
-
-
-export function ThemeColorsTab({ theme, onPersist, saving, onColorInUse }: ThemeColorsTabProps) {
-
+export function ThemeColorsTab({ theme, onPersist, saving }: ThemeEditorTabProps) {
   const { t } = useTranslation('website')
-
   const { t: tc } = useTranslation('common')
+  const { goToWebsite } = useNavigateDesign()
+  const [paletteDialogOpen, setPaletteDialogOpen] = useState(false)
 
-  const [dialog, setDialog] = useState<{ color?: WebsiteColorToken } | null>(null)
+  const colorPalettes = theme.colorPalettes ?? []
+  const appliedLibraryPaletteIds = useMemo(
+    () =>
+      (theme.colorPalettes ?? [])
+        .map((palette) => palette.sourceLibraryPaletteId)
+        .filter((id): id is string => Boolean(id)),
+    [theme.colorPalettes],
+  )
+  const colorsById = useMemo(() => new Map(theme.colors.map((color) => [color.id, color])), [theme.colors])
 
-  const [importOpen, setImportOpen] = useState(false)
-
-
-
-  function openDialog(color?: WebsiteColorToken) {
-
-    writeThemeDraft(theme)
-
-    setDialog({ color })
-
+  function applyLibraryItem(item: WebsiteColorLibraryItem) {
+    const entries = item.palette.colors.map((entry) => ({ name: entry.name, value: entry.value }))
+    onPersist({
+      ...theme,
+      ...applyLibraryPaletteGroupToTheme(theme, {
+        name: item.name,
+        sourceLibraryPaletteId: item.id,
+        entries,
+      }),
+    })
   }
 
-
-
-  function removeColor(id: string) {
-
-    const usedByText = theme.textStyles.some((style) => style.colorId === id)
-
-    const usedByButton = theme.buttonStyles.some(
-
-      (style) =>
-
-        style.backgroundColorId === id || style.textColorId === id || style.borderColorId === id,
-
-    )
-
-    if (usedByText || usedByButton) {
-
-      onColorInUse()
-
-      return
-
-    }
-
-    onPersist({ ...theme, colors: theme.colors.filter((item) => item.id !== id) })
-
+  function removePalette(paletteInstanceId: string) {
+    onPersist({ ...theme, ...removeThemeColorPaletteGroup(theme, paletteInstanceId) })
   }
 
-
+  const hasPalettes = colorPalettes.length > 0
 
   return (
-
-    <div className="space-y-4">
-
+    <div className="space-y-2">
       <ThemeEditorListHeader
-
         title={t('colors')}
-
-        addLabel={t('addColor')}
-
-        onAdd={() => openDialog()}
-
-        disabled={saving}
-
-      />
-
-      <ThemePaletteImportCallout
-
-        disabled={saving}
-
-        onOpenImport={() => {
-
+        addLabel={t('addThemeColorPalette')}
+        onAdd={() => {
           writeThemeDraft(theme)
-
-          setImportOpen(true)
-
+          setPaletteDialogOpen(true)
         }}
-
+        disabled={saving}
       />
 
-      {theme.colors.length === 0 ? (
-
-        <ItemListEmpty>{t('emptyColors')}</ItemListEmpty>
-
+      {!hasPalettes ? (
+        <ItemListEmpty>{t('emptyThemeColorPalettes')}</ItemListEmpty>
       ) : (
-
         <ItemList>
-
-          {theme.colors.map((color) => (
-
-            <ItemListItem key={color.id}>
-
-              <ItemListContent>
-
-                <button
-
-                  type="button"
-
-                  className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-
-                  onClick={() => openDialog(color)}
-
-                  disabled={saving}
-
-                >
-
-                  <div className="flex items-center gap-3">
-
-                    <span
-
-                      className="h-8 w-8 shrink-0 rounded-md border border-[hsl(var(--glass-border))]"
-
-                      style={{ backgroundColor: color.value }}
-
-                      aria-hidden
-
-                    />
-
-                    <div>
-
-                      <p className="font-medium">{color.name}</p>
-
-                      <p className="text-sm text-muted-foreground">{color.value}</p>
-
-                    </div>
-
-                  </div>
-
-                </button>
-
-              </ItemListContent>
-
-              <ItemListMenu ariaLabel={t('actionsFor', { name: color.name || t('colors') })}>
-
-                <DropdownMenuItem onClick={() => openDialog(color)} disabled={saving}>
-
-                  {tc('edit')}
-
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-
-                  className="text-destructive focus:text-destructive"
-
-                  onClick={() => removeColor(color.id)}
-
-                  disabled={saving}
-
-                >
-
-                  {tc('delete')}
-
-                </DropdownMenuItem>
-
-              </ItemListMenu>
-
-            </ItemListItem>
-
-          ))}
-
+          {colorPalettes.map((paletteRef) => {
+            const palette = themePaletteRefsToLibraryPalette(paletteRef, colorsById)
+            const detailPath = `/website/themes/${theme.id}/palettes/${paletteRef.id}`
+            return (
+              <ColorPaletteHubListItem
+                key={paletteRef.id}
+                name={paletteRef.name}
+                palette={palette}
+                colorCountLabel={t('colorPaletteColorCount', { count: palette.colors.length })}
+                onOpen={() => goToWebsite(detailPath)}
+                menu={
+                  <ItemListMenu ariaLabel={t('actionsFor', { name: paletteRef.name })}>
+                    <DropdownMenuItem disabled={saving} onClick={() => goToWebsite(detailPath)}>
+                      {tc('edit')}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => removePalette(paletteRef.id)}
+                      disabled={saving}
+                    >
+                      {tc('delete')}
+                    </DropdownMenuItem>
+                  </ItemListMenu>
+                }
+              />
+            )
+          })}
         </ItemList>
-
       )}
 
-      <ThemeColorDialog
-        open={dialog !== null}
-        themeId={theme.id}
-        initial={dialog?.color}
-        takenColorValues={theme.colors.map((color) => color.value)}
-        onOpenChange={(open) => {
-          if (!open) setDialog(null)
-        }}
-        onSubmit={(color) => {
-          onPersist({ ...theme, colors: upsertById(theme.colors, color) })
-          setDialog(null)
-        }}
-        onApplyPalette={(swatches) => {
-          const usedIds = new Set(
-            [
-              ...theme.textStyles.map((style) => style.colorId),
-              ...theme.buttonStyles.flatMap((style) => [
-                style.backgroundColorId,
-                style.textColorId,
-                style.borderColorId,
-              ]),
-            ].filter(Boolean),
-          )
-          const names = WEBSITE_PALETTE_SLOT_NAME_KEYS.map((key) => t(key))
-          const colors = mergeImportedSwatches(swatches, theme.colors, names, usedIds)
-          onPersist({
-            ...theme,
-            colors,
-            ...pageChromeFromTokens(colors),
-          })
-          setDialog(null)
-        }}
+      <ThemeColorPaletteAddDialog
+        open={paletteDialogOpen}
+        appliedLibraryPaletteIds={appliedLibraryPaletteIds}
+        onOpenChange={setPaletteDialogOpen}
+        onApply={applyLibraryItem}
       />
-
-      <ThemeCssImportDialog
-
-        open={importOpen}
-
-        onOpenChange={setImportOpen}
-
-        onImport={(swatches) => {
-
-          const usedIds = new Set(
-
-            [
-
-              ...theme.textStyles.map((style) => style.colorId),
-
-              ...theme.buttonStyles.flatMap((style) => [
-
-                style.backgroundColorId,
-
-                style.textColorId,
-
-                style.borderColorId,
-
-              ]),
-
-            ].filter(Boolean),
-
-          )
-
-          const names = WEBSITE_PALETTE_SLOT_NAME_KEYS.map((key) => t(key))
-
-          const colors = mergeImportedSwatches(swatches, theme.colors, names, usedIds)
-
-          onPersist({
-
-            ...theme,
-
-            colors,
-
-            ...pageChromeFromTokens(colors),
-
-          })
-
-          setImportOpen(false)
-
-        }}
-
-      />
-
     </div>
-
   )
-
 }
-
-

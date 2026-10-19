@@ -333,7 +333,7 @@ function emptyTextStyle(theme: WebsiteTheme, initial?: WebsiteTextStyle): Websit
     fontId: theme.fonts[0]?.id ?? '',
     size: fallbackTextSize(sizeByBreakpoint),
     sizeByBreakpoint,
-    colorId: theme.colors[0]?.id ?? '',
+    colorId: theme.colorPalettes?.[0]?.colorIds[0] ?? theme.colors[0]?.id ?? '',
     customization: emptyWebsiteElementCustomization(),
   }
 }

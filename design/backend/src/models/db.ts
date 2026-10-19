@@ -113,6 +113,8 @@ export interface DesignWebsiteThemeRow {
   source_library_id: string | null
   fonts: string | unknown[]
   colors: string | unknown[]
+  color_palettes: string | unknown[] | null
+  color_roles: string | Record<string, unknown> | null
   text_styles: string | unknown[]
   button_styles: string | unknown[]
   created_by: string | null

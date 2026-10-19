@@ -4,15 +4,15 @@ category: website-forms
 slug: website-presets
 audience: owner
 order: 10
-summary: "Save reusable content-element layouts and insert them while designing pages, headers, or footers."
+summary: "Save reusable block layouts and insert them while designing pages, headers, or footers."
 ---
 
 1. Open **Website → Presets**.
-2. Choose **Add preset**, then **Add from library** to copy a shared preset, or **Create new** to make one for this website. Give it a name, then design it in the same webpage designer used for pages (content elements and add-ons). Super Admin uses **Add preset** to add a library preset directly.
+2. Choose **Add preset**, then **Add from library** to copy a shared preset, or **Create new** to make one for this website. Give it a name, then design it in the same webpage designer used for pages (blocks and add-ons). Super Admin uses **Add preset** to add a library preset directly.
 3. Save the preset.
-4. Or, in a page, header, or footer designer, open a content element’s menu and choose **Save as preset** (unavailable while you are already editing a preset).
-5. In a page, header, or footer designer, select a content element and click **Add add-on**.
-6. Open **Website → Presets** and choose a saved preset. Its add-ons are copied into that content element (new copies, independent of the original).
+4. Or, in a page, header, or footer designer, open a block’s menu and choose **Save as preset** (unavailable while you are already editing a preset).
+5. In a page, header, or footer designer, select a block and click **Add add-on**.
+6. Open **Website → Presets** and choose a saved preset. Its add-ons are copied into that block (new copies, independent of the original).
 
 Nav menu add-ons in a preset are skipped when you insert into a page or footer. Presets are not shown on the public site.
 

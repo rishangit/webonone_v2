@@ -169,6 +169,8 @@ export type ElementChrome = {
 type WebsiteAddonBase = {
   id: string
   zIndex: number
+  /** Shown in the element tree so this add-on can be told apart from others of the same type. */
+  name?: string
   layout: LayoutByBreakpoint
   dataBinding?: AddonDataBinding
 } & ElementChrome
@@ -198,7 +200,11 @@ export type WebsiteAddon =
 export type WebsiteBlock = {
   id: string
   zIndex: number
+  /** Shown in the element tree. Separate from groupName, which data binding uses. */
+  name?: string
   groupName?: string
+  /** Where this block sits in its parent row. Omitted blocks stay packed from the left. */
+  place?: 'start' | 'center' | 'end'
   dataBinding?: BlockDataBinding
   layout: LayoutByBreakpoint
   addons: WebsiteAddon[]
@@ -294,13 +300,13 @@ export type WebsiteFontLibraryItem = {
   sortOrder: number
 }
 
+export type WebsiteColorLibraryColor = {
+  name: string
+  value: string
+}
+
 export type WebsiteColorLibraryPalette = {
-  color_1: string
-  color_2: string
-  color_3: string
-  color_4: string
-  color_5: string
-  color_6: string
+  colors: WebsiteColorLibraryColor[]
 }
 
 export type WebsiteColorLibraryItem = {
@@ -314,6 +320,13 @@ export type WebsiteColorToken = {
   id: string
   name: string
   value: string
+}
+
+export type WebsiteThemeColorPalette = {
+  id: string
+  name: string
+  sourceLibraryPaletteId?: string | null
+  colorIds: string[]
 }
 
 export type WebsiteElementCustomization = {
@@ -390,18 +403,31 @@ export type WebsiteButtonLibraryItem = {
   sortOrder: number
 }
 
+export type WebsiteThemeColorRoles = {
+  pageBackgroundColorId: string
+  surfaceColorId: string
+  bodyTextColorId: string
+  accentColor1Id: string
+  accentColor2Id: string
+}
+
 export type WebsiteTheme = {
   id: string
   companyId: string
   name: string
   pageBackground: string
   bodyTextColor: string
+  surfaceColor?: string
+  accentColor1?: string
+  accentColor2?: string
+  colorRoles?: WebsiteThemeColorRoles
   isActive: boolean
   isDefault: boolean
   isLocked: boolean
   sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
   colors: WebsiteColorToken[]
+  colorPalettes: WebsiteThemeColorPalette[]
   textStyles: WebsiteTextStyle[]
   buttonStyles: WebsiteButtonStyle[]
   createdBy: string | null

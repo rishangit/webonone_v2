@@ -120,7 +120,9 @@ export function ThemeButtonsTab({ theme, onPersist, saving }: ThemeEditorTabProp
         }}
         onSubmit={(style, patch) => {
           const base = applyThemeTokenPatch(theme, patch)
-          onPersist({ ...base, buttonStyles: upsertById(base.buttonStyles, style) })
+          if (!onPersist({ ...base, buttonStyles: upsertById(base.buttonStyles, style) })) {
+            return
+          }
           setDialog(null)
         }}
       />

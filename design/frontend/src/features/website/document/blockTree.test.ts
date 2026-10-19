@@ -11,6 +11,8 @@ import {
   duplicateBlock,
   findBlock,
   insertBlocksFromPreset,
+  moveAddon,
+  moveBlock,
   stripNestedSliders,
 } from './blockTree'
 import { ROW_HEIGHT } from './layout'
@@ -261,5 +263,38 @@ describe('cloneBlockTree preset into slider template', () => {
     const allowed = new Set(['image', 'text', 'button', 'menu'] as const)
     const cloned = cloneBlockTree(presetRoot, 0, allowed)
     assert.equal(cloned.addons.length, 0)
+  })
+})
+
+describe('moveAddon / moveBlock', () => {
+  it('moves an add-on from one block into another', () => {
+    const document: WebsiteDocumentV1 = {
+      version: 1,
+      container: { height: 640 },
+      blocks: [
+        blockWith('a', { addons: [textAddon('logo', 'Logo')], zIndex: 0 }),
+        blockWith('b', { addons: [textAddon('links', 'Links')], zIndex: 1 }),
+      ],
+    }
+    const moved = moveAddon(document, 'a', 'logo', 'b', 0)
+    assert.equal(findBlock(moved, 'a')?.addons.length, 0)
+    assert.deepEqual(
+      findBlock(moved, 'b')?.addons.map((addon) => addon.id),
+      ['logo', 'links'],
+    )
+  })
+
+  it('moves a block under another block and refuses a cycle', () => {
+    let document = emptyWebsiteDocument()
+    document = addBlock(document)
+    const first = document.blocks[0]!.id
+    document = addBlock(document)
+    const second = document.blocks[1]!.id
+    const nested = moveBlock(document, second, first, 0)
+    assert.equal(nested.blocks.length, 1)
+    assert.equal(findBlock(nested, first)?.children[0]?.id, second)
+    const cycled = moveBlock(nested, first, second, 0)
+    assert.equal(cycled.blocks[0]?.id, first)
+    assert.equal(findBlock(cycled, first)?.children[0]?.id, second)
   })
 })

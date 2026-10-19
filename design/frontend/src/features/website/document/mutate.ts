@@ -43,6 +43,8 @@ export {
   findBlockPath,
   insertBlocksFromPreset,
   mapBlocks,
+  moveAddon,
+  moveBlock,
   reorderAddons,
   reorderBlocks,
   updateAddon,

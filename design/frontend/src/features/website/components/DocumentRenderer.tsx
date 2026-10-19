@@ -19,6 +19,8 @@ import {
   CONTENT_ELEMENT_OUTLINE,
 } from '../document/selectionOutline'
 import { isChromePointerTarget, shouldDeferToSelectedAncestor } from '../document/selectionPointer'
+import { CanvasHighlightProvider, useCanvasHighlight } from '../document/canvasHighlight'
+import { themeChromeCssVars } from '../utils/websitePalette'
 import { SelectionChrome } from './SelectionChrome'
 import type {
   DesignerMode,
@@ -39,6 +41,8 @@ interface DocumentRendererProps {
   /** `content` shrink-wraps header/footer; `page` fills leftover viewport height. */
   fit?: 'canvas' | 'content' | 'page'
   selection?: DesignerSelection | null
+  /** Tree hover. Outlines the matching element without changing selection. */
+  highlight?: DesignerSelection | null
   pages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   companyId?: string
@@ -110,6 +114,7 @@ export function DocumentRenderer({
   mode = 'visual',
   fit = 'canvas',
   selection,
+  highlight = null,
   pages = [],
   currentPageId = null,
   companyId,
@@ -153,6 +158,7 @@ export function DocumentRenderer({
 
   const sortedBlocks = [...renderDocument.blocks].sort((a, b) => a.zIndex - b.zIndex)
   const containerSelected = interactive && selection?.kind === 'container'
+  const containerHighlighted = interactive && highlight?.kind === 'container' && !containerSelected
   const contentHeight = documentContentHeight(renderDocument, breakpoint)
   const canvasHeight = renderDocument.container.height
   const overlayHeight =
@@ -164,13 +170,16 @@ export function DocumentRenderer({
         ? { minHeight: `max(100%, ${Math.max(canvasHeight, contentHeight)}px)` }
         : { height: canvasHeight }
 
+  const chromeVars = themeChromeCssVars(theme ?? null)
   return (
+    <CanvasHighlightProvider value={highlight}>
     <div
       className={cn('relative w-full', fit === 'page' && 'flex-1')}
       style={{
         ...sizeStyle,
-        backgroundColor: renderDocument.container.backgroundColor || theme?.pageBackground || '#ffffff',
-        color: theme?.bodyTextColor || '#111827',
+        ...chromeVars,
+        backgroundColor: renderDocument.container.backgroundColor || chromeVars.backgroundColor || '#ffffff',
+        color: chromeVars.color || '#111827',
       }}
       onClick={() => onSelect?.({ kind: 'container' })}
     >
@@ -222,8 +231,9 @@ export function DocumentRenderer({
       ))}
       {/* Paint above blocks so flush-to-edge content cannot hide the container border. */}
       {interactive ? <div className={CONTENT_CONTAINER_EDGE} aria-hidden /> : null}
-      {containerSelected ? <div className={CONTENT_CONTAINER_FRAME} aria-hidden /> : null}
+      {containerSelected || containerHighlighted ? <div className={CONTENT_CONTAINER_FRAME} aria-hidden /> : null}
     </div>
+    </CanvasHighlightProvider>
   )
 }
 
@@ -297,7 +307,10 @@ function BlockView({
   onNavigatePage?: (path: string) => void
 }) {
   const rect = resolveLayoutRect(block.layout, breakpoint)
+  const highlight = useCanvasHighlight()
   const selected = selection?.kind === 'block' && selection.blockId === block.id
+  const highlighted = highlight?.kind === 'block' && highlight.blockId === block.id
+  const outlined = selected || highlighted
   const blockGrabbed: DesignerSelection = { kind: 'block', blockId: block.id }
   const childSelected =
     (selection?.kind === 'addon' && selection.blockId === block.id) ||
@@ -316,14 +329,17 @@ function BlockView({
     <div
       className={cn(
         interactive && !block.backgroundColor && 'bg-primary/5',
-        selected || childSelected ? 'overflow-visible' : 'overflow-hidden',
-        selected && CONTENT_ELEMENT_OUTLINE,
+        selected || childSelected || highlighted ? 'overflow-visible' : 'overflow-hidden',
+        outlined && CONTENT_ELEMENT_OUTLINE,
         chromeClassName(chrome),
       )}
       style={{
         ...chromeBoxStyle(rect, chrome),
         ...chromeInlineStyle(chrome),
-        zIndex: selected || childSelected ? 10000 + block.zIndex : block.zIndex,
+        ...(!chrome.backgroundColor && (publish || !interactive) && theme?.surfaceColor
+          ? { backgroundColor: theme.surfaceColor }
+          : {}),
+        zIndex: selected || childSelected ? 10000 + block.zIndex : highlighted ? 9000 + block.zIndex : block.zIndex,
         cursor: interactive ? 'move' : undefined,
         touchAction: interactive ? 'none' : undefined,
         userSelect: interactive ? 'none' : undefined,
@@ -403,7 +419,7 @@ function BlockView({
           <RowGridOverlay height={rect.height} lineClassName="border-primary/25" className="z-[2]" />
         </>
       ) : null}
-      {selected ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
+      {outlined ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
       {addons.map((addon) => (
         <AddonView
           key={addon.id}
@@ -412,6 +428,7 @@ function BlockView({
           breakpoint={breakpoint}
           theme={theme}
           selected={selection?.kind === 'addon' && selection.addonId === addon.id}
+          highlighted={highlight?.kind === 'addon' && highlight.addonId === addon.id && highlight.blockId === block.id}
           blockSelected={selected}
           pages={pages}
           currentPageId={currentPageId}
@@ -502,6 +519,7 @@ function AddonView({
   breakpoint,
   theme,
   selected,
+  highlighted = false,
   blockSelected,
   pages,
   currentPageId = null,
@@ -535,6 +553,7 @@ function AddonView({
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
   selected: boolean
+  highlighted?: boolean
   blockSelected: boolean
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
@@ -571,6 +590,7 @@ function AddonView({
   const RenderComponent = module?.RenderComponent
   const rect = resolveLayoutRect(addon.layout, breakpoint)
   const hostSelected = selection?.kind === 'addon' && selection.addonId === addon.id
+  const hostOutlined = hostSelected || highlighted
   const templateChildSelected =
     (selection?.kind === 'templateBlock' || selection?.kind === 'templateAddon') &&
     selection.sliderAddonId === addon.id
@@ -584,13 +604,18 @@ function AddonView({
   const clipSliderFrame = addon.type === 'slider' && !templateChildSelected
   return (
     <div
-      className={cn(hostSelected && ADDON_OUTLINE, chromeClassName(chrome))}
+      className={cn(hostOutlined && ADDON_OUTLINE, chromeClassName(chrome))}
       data-addon-node=""
       data-addon-id={addon.id}
       style={{
         ...chromeBoxStyle(rect, chrome),
         ...chromeInlineStyle(chrome),
-        zIndex: selected || templateChildSelected ? 10000 + addon.zIndex : addon.zIndex + 2,
+        zIndex:
+          selected || templateChildSelected
+            ? 10000 + addon.zIndex
+            : highlighted
+              ? 9000 + addon.zIndex
+              : addon.zIndex + 2,
         overflow: clipSliderFrame ? 'hidden' : 'visible',
         cursor: interactive && !blockLocksPointers ? 'move' : undefined,
         touchAction: interactive && !blockLocksPointers ? 'none' : undefined,
@@ -684,7 +709,7 @@ function AddonView({
           />
         ) : null}
       </div>
-      {hostSelected && !templateChildSelected ? <div className={ADDON_FRAME} /> : null}
+      {(hostSelected && !templateChildSelected) || highlighted ? <div className={ADDON_FRAME} /> : null}
       {interactive && hostSelected && !templateChildSelected && onResizePointerDown ? (
         <SelectionChrome
           kind="addon"

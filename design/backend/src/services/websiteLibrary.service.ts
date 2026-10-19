@@ -24,6 +24,7 @@ import {
 } from '../schemas/websiteThemes.schema.js'
 import {
   normalizeColorLibraryPalette,
+  parseStoredColorLibraryPalette,
   type WebsiteColorLibraryPalette,
 } from '../utils/colorLibraryPalette.js'
 import { normalizeStoredCustomization } from '../utils/websiteElementRoot.js'
@@ -197,8 +198,8 @@ type ColorLibraryRow = {
 }
 
 function parseColorLibraryPalette(raw: string | WebsiteColorLibraryPalette): WebsiteColorLibraryPalette {
-  const value = typeof raw === 'string' ? JSON.parse(raw) : raw
-  return normalizeColorLibraryPalette(websiteColorLibraryPaletteSchema.parse(value))
+  const parsed = parseStoredColorLibraryPalette(raw)
+  return normalizeColorLibraryPalette(websiteColorLibraryPaletteSchema.parse(parsed))
 }
 
 function toColorLibraryItem(row: ColorLibraryRow): ColorLibraryItem {
@@ -704,6 +705,12 @@ export async function patchButtonLibraryItem(
   const mergedDefinition: ButtonLibraryDefinition = {
     ...existing.definition,
     ...definitionFields,
+  }
+  if (definitionFields.textColorValue) {
+    mergedDefinition.labelColorValue = mergedDefinition.textColorValue
+    if (definitionFields.textColorName) {
+      mergedDefinition.labelColorName = mergedDefinition.textColorName
+    }
   }
   const customization = mergeCustomization(
     readCustomization(existing.definition.customization),

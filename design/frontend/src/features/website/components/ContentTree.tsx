@@ -7,12 +7,14 @@ import {
   cn,
 } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../addons/registry'
-import { blockTreeLabel, collapseKeysForTemplateSelection } from '../document/contentTreeModel'
+import { TreeHoverProvider } from '../document/canvasHighlight'
+import { collapseKeysForTemplateSelection, elementTreeTitle } from '../document/contentTreeModel'
 import type { DesignerSelection, WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../types'
 import {
   PageSliderAddonTreeNode,
   type TemplateTreeCallbacks,
 } from './contentTree/TemplateTreeNodes'
+import { CopyCanvasElementToAiMenuItem } from './CopyCanvasElementToAiMenuItem'
 import { ADDON_ICONS, TREE_NEST, TreeNavRow, TreeRowMenu } from './contentTree/treeUi'
 
 interface ContentTreeProps {
@@ -20,8 +22,8 @@ interface ContentTreeProps {
   selection: DesignerSelection | null
   canManage?: boolean
   onSelect: (selection: DesignerSelection) => void
-  onReorderAddon: (blockId: string, from: number, to: number) => void
-  onReorderBlock: (parentBlockId: string | null, from: number, to: number) => void
+  onMoveAddon: (fromBlockId: string, addonId: string, toBlockId: string, toIndex: number) => void
+  onMoveBlock: (blockId: string, toParentId: string | null, toIndex: number) => void
   onLayer: (target: { blockId: string; addonId?: string }, direction: 'up' | 'down') => void
   onDeleteBlock: (blockId: string) => void
   onDeleteAddon: (blockId: string, addonId: string) => void
@@ -72,11 +74,13 @@ interface ContentTreeProps {
   ) => void
   onSaveAsPreset?: (blockId: string) => void
   saveAsPresetDisabled?: boolean
+  onCopyToAi?: (selection: DesignerSelection) => void
+  onHover?: (selection: DesignerSelection | null) => void
 }
 
 type DragState =
-  | { kind: 'block'; parentBlockId: string | null; index: number }
-  | { kind: 'addon'; blockId: string; index: number }
+  | { kind: 'block'; blockId: string; parentBlockId: string | null; index: number }
+  | { kind: 'addon'; blockId: string; addonId: string; index: number }
 
 function treeItemId(selection: DesignerSelection) {
   if (selection.kind === 'container') return 'container'
@@ -117,12 +121,14 @@ function AddonTreeNode({
   drag,
   setDrag,
   onSelect,
-  onReorderAddon,
+  onMoveAddon,
+  onMoveBlock,
   onLayer,
   onDeleteAddon,
   onDuplicateAddon,
   onOpenAddonSettings,
   templateCallbacks,
+  onCopyToAi,
 }: {
   addon: WebsiteAddon
   hostBlockId: string
@@ -134,12 +140,14 @@ function AddonTreeNode({
   drag: DragState | null
   setDrag: (drag: DragState | null) => void
   onSelect: (selection: DesignerSelection) => void
-  onReorderAddon: (blockId: string, from: number, to: number) => void
+  onMoveAddon: (fromBlockId: string, addonId: string, toBlockId: string, toIndex: number) => void
+  onMoveBlock: (blockId: string, toParentId: string | null, toIndex: number) => void
   onLayer: (target: { blockId: string; addonId?: string }, direction: 'up' | 'down') => void
   onDeleteAddon: (blockId: string, addonId: string) => void
   onDuplicateAddon?: (blockId: string, addonId: string) => void
   onOpenAddonSettings: (blockId: string, addonId: string) => void
   templateCallbacks: TemplateTreeCallbacks
+  onCopyToAi?: (selection: DesignerSelection) => void
 }) {
   const { t } = useTranslation('website')
 
@@ -161,7 +169,7 @@ function AddonTreeNode({
         context={context}
         drag={drag?.kind === 'addon' ? drag : null}
         setDrag={setDrag}
-        onReorderAddon={onReorderAddon}
+        onMoveAddon={onMoveAddon}
         onLayer={onLayer}
         onDeleteAddon={onDeleteAddon}
         onDuplicateAddon={onDuplicateAddon}
@@ -171,7 +179,8 @@ function AddonTreeNode({
   }
 
   const module = getAddonModuleByType(addon.type)
-  const label = module ? t(module.labelKey) : addon.type
+  const typeLabel = module ? t(module.labelKey) : addon.type
+  const label = elementTreeTitle(addon.name, typeLabel)
   const AddonIcon = ADDON_ICONS[addon.type]
   const addonSelected = selection?.kind === 'addon' && selection.addonId === addon.id
 
@@ -180,13 +189,20 @@ function AddonTreeNode({
       treeId={`addon:${addon.id}`}
       icon={AddonIcon}
       label={label}
+      subtitle={typeLabel}
+      hoverTarget={{ kind: 'addon', blockId: hostBlockId, addonId: addon.id }}
       active={addonSelected}
       draggable={canManage}
       onSelect={() => onSelect({ kind: 'addon', blockId: hostBlockId, addonId: addon.id })}
-      onDragStart={() => setDrag({ kind: 'addon', blockId: hostBlockId, index: addonIndex })}
+      onDragStart={() => setDrag({ kind: 'addon', blockId: hostBlockId, addonId: addon.id, index: addonIndex })}
+      onDragEnd={() => setDrag(null)}
       onDrop={() => {
-        if (drag?.kind === 'addon' && drag.blockId === hostBlockId) {
-          onReorderAddon(hostBlockId, drag.index, addonIndex)
+        if (drag?.kind === 'addon' && drag.addonId !== addon.id) {
+          onMoveAddon(drag.blockId, drag.addonId, hostBlockId, addonIndex)
+          setCollapsed((current) => ({ ...current, [hostBlockId]: false }))
+        } else if (drag?.kind === 'block' && drag.blockId !== hostBlockId) {
+          onMoveBlock(drag.blockId, hostBlockId, Number.MAX_SAFE_INTEGER)
+          setCollapsed((current) => ({ ...current, [hostBlockId]: false }))
         }
         setDrag(null)
       }}
@@ -215,6 +231,11 @@ function AddonTreeNode({
             <DropdownMenuItem onClick={() => onLayer({ blockId: hostBlockId, addonId: addon.id }, 'down')}>
               {t('layerDown')}
             </DropdownMenuItem>
+            {onCopyToAi ? (
+              <CopyCanvasElementToAiMenuItem
+                onCopy={() => onCopyToAi({ kind: 'addon', blockId: hostBlockId, addonId: addon.id })}
+              />
+            ) : null}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
@@ -241,8 +262,8 @@ function BlockTreeNode({
   drag,
   setDrag,
   onSelect,
-  onReorderAddon,
-  onReorderBlock,
+  onMoveAddon,
+  onMoveBlock,
   onLayer,
   onDeleteBlock,
   onDeleteAddon,
@@ -253,6 +274,7 @@ function BlockTreeNode({
   templateCallbacks,
   onSaveAsPreset,
   saveAsPresetDisabled,
+  onCopyToAi,
 }: {
   block: WebsiteBlock
   parentBlockId: string | null
@@ -265,8 +287,8 @@ function BlockTreeNode({
   drag: DragState | null
   setDrag: (drag: DragState | null) => void
   onSelect: (selection: DesignerSelection) => void
-  onReorderAddon: (blockId: string, from: number, to: number) => void
-  onReorderBlock: (parentBlockId: string | null, from: number, to: number) => void
+  onMoveAddon: (fromBlockId: string, addonId: string, toBlockId: string, toIndex: number) => void
+  onMoveBlock: (blockId: string, toParentId: string | null, toIndex: number) => void
   onLayer: (target: { blockId: string; addonId?: string }, direction: 'up' | 'down') => void
   onDeleteBlock: (blockId: string) => void
   onDeleteAddon: (blockId: string, addonId: string) => void
@@ -277,6 +299,7 @@ function BlockTreeNode({
   templateCallbacks: TemplateTreeCallbacks
   onSaveAsPreset?: (blockId: string) => void
   saveAsPresetDisabled?: boolean
+  onCopyToAi?: (selection: DesignerSelection) => void
 }) {
   const { t } = useTranslation('website')
   const open = !collapsed[block.id]
@@ -305,14 +328,21 @@ function BlockTreeNode({
           <TreeNavRow
             treeId={`block:${block.id}`}
             icon={Box}
-            label={blockTreeLabel(block, t('block'))}
+            label={elementTreeTitle(block.name, block.groupName?.trim() || t('block'))}
+            subtitle={t('block')}
+            hoverTarget={{ kind: 'block', blockId: block.id }}
             active={blockSelected}
             draggable={canManage}
             onSelect={() => onSelect({ kind: 'block', blockId: block.id })}
-            onDragStart={() => setDrag({ kind: 'block', parentBlockId, index: blockIndex })}
+            onDragStart={() => setDrag({ kind: 'block', blockId: block.id, parentBlockId, index: blockIndex })}
+            onDragEnd={() => setDrag(null)}
             onDrop={() => {
-              if (drag?.kind === 'block' && drag.parentBlockId === parentBlockId) {
-                onReorderBlock(parentBlockId, drag.index, blockIndex)
+              if (drag?.kind === 'addon') {
+                onMoveAddon(drag.blockId, drag.addonId, block.id, addons.length)
+                setCollapsed((current) => ({ ...current, [block.id]: false }))
+              } else if (drag?.kind === 'block' && drag.blockId !== block.id) {
+                onMoveBlock(drag.blockId, block.id, children.length)
+                setCollapsed((current) => ({ ...current, [block.id]: false }))
               }
               setDrag(null)
             }}
@@ -348,6 +378,11 @@ function BlockTreeNode({
                   <DropdownMenuItem onClick={() => onLayer({ blockId: block.id }, 'down')}>
                     {t('layerDown')}
                   </DropdownMenuItem>
+                  {onCopyToAi ? (
+                    <CopyCanvasElementToAiMenuItem
+                      onCopy={() => onCopyToAi({ kind: 'block', blockId: block.id })}
+                    />
+                  ) : null}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
@@ -376,12 +411,14 @@ function BlockTreeNode({
               drag={drag}
               setDrag={setDrag}
               onSelect={onSelect}
-              onReorderAddon={onReorderAddon}
+              onMoveAddon={onMoveAddon}
+              onMoveBlock={onMoveBlock}
               onLayer={onLayer}
               onDeleteAddon={onDeleteAddon}
               onDuplicateAddon={onDuplicateAddon}
               onOpenAddonSettings={onOpenAddonSettings}
               templateCallbacks={templateCallbacks}
+              onCopyToAi={onCopyToAi}
             />
           ))}
           {children.map((child, childIndex) => (
@@ -398,8 +435,8 @@ function BlockTreeNode({
               drag={drag}
               setDrag={setDrag}
               onSelect={onSelect}
-              onReorderAddon={onReorderAddon}
-              onReorderBlock={onReorderBlock}
+              onMoveAddon={onMoveAddon}
+              onMoveBlock={onMoveBlock}
               onLayer={onLayer}
               onDeleteBlock={onDeleteBlock}
               onDeleteAddon={onDeleteAddon}
@@ -410,6 +447,7 @@ function BlockTreeNode({
               templateCallbacks={templateCallbacks}
               onSaveAsPreset={onSaveAsPreset}
               saveAsPresetDisabled={saveAsPresetDisabled}
+              onCopyToAi={onCopyToAi}
             />
           ))}
         </div>
@@ -423,8 +461,8 @@ export function ContentTree({
   selection,
   canManage = true,
   onSelect,
-  onReorderAddon,
-  onReorderBlock,
+  onMoveAddon,
+  onMoveBlock,
   onLayer,
   onDeleteBlock,
   onDeleteAddon,
@@ -442,6 +480,8 @@ export function ContentTree({
   onDeleteTemplateAddon,
   onSaveAsPreset,
   saveAsPresetDisabled = false,
+  onCopyToAi,
+  onHover,
 }: ContentTreeProps) {
   const { t } = useTranslation('website')
   const rootRef = useRef<HTMLElement>(null)
@@ -458,6 +498,7 @@ export function ContentTree({
     onDuplicateTemplateBlock,
     onLayerTemplateAddon,
     onDeleteTemplateAddon,
+    onCopyToAi,
   }
 
   useEffect(() => {
@@ -485,12 +526,14 @@ export function ContentTree({
   }, [selection])
 
   return (
+    <TreeHoverProvider onHover={onHover}>
     <nav ref={rootRef} className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2 scrollbar-themed" aria-label={t('contentTree')}>
       <h2 className="sr-only">{t('contentTree')}</h2>
       <TreeNavRow
         treeId="container"
         icon={LayoutTemplate}
         label={t('container')}
+        hoverTarget={{ kind: 'container' }}
         active={selection?.kind === 'container'}
         onSelect={() => onSelect({ kind: 'container' })}
         menu={
@@ -522,8 +565,8 @@ export function ContentTree({
           drag={drag}
           setDrag={setDrag}
           onSelect={onSelect}
-          onReorderAddon={onReorderAddon}
-          onReorderBlock={onReorderBlock}
+          onMoveAddon={onMoveAddon}
+          onMoveBlock={onMoveBlock}
           onLayer={onLayer}
           onDeleteBlock={onDeleteBlock}
           onDeleteAddon={onDeleteAddon}
@@ -534,8 +577,10 @@ export function ContentTree({
           templateCallbacks={templateCallbacks}
           onSaveAsPreset={onSaveAsPreset}
           saveAsPresetDisabled={saveAsPresetDisabled}
+          onCopyToAi={onCopyToAi}
         />
       ))}
     </nav>
+    </TreeHoverProvider>
   )
 }

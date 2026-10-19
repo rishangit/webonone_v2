@@ -11,6 +11,7 @@ import { websiteThemesActions } from '../store'
 import { WEBSITE_BREAKPOINTS } from '../types'
 import type { WebsiteTextStyle, WebsiteTheme } from '../types'
 import { parseGoogleFontFamily } from '../utils/parseGoogleFontFamily'
+import { normalizeWebsiteTheme } from '../utils/websitePalette'
 import { ThemeBasicSettingsTab } from '../components/theme-editor/ThemeBasicSettingsTab'
 import { ThemeButtonsTab } from '../components/theme-editor/ThemeButtonsTab'
 import { ThemeColorsTab } from '../components/theme-editor/ThemeColorsTab'
@@ -47,7 +48,7 @@ function hydrateTextStyle(style: WebsiteTextStyle): WebsiteTextStyle {
 
 function hydrateThemeDraft(theme: WebsiteTheme): WebsiteTheme {
   return {
-    ...theme,
+    ...normalizeWebsiteTheme(theme),
     textStyles: theme.textStyles.map(hydrateTextStyle),
   }
 }
@@ -166,7 +167,7 @@ export function WebsiteThemeEditorPage() {
           <ThemeFontsTab {...tokenTabProps} onFontInUse={() => toast({ title: t('fontInUse') })} />
         </TabsContent>
         <TabsContent value="colors" className="mt-0 outline-none">
-          <ThemeColorsTab {...tokenTabProps} onColorInUse={() => toast({ title: t('colorInUse') })} />
+          <ThemeColorsTab {...tokenTabProps} />
         </TabsContent>
         <TabsContent value="texts" className="mt-0 outline-none">
           <ThemeTextsTab

@@ -2,7 +2,7 @@ import type { WebsiteTheme } from '../../types'
 
 export type ThemeEditorTabProps = {
   theme: WebsiteTheme
-  onPersist: (theme: WebsiteTheme) => void
+  onPersist: (theme: WebsiteTheme) => boolean | void
   saving?: boolean
   fieldErrors?: Record<string, string>
 }

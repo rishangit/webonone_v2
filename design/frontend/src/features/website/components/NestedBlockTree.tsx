@@ -10,6 +10,7 @@ import {
   CONTENT_ELEMENT_OUTLINE,
 } from '../document/selectionOutline'
 import { isChromePointerTarget, shouldDeferToSelectedAncestor } from '../document/selectionPointer'
+import { useCanvasHighlight } from '../document/canvasHighlight'
 import { resolveLayoutRect, type ResizeHandle } from '../document/layout'
 import type {
   DesignerSelection,
@@ -94,12 +95,20 @@ export function NestedBlockTree({
   const rect = resolveLayoutRect(block.layout, breakpoint)
   const addons = [...block.addons].sort((a, b) => a.zIndex - b.zIndex)
   const children = [...(block.children ?? [])].sort((a, b) => a.zIndex - b.zIndex)
+  const highlight = useCanvasHighlight()
   const selected =
     interactive &&
     !root &&
     selection?.kind === 'templateBlock' &&
     selection.templateBlockId === block.id &&
     selection.sliderAddonId === sliderAddonId
+  const highlighted =
+    interactive &&
+    !root &&
+    highlight?.kind === 'templateBlock' &&
+    highlight.templateBlockId === block.id &&
+    highlight.sliderAddonId === sliderAddonId
+  const outlined = selected || highlighted
   const childSelected =
     interactive &&
     Boolean(hostBlockId && sliderAddonId) &&
@@ -116,7 +125,7 @@ export function NestedBlockTree({
         interactive ? 'overflow-visible' : null,
         !interactive && !(selected || childSelected) && 'overflow-hidden',
         (selected || childSelected) && 'overflow-visible',
-        selected && CONTENT_ELEMENT_OUTLINE,
+        outlined && CONTENT_ELEMENT_OUTLINE,
         chromeClassName(chrome),
       )}
       data-template-block-id={block.id}
@@ -132,7 +141,12 @@ export function NestedBlockTree({
           : {
               ...chromeBoxStyle(rect, chrome),
               ...chromeInlineStyle(chrome),
-              zIndex: selected || childSelected ? 10000 + block.zIndex : block.zIndex + 1,
+              zIndex:
+                selected || childSelected
+                  ? 10000 + block.zIndex
+                  : highlighted
+                    ? 9000 + block.zIndex
+                    : block.zIndex + 1,
               cursor: interactive ? 'move' : undefined,
               touchAction: interactive ? 'none' : undefined,
               userSelect: interactive ? 'none' : undefined,
@@ -219,7 +233,7 @@ export function NestedBlockTree({
         })
       }}
     >
-      {selected ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
+      {outlined ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
       {addons.map((addon) => (
         <NestedAddonView
           key={addon.id}
@@ -360,12 +374,20 @@ function NestedAddonView({
   const module = getAddonModuleByType(addon.type)
   const RenderComponent = module?.RenderComponent
   const rect = resolveLayoutRect(addon.layout, breakpoint)
+  const highlight = useCanvasHighlight()
   const selected =
     interactive &&
     selection?.kind === 'templateAddon' &&
     selection.templateAddonId === addon.id &&
     selection.templateBlockId === templateBlockId &&
     selection.sliderAddonId === sliderAddonId
+  const highlighted =
+    interactive &&
+    highlight?.kind === 'templateAddon' &&
+    highlight.templateAddonId === addon.id &&
+    highlight.templateBlockId === templateBlockId &&
+    highlight.sliderAddonId === sliderAddonId
+  const outlined = selected || highlighted
   if (!RenderComponent) return null
   const chrome = pickElementChrome(addon)
   // Same as page-level AddonView: resolve field bindings from the current row.
@@ -384,14 +406,14 @@ function NestedAddonView({
     <div
       className={cn(
         interactive || selected ? 'overflow-visible' : 'overflow-hidden',
-        selected && ADDON_OUTLINE,
+        outlined && ADDON_OUTLINE,
         chromeClassName(chrome),
       )}
       data-template-addon-id={addon.id}
       style={{
         ...chromeBoxStyle(rect, chrome),
         ...chromeInlineStyle(chrome),
-        zIndex: selected ? 10000 + addon.zIndex : addon.zIndex + 2,
+        zIndex: selected ? 10000 + addon.zIndex : highlighted ? 9000 + addon.zIndex : addon.zIndex + 2,
         cursor: interactive ? 'move' : undefined,
         touchAction: interactive ? 'none' : undefined,
         userSelect: interactive ? 'none' : undefined,
@@ -475,7 +497,7 @@ function NestedAddonView({
           onNavigatePage={onNavigatePage}
         />
       </div>
-      {selected ? <div className={ADDON_FRAME} /> : null}
+      {outlined ? <div className={ADDON_FRAME} /> : null}
       {interactive && selected && addonGrabbed && onResizePointerDown ? (
         <SelectionChrome
           kind="addon"

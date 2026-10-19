@@ -2,7 +2,7 @@ import { ClipboardPaste } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Button, Callout, CalloutAction, CalloutDescription, CalloutTitle } from '@webonone/ui-kit'
 
-export function ThemePaletteImportCallout({
+export function CColorPaletteImportCallout({
   disabled,
   onOpenImport,
 }: {

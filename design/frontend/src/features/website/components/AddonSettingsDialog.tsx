@@ -5,6 +5,8 @@ import {
   Button,
   CustomDialog,
   Form,
+  FormField,
+  Input,
   Tabs,
   TabsContent,
   TabsList,
@@ -95,7 +97,7 @@ export function AddonSettingsDialog({
 
   function submit() {
     if (!draft) return
-    onSave(draft)
+    onSave({ ...draft, name: draft.name?.trim() || undefined })
     onOpenChange(false)
   }
 
@@ -142,6 +144,14 @@ export function AddonSettingsDialog({
               <TabsTrigger value="dataBinding">{t('dataBindingTab')}</TabsTrigger>
             </TabsList>
             <TabsContent value="basic" className="space-y-4">
+              <FormField label={t('elementName')} htmlFor="addon-settings-name">
+                <Input
+                  id="addon-settings-name"
+                  value={draft.name ?? ''}
+                  onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+                  placeholder={t('elementNamePlaceholder')}
+                />
+              </FormField>
               {PropsFields ? (
                 <PropsFields
                   addon={draft}

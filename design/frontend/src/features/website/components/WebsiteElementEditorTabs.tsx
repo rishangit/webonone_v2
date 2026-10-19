@@ -152,12 +152,18 @@ export function WebsiteElementEditorTabs({
     </>
   )
 
+  const stylesEditorValue = isView
+    ? currentStyles
+    : customization.styles.trim()
+      ? customization.styles
+      : scopedDefaultStyles
+
   const stylesEditor = (
     <Textarea
       id="element-styles"
       aria-label={t('elementTabStyles')}
       className="min-h-[220px] font-mono text-sm"
-      value={currentStyles}
+      value={stylesEditorValue}
       onChange={(event) => onCustomizationChange({ ...customization, styles: event.target.value })}
       placeholder={scopedDefaultStyles}
       readOnly={isView}
@@ -232,16 +238,16 @@ export function WebsiteElementEditorTabs({
           {previewCanvas}
         </TabsContent>
         <TabsContent value="general" className={tabsPageContentClassName}>
-          {generalBody}
+          {tabWithPreview(generalBody)}
         </TabsContent>
         <TabsContent value="html" className={tabsPageContentClassName}>
-          {htmlBody}
+          {tabWithPreview(htmlBody)}
         </TabsContent>
         <TabsContent value="styles" className={tabsPageContentClassName}>
-          {stylesBody}
+          {tabWithPreview(stylesBody)}
         </TabsContent>
         <TabsContent value="scripts" className={tabsPageContentClassName}>
-          {scriptsBody}
+          {tabWithPreview(scriptsBody)}
         </TabsContent>
       </Tabs>
     )

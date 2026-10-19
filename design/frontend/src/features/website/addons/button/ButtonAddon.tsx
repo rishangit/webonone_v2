@@ -3,6 +3,7 @@ import { FormField, Input, Select, SelectContent, SelectItem, SelectTrigger, Sel
 import { nanoid } from 'nanoid'
 import { CustomWebsiteElementHost } from '../../components/CustomWebsiteElementHost'
 import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
+import { themePaletteColorValues } from '../../utils/websitePalette'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon } from '../../types'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
@@ -70,6 +71,15 @@ function ButtonAddonRenderer({
       customization={customization}
       placeholders={{ label }}
       baseStyle={style}
+      paletteColors={
+        theme
+          ? themePaletteColorValues(theme, [
+              buttonStyle?.backgroundColorId ?? '',
+              buttonStyle?.textColorId ?? '',
+              buttonStyle?.borderColorId ?? '',
+            ])
+          : undefined
+      }
       className="inline-flex h-full w-full"
       scriptContext={{ publish, href }}
       fallback={fallback}

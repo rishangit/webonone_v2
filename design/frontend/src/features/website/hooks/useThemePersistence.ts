@@ -7,6 +7,7 @@ import { websiteThemesActions } from '../store'
 import type { WebsiteTheme } from '../types'
 import { mapThemeFieldErrors } from '../utils/mapThemeFieldErrors'
 import { writeThemeDraft } from '../utils/themeDraftStorage'
+import { inferThemeColorRoles, normalizeWebsiteTheme, parseThemeColorRoles } from '../utils/websitePalette'
 
 export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme: WebsiteTheme) => void) {
   const { t } = useTranslation('website')
@@ -22,8 +23,9 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
       setAwaitingSave(false)
       setFieldErrors({})
       toast({ title: t('saved') })
-      onSynced(detail)
-      writeThemeDraft(detail)
+      const normalized = normalizeWebsiteTheme(detail)
+      onSynced(normalized)
+      writeThemeDraft(normalized)
     }
     if (detailStatus === 'error') {
       setAwaitingSave(false)
@@ -46,8 +48,10 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
         name: next.name,
         pageBackground: next.pageBackground,
         bodyTextColor: next.bodyTextColor,
+        colorRoles: inferThemeColorRoles({ ...next, colorRoles: parseThemeColorRoles(next.colorRoles) }),
         fonts: next.fonts,
         colors: next.colors,
+        colorPalettes: next.colorPalettes ?? [],
         textStyles: next.textStyles,
         buttonStyles: next.buttonStyles,
       })
@@ -73,10 +77,12 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
             name: parsed.data.name,
             pageBackground: parsed.data.pageBackground,
             bodyTextColor: parsed.data.bodyTextColor,
+            colorRoles: parsed.data.colorRoles,
             isActive: next.isActive,
             isDefault: next.isDefault,
             fonts: parsed.data.fonts,
             colors: parsed.data.colors,
+            colorPalettes: parsed.data.colorPalettes,
             textStyles: parsed.data.textStyles,
             buttonStyles: parsed.data.buttonStyles,
           },

@@ -15,7 +15,7 @@ Super Admin **බෙදාගත් text library** කළමනාකරණය �
 2. **Website** → **Texts** විවෘත කරන්න.
 3. පේළියක් ක්ලික් කරන්න, නැතහොත් three-dot menu → **Edit** තෝරන්න.
 
-විස්තර පිටුවේ **Preview**, **Basic settings**, **HTML**, **Styles**, සහ **Scripts** ඇත. එම tabs වෙනස් වන විට preview යාවත්කාලීන වේ.
+විස්තර පිටුවේ **Preview**, **Basic settings**, **HTML**, **Styles**, සහ **Scripts** ඇත. එම tabs වෙනස් වන විට preview යාවත්කාලීන වේ. **Basic settings** පුස්තකාල බොත්තමේම වර්ණ පාලන භාවිතා කරයි: **වර්ණ පැලට්**, ඊට පසු එම පැලට් එකෙන් **අකුරු වර්ණය**, එමෙන්ම විලාස නම, අකුරු වර්ගය, සහ ප්‍රමාණය.
 
 ## Text විලාසය සංස්කරණය
 
@@ -24,6 +24,12 @@ Super Admin **බෙදාගත් text library** කළමනාකරණය �
 3. ක්ෂේත්‍ර වෙනස් කර **Save** කරන්න. විස්තර පිටුව view ලෙසම පවතී.
 
 HTML තුළ `{{content}}` තබන්න — සමාගම් වෙබ් අඩවි පෙළ පුරවයි.
+
+## Preview තුළ Scripts
+
+Scripts **Preview** තුළ ධාවනය වේ (**Scripts** tab එකේ පැති preview ද). Timers බලන්න Preview තුළ රැඳී සිටින්න.
+
+තෝරාගත් වර්ණ පැලට් `--el-color-1` සිට `--el-color-6` දක්වා CSS විචල්‍ය වේ. `.animate-slide-up` තිබේ.
 
 ## Copy to AI
 

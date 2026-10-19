@@ -15,7 +15,7 @@ Super Admin maintains the **shared text library**. Company admins pick from it w
 2. Open **Website** → **Texts**.
 3. Click a row, or use the three-dot menu → **Edit**, to open the text detail page.
 
-The detail page shows **Preview**, **Basic settings**, **HTML**, **Styles**, and **Scripts**. The preview updates as those tabs change.
+The detail page shows **Preview**, **Basic settings**, **HTML**, **Styles**, and **Scripts**. The preview updates as those tabs change. **Basic settings** use the same color controls as a library button: a **color palette**, then a **font color** from that palette, plus style name, font type, and size.
 
 ## Edit a text style
 
@@ -24,6 +24,25 @@ The detail page shows **Preview**, **Basic settings**, **HTML**, **Styles**, and
 3. Change the fields, then **Save**. The detail page stays view-only.
 
 Keep `{{content}}` in the HTML so company websites can fill the text.
+
+## Scripts in preview
+
+Scripts run in the **Preview** (and in the side preview on **Scripts**). Stay on Preview to watch timers.
+
+The selected color palette is available as CSS variables `--el-color-1` through `--el-color-6`. `.animate-slide-up` is built in. Example:
+
+```js
+const el = document.querySelector('.website-el-lib-text-heading') || root
+el.classList.add('animate-slide-up')
+setTimeout(() => {
+  el.style.color = 'var(--el-color-4)'
+}, 10000)
+setTimeout(() => {
+  el.style.color = 'var(--el-color-5)'
+}, 20000)
+```
+
+`root` is always this text element. `document.querySelector('.website-el-…')` also targets it in preview even if the class name differs from the saved id.
 
 ## Copy to AI
 

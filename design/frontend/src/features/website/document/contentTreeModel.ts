@@ -58,7 +58,14 @@ export function templateCollapseKeysForPath(path: WebsiteBlock[]): string[] {
   return path.map((block) => templateCollapseKey(block.id))
 }
 
+export function elementTreeTitle(name: string | undefined, fallback: string): string {
+  const trimmed = name?.trim()
+  return trimmed ? trimmed : fallback
+}
+
 export function blockTreeLabel(block: WebsiteBlock, blockLabel: string): string {
+  const name = block.name?.trim()
+  if (name) return name
   const group = block.groupName?.trim()
   return group ? `${blockLabel} · ${group}` : blockLabel
 }

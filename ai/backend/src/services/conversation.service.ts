@@ -36,6 +36,7 @@ import {
   type PendingWrite,
 } from '../ai/tools/uniqueValues.js'
 import type { AiConversationRow, AiMessageRow, MessageRole } from '../models/db.js'
+import { keepLatestDesignerCanvas } from './designerCanvasHistory.js'
 import { HttpError } from './httpError.js'
 import type { ConversationRepository } from './conversation.repository.js'
 import {
@@ -460,7 +461,7 @@ function lastUserContent(rows: AiMessageRow[]): string {
 
 function historyToProviderMessages(rows: AiMessageRow[]): ChatMessage[] {
   const messages: ChatMessage[] = []
-  for (const row of rows) {
+  for (const row of keepLatestDesignerCanvas(rows)) {
     if (row.role === 'user') {
       messages.push({ role: 'user', content: row.content })
       continue

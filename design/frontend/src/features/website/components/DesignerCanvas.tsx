@@ -233,6 +233,7 @@ interface DesignerCanvasProps {
   canvasWidth: number
   mode: DesignerMode
   selection: DesignerSelection | null
+  highlight?: DesignerSelection | null
   theme: WebsiteTheme | null
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
@@ -302,6 +303,7 @@ export function DesignerCanvas({
   canvasWidth,
   mode,
   selection,
+  highlight = null,
   theme,
   pages,
   currentPageId = null,
@@ -609,6 +611,7 @@ export function DesignerCanvas({
         theme={theme}
         mode={mode}
         selection={selection}
+        highlight={mode === 'edit' ? highlight : null}
         pages={pages}
         currentPageId={currentPageId}
         canManage={canManage}

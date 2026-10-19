@@ -20,6 +20,7 @@ function isDesignCompanyWebsitePath(path: string): boolean {
   if (path.startsWith('/api/v1/website/library')) return false
   if (path.startsWith('/api/v1/website/button-library')) return false
   if (path.startsWith('/api/v1/website/text-library')) return false
+  if (path.startsWith('/api/v1/website/designer/canvas')) return false
   return path.startsWith('/api/v1/website/') || path.startsWith('/api/v1/website-themes')
 }
 

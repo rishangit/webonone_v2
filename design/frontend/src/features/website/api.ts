@@ -1,5 +1,6 @@
 import { apiClient, API_BASE } from '@/shared/services/apiClient'
 import { websiteEntityPath } from './utils/websiteCatalogScope'
+import { normalizeWebsiteTheme } from './utils/websitePalette'
 import type { PaginatedResult } from '@/shared/types/design.types'
 import type {
   PublicWebsiteSite,
@@ -129,10 +130,12 @@ export type CreateThemeBody = {
   name: string
   pageBackground?: string
   bodyTextColor?: string
+  colorRoles?: WebsiteTheme['colorRoles']
   isActive?: boolean
   isDefault?: boolean
   fonts?: WebsiteTheme['fonts']
   colors?: WebsiteTheme['colors']
+  colorPalettes?: WebsiteTheme['colorPalettes']
   textStyles?: WebsiteTheme['textStyles']
   buttonStyles?: WebsiteTheme['buttonStyles']
 }
@@ -411,21 +414,21 @@ export const websiteApi = {
   },
   async getTheme(id: string) {
     const data = await websiteClient<{ theme: WebsiteTheme }>(`/website-themes/${id}`)
-    return data.theme
+    return normalizeWebsiteTheme(data.theme)
   },
   async createTheme(body: CreateThemeBody) {
     const data = await websiteClient<{ theme: WebsiteTheme }>('/website-themes', {
       method: 'POST',
       body: JSON.stringify(body),
     })
-    return data.theme
+    return normalizeWebsiteTheme(data.theme)
   },
   async updateTheme(id: string, body: UpdateThemeBody) {
     const data = await websiteClient<{ theme: WebsiteTheme }>(`/website-themes/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     })
-    return data.theme
+    return normalizeWebsiteTheme(data.theme)
   },
   deleteTheme(id: string) {
     return websiteClient<void>(`/website-themes/${id}`, { method: 'DELETE' })

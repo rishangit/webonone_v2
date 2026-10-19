@@ -75,6 +75,11 @@ const WebsiteColorLibraryPage = lazy(() =>
     default: m.WebsiteColorLibraryPage,
   })),
 )
+const WebsiteColorLibraryDetailPage = lazy(() =>
+  import('@/features/website/pages/WebsiteColorLibraryDetailPage').then((m) => ({
+    default: m.WebsiteColorLibraryDetailPage,
+  })),
+)
 const WebsiteTextLibraryPage = lazy(() =>
   import('@/features/website/pages/WebsiteTextLibraryPage').then((m) => ({
     default: m.WebsiteTextLibraryPage,
@@ -113,6 +118,11 @@ const WebsiteThemeTextStyleDetailPage = lazy(() =>
 const WebsiteThemeButtonStyleDetailPage = lazy(() =>
   import('@/features/website/pages/WebsiteThemeButtonStyleDetailPage').then((m) => ({
     default: m.WebsiteThemeButtonStyleDetailPage,
+  })),
+)
+const WebsiteThemeColorPaletteDetailPage = lazy(() =>
+  import('@/features/website/pages/WebsiteThemeColorPaletteDetailPage').then((m) => ({
+    default: m.WebsiteThemeColorPaletteDetailPage,
   })),
 )
 const WebsiteThemeEditorPage = lazy(() =>
@@ -442,6 +452,16 @@ export function App() {
               }
             />
             <Route
+              path="/website/colors/:itemId"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteColorLibraryDetailPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
               path="/website/texts"
               element={
                 <RoleRoute roles={['super_admin']}>
@@ -497,6 +517,16 @@ export function App() {
                 <RoleRoute roles={[...companyRoles]}>
                   <LazyRoute>
                     <WebsiteThemeButtonStyleDetailPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/website/themes/:themeId/palettes/:paletteId"
+              element={
+                <RoleRoute roles={[...companyRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeColorPaletteDetailPage />
                   </LazyRoute>
                 </RoleRoute>
               }

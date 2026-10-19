@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ReadOnlyField } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { buttonLabelTypography } from '../document/theme'
 import { websiteColorLibraryActions, websiteFontLibraryActions } from '../store'
@@ -8,21 +7,21 @@ import type { WebsiteButtonLibraryItem } from '../types'
 import {
   findColorOptionId,
   flattenColorLibraryPalettes,
-  type FlattenedLibraryColor,
+  formatPaletteScopedColorLabel,
+  inferLibraryPaletteId,
+  libraryPaletteColorValues,
 } from '../utils/colorLibraryPalette'
 import {
   defaultElementHtml,
   normalizeWebsiteElementCustomization,
+  withPaletteColors,
 } from '../utils/websiteElementCustomization'
+import { ButtonStyleBasicSettingsFields } from './ButtonStyleBasicSettingsFields'
 import { WebsiteElementCustomizationPreview } from './WebsiteElementCustomizationPreview'
 import {
   WebsiteElementEditorTabs,
   type WebsiteElementEditorTab,
 } from './WebsiteElementEditorTabs'
-
-function colorOptionLabel(color: FlattenedLibraryColor, slotLabel: string) {
-  return `${color.paletteName} · ${slotLabel} (${color.value})`
-}
 
 export function ButtonLibraryItemEditor({
   item,
@@ -37,10 +36,10 @@ export function ButtonLibraryItemEditor({
   const colorLibrary = useAppSelector((state) => state.websiteColorLibrary)
   const colorOptions = useMemo(() => flattenColorLibraryPalettes(colorLibrary.items), [colorLibrary.items])
   const [fontId, setFontId] = useState('')
+  const [colorPaletteId, setColorPaletteId] = useState('')
   const [backgroundColorId, setBackgroundColorId] = useState('')
   const [textColorId, setTextColorId] = useState('')
   const [borderColorId, setBorderColorId] = useState('')
-  const [labelColorId, setLabelColorId] = useState('')
   const [elementTab, setElementTab] = useState<WebsiteElementEditorTab>('general')
   const customization = normalizeWebsiteElementCustomization(item.definition.customization)
 
@@ -60,10 +59,14 @@ export function ButtonLibraryItemEditor({
     )
     if (font) setFontId(font.id)
     if (colorOptions.length > 0) {
-      setBackgroundColorId(findColorOptionId(d.backgroundColorValue, colorOptions))
-      setTextColorId(findColorOptionId(d.textColorValue, colorOptions))
-      setBorderColorId(findColorOptionId(d.borderColorValue, colorOptions))
-      setLabelColorId(findColorOptionId(d.labelColorValue, colorOptions))
+      const nextBackground = findColorOptionId(d.backgroundColorValue, colorOptions)
+      const nextText =
+        findColorOptionId(d.labelColorValue, colorOptions) || findColorOptionId(d.textColorValue, colorOptions)
+      const nextBorder = findColorOptionId(d.borderColorValue, colorOptions)
+      setBackgroundColorId(nextBackground)
+      setTextColorId(nextText)
+      setBorderColorId(nextBorder)
+      setColorPaletteId(inferLibraryPaletteId(colorOptions, [nextBackground, nextText, nextBorder]))
     }
   }, [colorOptions, fonts.items, item])
 
@@ -73,52 +76,65 @@ export function ButtonLibraryItemEditor({
   const previewBaseStyle = {
     ...buttonLabelTypography(),
     background: d.backgroundColorValue,
-    color: d.textColorValue,
+    color: d.labelColorValue,
     border: `${d.borderWidth}px solid ${d.borderColorValue}`,
     borderRadius: d.radius,
     fontFamily: font?.family ?? d.textFontFamily,
     fontSize: d.textSize,
   }
-  const elementVisual = {
-    background: previewBaseStyle.background,
-    color: previewBaseStyle.color,
-    border: previewBaseStyle.border,
-    borderRadius: previewBaseStyle.borderRadius,
-    fontFamily: previewBaseStyle.fontFamily,
-    fontSize: previewBaseStyle.fontSize,
-    lineHeight: 1,
-  }
+  const elementVisual = withPaletteColors(
+    {
+      background: previewBaseStyle.background,
+      color: previewBaseStyle.color,
+      border: previewBaseStyle.border,
+      borderRadius: previewBaseStyle.borderRadius,
+      fontFamily: previewBaseStyle.fontFamily,
+      fontSize: previewBaseStyle.fontSize,
+      lineHeight: 1,
+    },
+    libraryPaletteColorValues(colorLibrary.items, colorPaletteId),
+  )
   const defaultHtml = defaultElementHtml('button', item.id, elementVisual)
 
-  function colorReadout(optionId: string) {
-    const color = colorOptions.find((entry) => entry.optionId === optionId)
-    if (!color) return '—'
-    return (
-      <span className="inline-flex items-center gap-2">
-        <span
-          className="h-4 w-4 shrink-0 rounded-sm border border-[hsl(var(--glass-border))]"
-          style={{ backgroundColor: color.value }}
-          aria-hidden
-        />
-        {colorOptionLabel(color, t('paletteColorSlot', { index: color.slot }))}
-      </span>
-    )
-  }
-
+  const resolvedFontId = fontId || 'definition-font'
   const generalView = (
-    <div className="space-y-4">
-      <ReadOnlyField label={t('styleName')} value={item.name} />
-      <ReadOnlyField label={t('fontType')} value={font?.name ?? d.textFontName} />
-      <ReadOnlyField label={t('backgroundColor')} value={colorReadout(backgroundColorId)} />
-      <ReadOnlyField label={t('textColor')} value={colorReadout(textColorId)} />
-      <ReadOnlyField label={t('labelTextColor')} value={colorReadout(labelColorId)} />
-      <ReadOnlyField label={t('borderColor')} value={colorReadout(borderColorId)} />
-      <div className="grid grid-cols-3 gap-3">
-        <ReadOnlyField label={t('textSize')} value={String(d.textSize)} />
-        <ReadOnlyField label={t('borderWidth')} value={String(d.borderWidth)} />
-        <ReadOnlyField label={t('radius')} value={String(d.radius)} />
-      </div>
-    </div>
+    <ButtonStyleBasicSettingsFields
+      mode="view"
+      idPrefix="library-button"
+      values={{
+        name: item.name,
+        fontId: resolvedFontId,
+        colorPaletteId,
+        backgroundColorId,
+        textColorId,
+        borderColorId,
+        textSize: d.textSize,
+        borderWidth: d.borderWidth,
+        radius: d.radius,
+      }}
+      fontOptions={[
+        ...fonts.items.map((fontItem) => ({
+          id: fontItem.id,
+          label: fontItem.name,
+          fontFamily: fontItem.family,
+        })),
+        ...(!fontId && d.textFontName
+          ? [{ id: 'definition-font', label: d.textFontName, fontFamily: d.textFontFamily }]
+          : []),
+      ]}
+      paletteOptions={colorLibrary.items.map((libraryItem) => ({
+        id: libraryItem.id,
+        name: libraryItem.name,
+        palette: libraryItem.palette,
+      }))}
+      colorOptions={colorOptions
+        .filter((color) => !colorPaletteId || color.paletteId === colorPaletteId)
+        .map((color) => ({
+          id: color.optionId,
+          label: formatPaletteScopedColorLabel(color, t('paletteColorSlot', { index: color.slot })),
+          swatch: color.value,
+        }))}
+    />
   )
 
   return (

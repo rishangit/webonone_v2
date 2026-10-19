@@ -1,12 +1,26 @@
 import { useTranslation } from 'react-i18next'
-import { Form, FormField, Input, ReadOnlyField } from '@webonone/ui-kit'
 import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
-import type { WebsiteButtonStyle, WebsiteTheme } from '../../types'
+import type { WebsiteButtonStyle, WebsiteTextStyle, WebsiteTheme } from '../../types'
+import { applyButtonBasicToDraft, resolveOwnedButtonLabelStyle } from '../../utils/ownedButtonLabelStyle'
+import { upsertById } from '../../utils/upsertById'
+import {
+  inferThemePaletteId,
+  remapColorIdToPalette,
+  themeColorOptionsForPalette,
+  themePaletteColorValues,
+  themePaletteSelectOptions,
+} from '../../utils/websitePalette'
 import {
   buttonVisualFromResolved,
   defaultElementHtml,
   normalizeWebsiteElementCustomization,
+  withPaletteColors,
 } from '../../utils/websiteElementCustomization'
+import {
+  ButtonStyleBasicSettingsFields,
+  type ButtonStyleBasicSettingsOption,
+  type ButtonStyleBasicSettingsValues,
+} from '../ButtonStyleBasicSettingsFields'
 import { WebsiteElementCustomizationPreview } from '../WebsiteElementCustomizationPreview'
 import {
   WebsiteElementEditorTabs,
@@ -14,17 +28,12 @@ import {
   type WebsiteElementEditorMode,
   type WebsiteElementEditorTab,
 } from '../WebsiteElementEditorTabs'
-import { ThemeTokenSelect } from './ThemeTokenSelect'
-
-function borderWidthForColor(borderColorId: string, current: number): number {
-  if (!borderColorId) return 0
-  return current > 0 ? current : 1
-}
 
 type ThemeButtonStyleEditPanelProps = {
   theme: WebsiteTheme
   values: WebsiteButtonStyle
-  onValuesChange: (next: WebsiteButtonStyle) => void
+  labelStyle: WebsiteTextStyle
+  onDraftChange: (button: WebsiteButtonStyle, labelStyle: WebsiteTextStyle) => void
   fieldErrors: Partial<Record<string, string>>
   elementTab: WebsiteElementEditorTab
   onElementTabChange: (tab: WebsiteElementEditorTab) => void
@@ -36,7 +45,8 @@ type ThemeButtonStyleEditPanelProps = {
 export function ThemeButtonStyleEditPanel({
   theme,
   values,
-  onValuesChange,
+  labelStyle,
+  onDraftChange,
   fieldErrors,
   elementTab,
   onElementTabChange,
@@ -45,8 +55,13 @@ export function ThemeButtonStyleEditPanel({
   onEdit,
 }: ThemeButtonStyleEditPanelProps) {
   const { t } = useTranslation('website')
-  const { t: tc } = useTranslation('common')
-  const snap = resolveButtonStyle(theme, values)
+  const resolvedLabelStyle = resolveOwnedButtonLabelStyle(theme, values)
+  const previewLabelStyle = { ...resolvedLabelStyle, ...labelStyle, id: labelStyle.id || resolvedLabelStyle.id }
+  const previewTheme = {
+    ...theme,
+    textStyles: upsertById(theme.textStyles, previewLabelStyle),
+  }
+  const snap = resolveButtonStyle(previewTheme, { ...values, textStyleId: previewLabelStyle.id })
   const previewLabel = t('buttonPreviewLabel')
   const previewBaseStyle = {
     ...buttonLabelTypography(),
@@ -58,105 +73,76 @@ export function ThemeButtonStyleEditPanel({
     fontSize: snap.fontSize,
   }
   const customization = normalizeWebsiteElementCustomization(values.customization)
-  const elementVisual = buttonVisualFromResolved(snap)
+  const textColorId = previewLabelStyle.colorId || values.textColorId
+  const elementVisual = withPaletteColors(
+    buttonVisualFromResolved(snap),
+    themePaletteColorValues(theme, [values.backgroundColorId, textColorId, values.borderColorId]),
+  )
   const defaultHtml = defaultElementHtml('button', values.id, elementVisual)
-  const colorOptions = theme.colors.map((color) => ({
-    id: color.id,
-    label: color.name,
-    swatch: color.value,
+  const fontOptions = theme.fonts.map((font) => ({
+    id: font.id,
+    label: font.name,
+    fontFamily: font.family,
   }))
-
-  function colorReadout(colorId: string) {
-    const color = theme.colors.find((entry) => entry.id === colorId)
-    if (!color) return '—'
-    return (
-      <span className="inline-flex items-center gap-2">
-        <span
-          className="h-4 w-4 shrink-0 rounded-sm border border-[hsl(var(--glass-border))]"
-          style={{ backgroundColor: color.value }}
-          aria-hidden
-        />
-        {`${color.name} (${color.value})`}
-      </span>
-    )
+  const paletteOptions = themePaletteSelectOptions(theme)
+  const colorPaletteId = inferThemePaletteId(theme, [
+    values.backgroundColorId,
+    textColorId,
+    values.borderColorId,
+  ])
+  const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId)
+  const missingTokenLabel = t('themeTokenMissing')
+  const withTokenFallback = (options: ButtonStyleBasicSettingsOption[], id: string) =>
+    id && !options.some((entry) => entry.id === id)
+      ? [...options, { id, label: missingTokenLabel }]
+      : options
+  const fontOptionsWithFallback = withTokenFallback(fontOptions, previewLabelStyle.fontId)
+  let colorOptionsWithFallback: ButtonStyleBasicSettingsOption[] = colorOptions
+  for (const colorId of [values.backgroundColorId, textColorId, values.borderColorId]) {
+    colorOptionsWithFallback = withTokenFallback(colorOptionsWithFallback, colorId)
+  }
+  const basicValues: ButtonStyleBasicSettingsValues = {
+    name: values.name,
+    fontId: previewLabelStyle.fontId,
+    colorPaletteId,
+    backgroundColorId: values.backgroundColorId,
+    textColorId,
+    borderColorId: values.borderColorId,
+    textSize: previewLabelStyle.size,
+    borderWidth: values.borderWidth,
+    radius: values.radius,
   }
 
-  const generalView = (
-    <div className="space-y-4">
-      <ReadOnlyField label={t('name')} value={values.name} />
-      <ReadOnlyField
-        label={t('textStyle')}
-        value={theme.textStyles.find((style) => style.id === values.textStyleId)?.name}
-      />
-      <ReadOnlyField label={t('backgroundColor')} value={colorReadout(values.backgroundColorId)} />
-      <ReadOnlyField label={t('fontColor')} value={colorReadout(values.textColorId)} />
-      <ReadOnlyField label={t('borderColor')} value={colorReadout(values.borderColorId)} />
-      <ReadOnlyField label={t('borderRadius')} value={String(values.radius)} />
-    </div>
-  )
-
-  const generalFields = (
-    <Form className="space-y-4">
-      <FormField label={t('name')} htmlFor="theme-button-name" required error={fieldErrors.name}>
-        <Input
-          id="theme-button-name"
-          value={values.name}
-          onChange={(event) => onValuesChange({ ...values, name: event.target.value })}
-        />
-      </FormField>
-      <FormField label={t('textStyle')} htmlFor="theme-button-text-style">
-        <ThemeTokenSelect
-          id="theme-button-text-style"
-          value={values.textStyleId}
-          noneLabel={tc('none')}
-          options={theme.textStyles.map((style) => ({ id: style.id, label: style.name }))}
-          onChange={(textStyleId) => onValuesChange({ ...values, textStyleId })}
-        />
-      </FormField>
-      <FormField label={t('backgroundColor')} htmlFor="theme-button-bg">
-        <ThemeTokenSelect
-          id="theme-button-bg"
-          value={values.backgroundColorId}
-          noneLabel={tc('none')}
-          options={colorOptions}
-          onChange={(backgroundColorId) => onValuesChange({ ...values, backgroundColorId })}
-        />
-      </FormField>
-      <FormField label={t('fontColor')} htmlFor="theme-button-text-color">
-        <ThemeTokenSelect
-          id="theme-button-text-color"
-          value={values.textColorId}
-          noneLabel={tc('none')}
-          options={colorOptions}
-          onChange={(textColorId) => onValuesChange({ ...values, textColorId })}
-        />
-      </FormField>
-      <FormField label={t('borderColor')} htmlFor="theme-button-border">
-        <ThemeTokenSelect
-          id="theme-button-border"
-          value={values.borderColorId}
-          noneLabel={tc('none')}
-          options={colorOptions}
-          onChange={(borderColorId) =>
-            onValuesChange({
-              ...values,
-              borderColorId,
-              borderWidth: borderWidthForColor(borderColorId, values.borderWidth),
-            })
-          }
-        />
-      </FormField>
-      <FormField label={t('borderRadius')} htmlFor="theme-button-radius" error={fieldErrors.radius}>
-        <Input
-          id="theme-button-radius"
-          type="number"
-          min={0}
-          max={999}
-          value={values.radius}
-          onChange={(event) => onValuesChange({ ...values, radius: Number(event.target.value) || 0 })}
-        />
-      </FormField>
-    </Form>
+  const general = (
+    <ButtonStyleBasicSettingsFields
+      mode={mode}
+      values={basicValues}
+      onChange={(next) => {
+        const paletteChanged = next.colorPaletteId !== colorPaletteId
+        const remapped = paletteChanged
+          ? {
+              ...next,
+              backgroundColorId: remapColorIdToPalette(
+                theme,
+                colorPaletteId,
+                next.colorPaletteId,
+                next.backgroundColorId,
+              ),
+              textColorId: remapColorIdToPalette(theme, colorPaletteId, next.colorPaletteId, next.textColorId),
+              borderColorId: remapColorIdToPalette(theme, colorPaletteId, next.colorPaletteId, next.borderColorId),
+            }
+          : next
+        const draft = applyButtonBasicToDraft(values, labelStyle, remapped)
+        onDraftChange(draft.button, draft.labelStyle)
+      }}
+      fieldErrors={fieldErrors}
+      fontOptions={fontOptionsWithFallback}
+      paletteOptions={paletteOptions}
+      colorOptions={colorOptionsWithFallback}
+      idPrefix="theme-button"
+      fontPlaceholder={t('pickFontRequired')}
+      colorPlaceholder={t('pickColorRequired')}
+    />
   )
 
   return (
@@ -171,7 +157,7 @@ export function ThemeButtonStyleEditPanel({
       customization={customization}
       defaultHtml={defaultHtml}
       visual={elementVisual}
-      onCustomizationChange={(next) => onValuesChange({ ...values, customization: next })}
+      onCustomizationChange={(next) => onDraftChange({ ...values, customization: next }, labelStyle)}
       preview={
         <WebsiteElementCustomizationPreview
           scopeId={values.id}
@@ -189,8 +175,8 @@ export function ThemeButtonStyleEditPanel({
           }
         />
       }
-      general={generalFields}
-      generalView={generalView}
+      general={general}
+      generalView={general}
     />
   )
 }

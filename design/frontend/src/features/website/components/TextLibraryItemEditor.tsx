@@ -1,15 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ReadOnlyField } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { websiteColorLibraryActions, websiteFontLibraryActions } from '../store'
 import type { WebsiteTextLibraryItem } from '../types'
-import { findColorOptionId, flattenColorLibraryPalettes } from '../utils/colorLibraryPalette'
+import {
+  findColorOptionId,
+  flattenColorLibraryPalettes,
+  formatPaletteScopedColorLabel,
+  inferLibraryPaletteId,
+  libraryPaletteColorValues,
+} from '../utils/colorLibraryPalette'
 import { themeFontFamilyStyle } from '../utils/themeFontPreview'
 import {
   defaultElementHtml,
   normalizeWebsiteElementCustomization,
+  withPaletteColors,
 } from '../utils/websiteElementCustomization'
+import { TextStyleBasicSettingsFields } from './TextStyleBasicSettingsFields'
 import { WebsiteElementCustomizationPreview } from './WebsiteElementCustomizationPreview'
 import {
   WebsiteElementEditorTabs,
@@ -26,10 +33,11 @@ export function TextLibraryItemEditor({
   const { t } = useTranslation('website')
   const dispatch = useAppDispatch()
   const fonts = useAppSelector((state) => state.websiteFontLibrary)
-  const colors = useAppSelector((state) => state.websiteColorLibrary)
-  const colorOptions = useMemo(() => flattenColorLibraryPalettes(colors.items), [colors.items])
+  const colorLibrary = useAppSelector((state) => state.websiteColorLibrary)
+  const colorOptions = useMemo(() => flattenColorLibraryPalettes(colorLibrary.items), [colorLibrary.items])
   const [fontId, setFontId] = useState('')
-  const [colorOptionId, setColorOptionId] = useState('')
+  const [colorPaletteId, setColorPaletteId] = useState('')
+  const [colorId, setColorId] = useState('')
   const [elementTab, setElementTab] = useState<WebsiteElementEditorTab>('general')
   const customization = normalizeWebsiteElementCustomization(item.definition.customization)
 
@@ -49,7 +57,9 @@ export function TextLibraryItemEditor({
     )
     if (font) setFontId(font.id)
     if (colorOptions.length > 0) {
-      setColorOptionId(findColorOptionId(d.colorValue, colorOptions))
+      const nextColor = findColorOptionId(d.colorValue, colorOptions)
+      setColorId(nextColor)
+      setColorPaletteId(inferLibraryPaletteId(colorOptions, [nextColor]))
     }
   }, [colorOptions, fonts.items, item])
 
@@ -61,35 +71,49 @@ export function TextLibraryItemEditor({
     fontSize: d.size,
     color: d.colorValue,
   }
-  const elementVisual = {
-    color: previewBaseStyle.color,
-    fontFamily: previewBaseStyle.fontFamily,
-    fontSize: previewBaseStyle.fontSize,
-  }
+  const elementVisual = withPaletteColors(
+    {
+      color: previewBaseStyle.color,
+      fontFamily: previewBaseStyle.fontFamily,
+      fontSize: previewBaseStyle.fontSize,
+    },
+    libraryPaletteColorValues(colorLibrary.items, colorPaletteId),
+  )
   const defaultHtml = defaultElementHtml('text', item.id, elementVisual)
-
-  function colorReadout(optionId: string) {
-    const selected = colorOptions.find((entry) => entry.optionId === optionId)
-    if (!selected) return '—'
-    return (
-      <span className="inline-flex items-center gap-2">
-        <span
-          className="h-4 w-4 shrink-0 rounded-sm border border-[hsl(var(--glass-border))]"
-          style={{ backgroundColor: selected.value }}
-          aria-hidden
-        />
-        {selected.paletteName} · {t('paletteColorSlot', { index: selected.slot })} ({selected.value})
-      </span>
-    )
-  }
+  const resolvedFontId = fontId || 'definition-font'
 
   const generalView = (
-    <div className="space-y-4">
-      <ReadOnlyField label={t('styleName')} value={item.name} />
-      <ReadOnlyField label={t('fontType')} value={font?.name ?? d.fontName} />
-      <ReadOnlyField label={t('fontColor')} value={colorReadout(colorOptionId)} />
-      <ReadOnlyField label={t('sizeLg')} value={String(d.size)} />
-    </div>
+    <TextStyleBasicSettingsFields
+      mode="view"
+      idPrefix="library-text"
+      values={{
+        name: item.name,
+        fontId: resolvedFontId,
+        colorPaletteId,
+        colorId,
+        size: d.size,
+      }}
+      fontOptions={[
+        ...fonts.items.map((fontItem) => ({
+          id: fontItem.id,
+          label: fontItem.name,
+          fontFamily: fontItem.family,
+        })),
+        ...(!fontId && d.fontName ? [{ id: 'definition-font', label: d.fontName, fontFamily: d.family }] : []),
+      ]}
+      paletteOptions={colorLibrary.items.map((libraryItem) => ({
+        id: libraryItem.id,
+        name: libraryItem.name,
+        palette: libraryItem.palette,
+      }))}
+      colorOptions={colorOptions
+        .filter((color) => !colorPaletteId || color.paletteId === colorPaletteId)
+        .map((color) => ({
+          id: color.optionId,
+          label: formatPaletteScopedColorLabel(color, t('paletteColorSlot', { index: color.slot })),
+          swatch: color.value,
+        }))}
+    />
   )
 
   return (

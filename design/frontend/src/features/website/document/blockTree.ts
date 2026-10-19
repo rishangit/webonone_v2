@@ -200,6 +200,7 @@ export function cloneBlockTree(
       boxShadow: block.boxShadow,
       padding: block.padding,
       margin: block.margin,
+      name: block.name,
       groupName: block.groupName,
       dataBinding: block.dataBinding,
       layout: block.layout,
@@ -406,6 +407,78 @@ export function reorderAddons(
     if (!moved) return block
     addons.splice(toIndex, 0, moved)
     return { ...block, addons: addons.map((item, index) => ({ ...item, zIndex: index })) }
+  })
+}
+
+function findParentBlockId(blocks: WebsiteBlock[], blockId: string, parentId: string | null): string | null | undefined {
+  for (const block of blocks) {
+    if (block.id === blockId) return parentId
+    const nested = findParentBlockId(block.children ?? [], blockId, block.id)
+    if (nested !== undefined) return nested
+  }
+  return undefined
+}
+
+function blockContainsId(block: WebsiteBlock, blockId: string): boolean {
+  if (block.id === blockId) return true
+  return (block.children ?? []).some((child) => blockContainsId(child, blockId))
+}
+
+/** Move an add-on to any block, including another block, and keep sibling order. */
+export function moveAddon(
+  document: WebsiteDocumentV1,
+  fromBlockId: string,
+  addonId: string,
+  toBlockId: string,
+  toIndex: number,
+): WebsiteDocumentV1 {
+  const source = findBlock(document, fromBlockId)
+  const target = findBlock(document, toBlockId)
+  const addon = source?.addons.find((item) => item.id === addonId)
+  if (!source || !target || !addon) return document
+  const sorted = [...source.addons].sort((a, b) => a.zIndex - b.zIndex)
+  const fromIndex = sorted.findIndex((item) => item.id === addonId)
+  if (fromBlockId === toBlockId) {
+    if (fromIndex < 0 || fromIndex === toIndex) return document
+    return reorderAddons(document, fromBlockId, fromIndex, toIndex)
+  }
+  const removed = deleteAddon(document, fromBlockId, addonId)
+  return updateBlockById(removed, toBlockId, (block) => {
+    const addons = [...block.addons].sort((a, b) => a.zIndex - b.zIndex)
+    addons.splice(Math.max(0, Math.min(toIndex, addons.length)), 0, addon)
+    return { ...block, addons: addons.map((item, index) => ({ ...item, zIndex: index })) }
+  })
+}
+
+/** Move a block under another block, or reorder it among the same siblings. */
+export function moveBlock(
+  document: WebsiteDocumentV1,
+  blockId: string,
+  toParentId: string | null,
+  toIndex: number,
+): WebsiteDocumentV1 {
+  const moving = findBlock(document, blockId)
+  if (!moving) return document
+  if (toParentId === blockId || (toParentId && blockContainsId(moving, toParentId))) return document
+  const currentParent = findParentBlockId(document.blocks, blockId, null)
+  if (currentParent === undefined) return document
+  if (currentParent === toParentId) {
+    const siblings = currentParent ? (findBlock(document, currentParent)?.children ?? []) : document.blocks
+    const fromIndex = [...siblings].sort((a, b) => a.zIndex - b.zIndex).findIndex((block) => block.id === blockId)
+    if (fromIndex < 0 || fromIndex === toIndex) return document
+    return reorderBlocks(document, fromIndex, toIndex, currentParent)
+  }
+  const detached = deleteBlock(document, blockId)
+  if (!toParentId) {
+    const blocks = [...detached.blocks].sort((a, b) => a.zIndex - b.zIndex)
+    blocks.splice(Math.max(0, Math.min(toIndex, blocks.length)), 0, moving)
+    return { ...detached, blocks: blocks.map((block, index) => ({ ...block, zIndex: index })) }
+  }
+  if (!findBlock(detached, toParentId)) return document
+  return updateBlockById(detached, toParentId, (block) => {
+    const children = [...(block.children ?? [])].sort((a, b) => a.zIndex - b.zIndex)
+    children.splice(Math.max(0, Math.min(toIndex, children.length)), 0, moving)
+    return { ...block, children: children.map((child, index) => ({ ...child, zIndex: index })) }
   })
 }
 

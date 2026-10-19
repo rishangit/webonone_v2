@@ -11,6 +11,8 @@ import type {
   WebsiteButtonStyle,
   WebsiteColorToken,
   WebsiteFontToken,
+  WebsiteThemeColorPalette,
+  WebsiteThemeColorRoles,
   WebsiteTextStyle,
 } from '../schemas/websiteThemes.schema.js'
 
@@ -26,6 +28,8 @@ export type WebsiteThemeDto = {
   sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
   colors: WebsiteColorToken[]
+  colorPalettes: WebsiteThemeColorPalette[]
+  colorRoles: WebsiteThemeColorRoles
   textStyles: WebsiteTextStyle[]
   buttonStyles: WebsiteButtonStyle[]
   createdBy: string | null
@@ -46,6 +50,34 @@ function parseJsonArray<T>(raw: string | unknown[]): T[] {
   return []
 }
 
+const EMPTY_COLOR_ROLES: WebsiteThemeColorRoles = {
+  pageBackgroundColorId: '',
+  surfaceColorId: '',
+  bodyTextColorId: '',
+  accentColor1Id: '',
+  accentColor2Id: '',
+}
+
+function parseColorRoles(raw: unknown): WebsiteThemeColorRoles {
+  let value: unknown = raw
+  if (typeof raw === 'string') {
+    try {
+      value = JSON.parse(raw) as unknown
+    } catch {
+      return { ...EMPTY_COLOR_ROLES }
+    }
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...EMPTY_COLOR_ROLES }
+  const record = value as Record<string, unknown>
+  return {
+    pageBackgroundColorId: typeof record.pageBackgroundColorId === 'string' ? record.pageBackgroundColorId : '',
+    surfaceColorId: typeof record.surfaceColorId === 'string' ? record.surfaceColorId : '',
+    bodyTextColorId: typeof record.bodyTextColorId === 'string' ? record.bodyTextColorId : '',
+    accentColor1Id: typeof record.accentColor1Id === 'string' ? record.accentColor1Id : '',
+    accentColor2Id: typeof record.accentColor2Id === 'string' ? record.accentColor2Id : '',
+  }
+}
+
 function toBool(value: number | boolean): boolean {
   return value === true || value === 1
 }
@@ -63,6 +95,8 @@ function toDto(row: DesignWebsiteThemeRow): WebsiteThemeDto {
     sourceLibraryId: row.source_library_id ?? null,
     fonts: parseJsonArray<WebsiteFontToken>(row.fonts),
     colors: parseJsonArray<WebsiteColorToken>(row.colors),
+    colorPalettes: parseJsonArray<WebsiteThemeColorPalette>(row.color_palettes ?? []),
+    colorRoles: parseColorRoles(row.color_roles),
     textStyles: parseJsonArray<WebsiteTextStyle>(row.text_styles),
     buttonStyles: parseJsonArray<WebsiteButtonStyle>(row.button_styles),
     createdBy: row.created_by,
@@ -137,6 +171,8 @@ export async function createWebsiteTheme(input: {
     is_default: input.body.isDefault,
     fonts: JSON.stringify(input.body.fonts),
     colors: JSON.stringify(input.body.colors),
+    color_palettes: JSON.stringify(input.body.colorPalettes ?? []),
+    color_roles: JSON.stringify(parseColorRoles(input.body.colorRoles)),
     text_styles: JSON.stringify(input.body.textStyles),
     button_styles: JSON.stringify(input.body.buttonStyles),
     created_by: input.userId,
@@ -165,6 +201,8 @@ export async function updateWebsiteTheme(input: {
   if (input.body.isDefault != null) updates.is_default = input.body.isDefault
   if (input.body.fonts != null) updates.fonts = JSON.stringify(input.body.fonts)
   if (input.body.colors != null) updates.colors = JSON.stringify(input.body.colors)
+  if (input.body.colorPalettes != null) updates.color_palettes = JSON.stringify(input.body.colorPalettes)
+  if (input.body.colorRoles != null) updates.color_roles = JSON.stringify(parseColorRoles(input.body.colorRoles))
   if (input.body.textStyles != null) updates.text_styles = JSON.stringify(input.body.textStyles)
   if (input.body.buttonStyles != null) updates.button_styles = JSON.stringify(input.body.buttonStyles)
   await db('design_website_themes').where({ id: input.id }).update(updates)

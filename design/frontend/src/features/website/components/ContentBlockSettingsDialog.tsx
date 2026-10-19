@@ -35,6 +35,7 @@ export const BLOCK_SETTINGS_DIALOG_SIZE = {
 }
 
 export type BlockSettingsPatch = ElementChrome & {
+  name: string | undefined
   groupName: string | undefined
   dataBinding: BlockDataBinding | undefined
 }
@@ -71,6 +72,7 @@ export function ContentBlockSettingsDialog({
   const datasetsState = useAppSelector((s) => s.websiteDatasets)
   const [tab, setTab] = useState('basic')
   const [chrome, setChrome] = useState<ElementChrome>({})
+  const [name, setName] = useState(block?.name ?? '')
   const [groupName, setGroupName] = useState(block?.groupName ?? '')
   const [datasetId, setDatasetId] = useState(block?.dataBinding?.datasetId ?? '')
   const [itemGroup, setItemGroup] = useState(block?.dataBinding?.itemGroup ?? '')
@@ -104,6 +106,7 @@ export function ContentBlockSettingsDialog({
     if (!open) return
     setTab('basic')
     setChrome(block ? pickElementChrome(block) : {})
+    setName(block?.name ?? '')
     setGroupName(block?.groupName ?? '')
     setDatasetId(block?.dataBinding?.datasetId ?? '')
     setItemGroup(block?.dataBinding?.itemGroup ?? '')
@@ -142,6 +145,7 @@ export function ContentBlockSettingsDialog({
       ...chrome,
       backgroundColor: chrome.backgroundColor || undefined,
       borderColor: chrome.borderColor || undefined,
+      name: name.trim() || undefined,
       groupName: groupName.trim() || undefined,
       dataBinding,
     })
@@ -159,6 +163,7 @@ export function ContentBlockSettingsDialog({
       boxShadow: parsed.data.boxShadow,
       padding: parsed.data.padding,
       margin: parsed.data.margin,
+      name: parsed.data.name || undefined,
       groupName: parsed.data.groupName || undefined,
       dataBinding: nextBinding
         ? {
@@ -200,6 +205,14 @@ export function ContentBlockSettingsDialog({
             <TabsTrigger value="dataBinding">{t('dataBindingTab')}</TabsTrigger>
           </TabsList>
           <TabsContent value="basic" className="space-y-4">
+            <FormField label={t('elementName')} htmlFor="block-settings-name">
+              <Input
+                id="block-settings-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder={t('elementNamePlaceholder')}
+              />
+            </FormField>
             <FormField label={t('groupName')} htmlFor="block-settings-group-name">
               <Input
                 id="block-settings-group-name"
