@@ -12,5 +12,10 @@
   "emptyUpcomingStaff": "No upcoming assigned events.",
   "staffName": "{{name}}",
   "metaWithAttendee": "{{staff}} · {{attendee}}",
-  "smsCreditsFrameTitle": "SMS Credits"
+  "smsCreditsFrameTitle": "SMS Credits",
+  "statusPending": "Pending",
+  "statusApproved": "Approved",
+  "statusRejected": "Rejected",
+  "pendingCompaniesTitle": "Pending companies",
+  "pendingCompaniesEmpty": "No pending companies."
 }

@@ -1,18 +1,7 @@
 import type { ReactNode } from 'react'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@webonone/ui-kit'
+import { Card, CardContent, CardHeader, CardTitle } from '@webonone/ui-kit'
 
-export function AnalyticsStatCard({
-  title,
-  value,
-}: {
-  title: string
-  value: ReactNode
-}) {
+export function StatCard({ title, value }: { title: string; value: ReactNode }) {
   return (
     <Card>
       <CardHeader className="pb-2">

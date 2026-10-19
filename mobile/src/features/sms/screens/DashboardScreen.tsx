@@ -5,11 +5,11 @@ import {
   Button,
   Card,
   FeatureScreen,
-  Heading,
   Muted,
   PriceDisplay,
   Spinner,
 } from '@webonone/mobile-ui'
+import { StatCard } from '@/shared/components/StatCard'
 import { useTranslation } from 'react-i18next'
 import { useSession } from '@/features/auth/SessionContext'
 import {
@@ -34,15 +34,6 @@ function formatRelativeUpdated(iso: string | null | undefined): string | null {
   }
   const diffDay = Math.floor(diffHr / 24)
   return diffDay === 1 ? '1 day ago' : `${diffDay} days ago`
-}
-
-function StatCard({ title, value }: { title: string; value: number | string }) {
-  return (
-    <Card className="flex-1 min-w-[40%] p-4">
-      <Muted className="text-sm">{title}</Muted>
-      <Heading className="mt-1 text-2xl">{value}</Heading>
-    </Card>
-  )
 }
 
 export function DashboardScreen() {

@@ -2,12 +2,17 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { authActions } from '@/features/auth/store/authSlice'
 import { isFresh } from '@/shared/store/cacheUtils'
 import type { CompanyEventOccurrence } from '@/features/calendar/types/event.types'
+import type { DashboardCompany } from '@/features/home/services/adminCompaniesApi'
 import { DASHBOARD_UPCOMING_LIMIT } from '../utils/dashboardRange'
 
 export type HomeDashboardLoadPayload = {
   from: string
   to: string
   sessionKey: string
+  force?: boolean
+}
+
+export type HomeDashboardCompaniesLoadPayload = {
   force?: boolean
 }
 
@@ -19,6 +24,10 @@ export interface HomeDashboardState {
   lastFetchedAt: number | null
   status: 'idle' | 'loading' | 'error'
   error: string | null
+  companies: DashboardCompany[]
+  companiesLastFetchedAt: number | null
+  companiesStatus: 'idle' | 'loading' | 'error'
+  companiesError: string | null
 }
 
 const initialState: HomeDashboardState = {
@@ -29,6 +38,10 @@ const initialState: HomeDashboardState = {
   lastFetchedAt: null,
   status: 'idle',
   error: null,
+  companies: [],
+  companiesLastFetchedAt: null,
+  companiesStatus: 'idle',
+  companiesError: null,
 }
 
 export function shouldLoadHomeDashboard(
@@ -44,6 +57,14 @@ export function shouldLoadHomeDashboard(
     return true
   }
   return !isFresh(state.lastFetchedAt)
+}
+
+export function shouldLoadDashboardCompanies(
+  state: Pick<HomeDashboardState, 'companiesLastFetchedAt'>,
+  payload: HomeDashboardCompaniesLoadPayload | undefined,
+): boolean {
+  if (payload?.force) return true
+  return !isFresh(state.companiesLastFetchedAt)
 }
 
 export const homeDashboardSlice = createSlice({
@@ -80,6 +101,24 @@ export const homeDashboardSlice = createSlice({
       state.status = 'error'
       state.error = action.payload
     },
+    loadCompaniesRequested(
+      state,
+      action: PayloadAction<HomeDashboardCompaniesLoadPayload | undefined>,
+    ) {
+      if (!shouldLoadDashboardCompanies(state, action.payload)) return
+      state.companiesStatus = 'loading'
+      state.companiesError = null
+    },
+    loadCompaniesSucceeded(state, action: PayloadAction<DashboardCompany[]>) {
+      state.companies = action.payload
+      state.companiesLastFetchedAt = Date.now()
+      state.companiesStatus = 'idle'
+      state.companiesError = null
+    },
+    loadCompaniesFailed(state, action: PayloadAction<string>) {
+      state.companiesStatus = 'error'
+      state.companiesError = action.payload
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(authActions.loginSuccess, () => initialState)
@@ -104,4 +143,22 @@ export function selectUpcomingOccurrences(
   return items
     .filter((item) => item.occurrenceDate > today)
     .slice(0, DASHBOARD_UPCOMING_LIMIT)
+}
+
+export function selectCompanyStatusCounts(companies: DashboardCompany[]): {
+  pending: number
+  approved: number
+  rejected: number
+} {
+  return {
+    pending: companies.filter((item) => item.status === 'pending').length,
+    approved: companies.filter((item) => item.status === 'approved').length,
+    rejected: companies.filter((item) => item.status === 'rejected').length,
+  }
+}
+
+export function selectPendingCompanies(companies: DashboardCompany[]): DashboardCompany[] {
+  return companies
+    .filter((item) => item.status === 'pending')
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }

@@ -14,11 +14,15 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 import { canBrowseCalendar } from '@/features/session/utils/canAccessCompanySession'
 import { DashboardEventList } from '@/features/home/components/DashboardEventList'
+import { PendingCompaniesList } from '@/features/home/components/PendingCompaniesList'
 import {
   homeDashboardActions,
+  selectCompanyStatusCounts,
+  selectPendingCompanies,
   selectTodayOccurrences,
   selectUpcomingOccurrences,
 } from '@/features/home/store'
+import { StatCard } from '@/shared/components/StatCard'
 import {
   dashboardEventAudience,
   dashboardOccurrenceRange,
@@ -50,17 +54,27 @@ export function HomePage() {
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
   const activeCompanyId = useAppSelector((s) => s.sessionRole.activeCompanyId)
   const selectionComplete = useAppSelector((s) => s.sessionRole.selectionComplete)
-  const { items, lastFetchedAt, error } = useAppSelector((s) => s.homeDashboard)
+  const { items, lastFetchedAt, error, companies, companiesLastFetchedAt, companiesError } =
+    useAppSelector((s) => s.homeDashboard)
 
+  const isSuperAdmin = activeRole === 'super_admin'
   const canBrowse = canBrowseCalendar(activeRole)
-  const canViewSmsCredits = activeRole === 'company_admin' || activeRole === 'super_admin'
+  const canViewSmsCredits = activeRole === 'company_admin' || isSuperAdmin
   const audience = dashboardEventAudience(activeRole, activeCompanyId)
   const range = dashboardOccurrenceRange()
   const todayItems = selectTodayOccurrences(items, range.today)
   const upcomingItems = selectUpcomingOccurrences(items, range.today)
+  const statusCounts = selectCompanyStatusCounts(companies)
+  const pendingCompanies = selectPendingCompanies(companies)
   const awaitingFirstLoad = canBrowse && lastFetchedAt === null && !error
+  const awaitingCompanies = isSuperAdmin && companiesLastFetchedAt === null && !companiesError
 
-  usePlatformLoading(awaitingFirstLoad ? t('loading') : null)
+  usePlatformLoading(awaitingFirstLoad || awaitingCompanies ? t('loading') : null)
+
+  useEffect(() => {
+    if (!selectionComplete || !isSuperAdmin) return
+    dispatch(homeDashboardActions.loadCompaniesRequested())
+  }, [selectionComplete, isSuperAdmin, dispatch])
 
   useEffect(() => {
     if (!selectionComplete || !canBrowse) return
@@ -83,13 +97,36 @@ export function HomePage() {
 
   return (
     <FeaturePage title={t('pageTitle')} description={t('pageDescription')}>
-      {error ? (
+      {error || (isSuperAdmin && companiesError) ? (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{error || companiesError}</AlertDescription>
         </Alert>
       ) : null}
 
-      {audience || canViewSmsCredits ? (
+      {isSuperAdmin ? (
+        <div className="grid items-start gap-6 lg:grid-cols-3">
+          <div className="flex flex-col gap-6 lg:col-span-2">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <StatCard title={t('statusPending')} value={statusCounts.pending} />
+              <StatCard title={t('statusApproved')} value={statusCounts.approved} />
+              <StatCard title={t('statusRejected')} value={statusCounts.rejected} />
+            </div>
+            <Card variant="list">
+              <CardHeader>
+                <CardTitle className="text-lg">{t('pendingCompaniesTitle')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!awaitingCompanies ? <PendingCompaniesList items={pendingCompanies} /> : null}
+              </CardContent>
+            </Card>
+          </div>
+          <div className="flex flex-col gap-6 lg:col-span-1">
+            {canViewSmsCredits ? <SmsCreditsFrame /> : null}
+          </div>
+        </div>
+      ) : null}
+
+      {!isSuperAdmin && (audience || canViewSmsCredits) ? (
         <div className="grid items-start gap-6 lg:grid-cols-3">
           {audience ? (
             <div className="flex flex-col gap-6 lg:col-span-2">

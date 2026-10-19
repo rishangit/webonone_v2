@@ -19,7 +19,7 @@ import { analyticsActions } from '@/features/analytics/store'
 import { analyticsDateRange } from '@/features/analytics/utils/analyticsRange'
 import type { AnalyticsRangeKey, NamedAmount, NamedCount } from '@/features/analytics/types/analytics.types'
 import { ANALYTICS_RANGE_KEYS } from '@/features/analytics/schemas/analyticsRange'
-import { AnalyticsStatCard } from '@/features/analytics/components/AnalyticsStatCard'
+import { StatCard } from '@/shared/components/StatCard'
 import { AnalyticsChartCard } from '@/features/analytics/components/AnalyticsChartCard'
 import { AnalyticsLineChart } from '@/features/analytics/components/charts/AnalyticsLineChart'
 import { AnalyticsPieChart } from '@/features/analytics/components/charts/AnalyticsPieChart'
@@ -129,8 +129,8 @@ export function AnalyticsPage() {
           </Alert>
         ) : null}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <AnalyticsStatCard title={t('kpis.companies')} value={platform?.kpis.companyCount ?? '—'} />
-          <AnalyticsStatCard title={t('kpis.staff')} value={platform?.kpis.staffCount ?? '—'} />
+          <StatCard title={t('kpis.companies')} value={platform?.kpis.companyCount ?? '—'} />
+          <StatCard title={t('kpis.staff')} value={platform?.kpis.staffCount ?? '—'} />
         </div>
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <AnalyticsChartCard
@@ -172,29 +172,29 @@ export function AnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {showRevenue ? (
           <>
-            <AnalyticsStatCard
+            <StatCard
               title={t('kpis.revenue')}
               value={
                 company ? <PriceDisplay value={company.kpis.revenueTotal} size="lg" /> : '—'
               }
             />
-            <AnalyticsStatCard
+            <StatCard
               title={t('kpis.profit')}
               value={
                 company ? <PriceDisplay value={company.kpis.profitTotal} size="lg" /> : '—'
               }
             />
-            <AnalyticsStatCard title={t('kpis.sales')} value={company?.kpis.saleCount ?? '—'} />
-            <AnalyticsStatCard title={t('kpis.customers')} value={company?.kpis.uniqueCustomers ?? '—'} />
+            <StatCard title={t('kpis.sales')} value={company?.kpis.saleCount ?? '—'} />
+            <StatCard title={t('kpis.customers')} value={company?.kpis.uniqueCustomers ?? '—'} />
           </>
         ) : null}
-        <AnalyticsStatCard title={t('kpis.staff')} value={company?.kpis.staffCount ?? '—'} />
-        <AnalyticsStatCard title={t('kpis.products')} value={company?.kpis.productCount ?? '—'} />
-        <AnalyticsStatCard title={t('kpis.services')} value={company?.kpis.serviceCount ?? '—'} />
-        <AnalyticsStatCard title={t('kpis.spaces')} value={company?.kpis.spaceCount ?? '—'} />
-        <AnalyticsStatCard title={t('kpis.occurrences')} value={company?.kpis.occurrenceCount ?? '—'} />
-        <AnalyticsStatCard title={t('kpis.checkIns')} value={company?.kpis.checkInCount ?? '—'} />
-        <AnalyticsStatCard
+        <StatCard title={t('kpis.staff')} value={company?.kpis.staffCount ?? '—'} />
+        <StatCard title={t('kpis.products')} value={company?.kpis.productCount ?? '—'} />
+        <StatCard title={t('kpis.services')} value={company?.kpis.serviceCount ?? '—'} />
+        <StatCard title={t('kpis.spaces')} value={company?.kpis.spaceCount ?? '—'} />
+        <StatCard title={t('kpis.occurrences')} value={company?.kpis.occurrenceCount ?? '—'} />
+        <StatCard title={t('kpis.checkIns')} value={company?.kpis.checkInCount ?? '—'} />
+        <StatCard
           title={t('progress.title')}
           value={company ? t(`progress.${company.companyProgress.status}`) : '—'}
         />
