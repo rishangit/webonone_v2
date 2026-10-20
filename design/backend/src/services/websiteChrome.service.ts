@@ -7,6 +7,7 @@ import { emptyWebsiteDocument, websiteDocumentSchema, type WebsiteDocumentV1 } f
 import type { CreateWebsiteChromeBody, UpdateWebsiteChromeBody } from '../schemas/websiteChrome.schema.js'
 import { countLayoutsUsingChrome } from './websiteLayout.service.js'
 import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
+import { rewriteWebsiteDocumentMedia } from '../utils/rewriteWebsiteDocumentMedia.js'
 
 export type WebsiteChromeKind = 'headers' | 'footers'
 
@@ -48,7 +49,7 @@ function toDto(row: DesignWebsiteChromeRow): WebsiteChromeDto {
     name: row.name,
     isDefault: toBool(row.is_default),
     isLocked: isLockedFlag(row.is_locked),
-    document: parseDocument(row.document),
+    document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
     sourceLibraryId: row.source_library_id ?? null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),

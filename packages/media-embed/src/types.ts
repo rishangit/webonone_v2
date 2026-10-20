@@ -2,6 +2,7 @@ export const MEDIA_MESSAGE_TYPES = {
   INIT: 'webonone:media:init',
   CROP_INIT: 'webonone:media:crop-init',
   CROP_REQUEST: 'webonone:media:crop-request',
+  CONTENT_SIZE: 'webonone:media:content-size',
   CONFIRM: 'webonone:media:confirm',
   SELECT: 'webonone:media:select',
   SELECTION_CHANGE: 'webonone:media:selection-change',
@@ -42,6 +43,11 @@ export interface MediaCropRequestMessage {
   folderPath: string
   file: File
   cropAspectPresets?: CropAspectPreset[]
+}
+
+export interface MediaContentSizeMessage {
+  type: typeof MEDIA_MESSAGE_TYPES.CONTENT_SIZE
+  height: number
 }
 
 export interface MediaSelectMessage {
@@ -90,6 +96,7 @@ export type MediaEmbedMessage =
   | MediaCancelMessage
   | MediaViewerChangedMessage
   | MediaCropRequestMessage
+  | MediaContentSizeMessage
 
 export type MediaParentMessage = MediaInitMessage | MediaConfirmMessage | MediaCropInitMessage
 
@@ -127,6 +134,8 @@ export interface BuildMediaSelectorUrlOptions extends BuildMediaEmbedUrlOptions 
   mode?: MediaEmbedMode
   selectorUpload?: boolean
   cropAspectPresets?: CropAspectPreset[]
+  /** Full website media page: fill the parent list page and stay on list rows. */
+  listPage?: boolean
 }
 
 export interface BuildMediaCropDialogUrlOptions extends BuildMediaEmbedUrlOptions {
@@ -157,6 +166,7 @@ const IFRAME_TO_PARENT_TYPES = new Set<string>([
   MEDIA_MESSAGE_TYPES.CANCEL,
   MEDIA_MESSAGE_TYPES.VIEWER_CHANGED,
   MEDIA_MESSAGE_TYPES.CROP_REQUEST,
+  MEDIA_MESSAGE_TYPES.CONTENT_SIZE,
 ])
 
 export function isMediaEmbedMessage(data: unknown): data is MediaEmbedMessage {

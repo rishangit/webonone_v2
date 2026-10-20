@@ -28,7 +28,7 @@ function TextAddonRenderer({ addon, breakpoint, theme, interactive }: AddonRende
       customization={style?.customization}
       placeholders={{ content }}
       baseStyle={baseStyle}
-      paletteColors={theme ? themePaletteColorValues(theme, style ? [style.colorId] : []) : undefined}
+      paletteColors={theme ? themePaletteColorValues(theme, style?.colorPaletteId) : undefined}
       className="h-full w-full overflow-hidden whitespace-pre-wrap p-2"
       fallback={<div style={baseStyle}>{content}</div>}
     />

@@ -1,7 +1,7 @@
 import type { Response } from 'express'
 import type { AuthenticatedRequest } from '../middleware/auth.js'
 import * as mediaService from '../services/media.service.js'
-import { scopeSchema, folderPathSchema, listMediaQuerySchema } from '../schemas/mediaSchemas.js'
+import { scopeSchema, folderPathSchema, listMediaQuerySchema, moveMediaBodySchema } from '../schemas/mediaSchemas.js'
 
 export async function uploadSingle(req: AuthenticatedRequest, res: Response) {
   const file = req.file
@@ -116,6 +116,30 @@ export async function getItem(req: AuthenticatedRequest, res: Response) {
     return
   }
   res.json({ item })
+}
+
+export async function moveItem(req: AuthenticatedRequest, res: Response) {
+  const parsed = moveMediaBodySchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({
+      message: 'Validation failed',
+      code: 'VALIDATION_ERROR',
+      details: parsed.error.flatten(),
+    })
+    return
+  }
+
+  try {
+    const item = await mediaService.moveMediaItem(String(req.params.id), parsed.data.folderPath)
+    if (!item) {
+      res.status(404).json({ message: 'Media item not found', code: 'NOT_FOUND' })
+      return
+    }
+    res.json({ item })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to move media'
+    res.status(400).json({ message, code: 'MEDIA_MOVE_FAILED' })
+  }
 }
 
 export async function deleteItem(req: AuthenticatedRequest, res: Response) {

@@ -119,6 +119,57 @@ describe('applyDesignCanvasSchema', () => {
     assert.equal(addonMove && 'cols' in addonMove ? addonMove.cols : undefined, 6)
   })
 
+  it('fills a header logo and menu when the add-on type is omitted', () => {
+    const parsed = applyDesignCanvasSchema.parse({
+      name: 'Design Website Header',
+      operations: [
+        { op: 'add_block', name: 'Header' },
+        { op: 'add_block', group: true, name: 'Company logo' },
+        { op: 'add_addon', name: 'Company logo' },
+        { op: 'add_block', group: true, name: 'Menu' },
+        { op: 'add_addon', name: 'Menu' },
+      ],
+    })
+    const logo = parsed.operations[2]
+    const menu = parsed.operations[4]
+    assert.equal(logo && 'type' in logo ? logo.type : undefined, 'image')
+    assert.equal(menu && 'type' in menu ? menu.type : undefined, 'menu')
+  })
+
+  it('accepts every designer item through the same operations', () => {
+    const parsed = applyDesignCanvasSchema.parse({
+      name: 'Add page elements',
+      operations: [
+        { op: 'add_block', name: 'Intro' },
+        { op: 'add_group', name: 'Actions' },
+        { op: 'add_text', name: 'Welcome', text: 'Welcome', role: 'heading' },
+        { op: 'add_button', name: 'Book', text: 'Book' },
+        { op: 'add_image', name: 'Photo' },
+        { op: 'add_slider', name: 'Stories' },
+        { op: 'add_menu', name: 'Pages', items: ['Home', 'About'] },
+      ],
+    })
+    assert.equal(parsed.operations[1]?.op, 'add_block')
+    assert.equal(parsed.operations[1] && 'group' in parsed.operations[1] ? parsed.operations[1].group : undefined, true)
+    assert.deepEqual(
+      parsed.operations.slice(2).map((operation) => ('type' in operation ? operation.type : undefined)),
+      ['text', 'button', 'image', 'slider', 'menu'],
+    )
+  })
+
+  it('accepts a hero image section when the operation names are not canvas ops', () => {
+    const parsed = applyDesignCanvasSchema.parse({
+      name: 'Add hero image section',
+      operations: [
+        { op: 'add_section', name: 'Hero image section' },
+        { op: 'add_image', name: 'Hero image' },
+      ],
+    })
+    assert.equal(parsed.operations[0]?.op, 'add_block')
+    assert.equal(parsed.operations[1]?.op, 'add_addon')
+    assert.equal(parsed.operations[1] && 'type' in parsed.operations[1] ? parsed.operations[1].type : undefined, 'image')
+  })
+
   it('accepts moving an existing block', () => {
     const parsed = applyDesignCanvasSchema.parse({
       name: 'Move contact',

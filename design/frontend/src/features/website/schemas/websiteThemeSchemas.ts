@@ -121,11 +121,18 @@ export const websiteColorTokenSchema = z.object({
   value: z.string().trim().min(1, 'Color value is required').max(32),
 })
 
+const themeColorIndexSchema = z.number().int().min(1).max(6)
+
+const themePaletteColorSchema = z.object({
+  name: z.string().trim().min(1, 'Color name is required').max(128),
+  value: z.string().trim().min(1, 'Color value is required').max(32),
+})
+
 export const websiteThemeColorPaletteSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1, 'Palette name is required').max(128),
   sourceLibraryPaletteId: z.string().min(1).max(64).nullable().optional(),
-  colorIds: z.array(z.string().min(1).max(64)).max(80),
+  colors: z.array(themePaletteColorSchema).min(1).max(6),
 })
 
 export const websiteTextStyleSchema = z.object({
@@ -142,7 +149,8 @@ export const websiteTextStyleSchema = z.object({
       '2xl': breakpointSizeSchema.optional(),
     })
     .optional(),
-  colorId: z.string().max(64).default(''),
+  colorIndex: themeColorIndexSchema.default(1),
+  colorPaletteId: z.string().min(1).max(64).nullable().optional(),
   sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
   customization: websiteElementCustomizationSchema.optional(),
 })
@@ -150,31 +158,26 @@ export const websiteTextStyleSchema = z.object({
 export const websiteButtonStyleSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1, 'Button name is required').max(128),
-  backgroundColorId: z.string().max(64).default(''),
-  textColorId: z.string().max(64).default(''),
+  colorPaletteId: z.string().min(1).max(64).nullable().optional(),
+  backgroundColorIndex: themeColorIndexSchema.default(1),
+  textColorIndex: themeColorIndexSchema.default(1),
   textStyleId: z.string().max(64).default(''),
-  borderColorId: z.string().max(64).default(''),
+  borderColorIndex: themeColorIndexSchema.default(1),
   borderWidth: z.number().min(0).max(16).default(0),
   radius: z.number({ invalid_type_error: 'Border radius is required' }).min(0).max(999).default(6),
   sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
   customization: websiteElementCustomizationSchema.optional(),
 })
 
-export const websiteThemeColorRolesSchema = z.object({
-  pageBackgroundColorId: z.string().max(64).optional().default(''),
-  surfaceColorId: z.string().max(64).optional().default(''),
-  bodyTextColorId: z.string().max(64).optional().default(''),
-  accentColor1Id: z.string().max(64).optional().default(''),
-  accentColor2Id: z.string().max(64).optional().default(''),
-})
-
 export const websiteThemeEditorSchema = z.object({
   name: z.string().trim().min(1, 'Theme name is required').max(255),
-  pageBackground: z.string().max(32),
-  bodyTextColor: z.string().max(32),
-  colorRoles: websiteThemeColorRolesSchema,
+  colorPaletteId: z.string().max(64),
+  pageBackgroundIndex: themeColorIndexSchema,
+  surfaceIndex: themeColorIndexSchema,
+  bodyTextIndex: themeColorIndexSchema,
+  accent1Index: themeColorIndexSchema,
+  accent2Index: themeColorIndexSchema,
   fonts: z.array(websiteFontTokenSchema).max(40),
-  colors: z.array(websiteColorTokenSchema).max(80),
   colorPalettes: z.array(websiteThemeColorPaletteSchema).max(24),
   textStyles: z.array(websiteTextStyleSchema).max(40),
   buttonStyles: z.array(websiteButtonStyleSchema).max(40),

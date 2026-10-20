@@ -36,6 +36,16 @@ export const renameFolderBodySchema = z.object({
   name: z.string().min(1).max(255),
 })
 
+export const moveMediaBodySchema = z.object({
+  folderPath: folderPathSchema,
+})
+
+export const moveFolderBodySchema = z.object({
+  scope: scopeSchema,
+  fromPath: z.string().regex(/^\/[A-Za-z0-9_/-]+$/, 'Invalid folder path'),
+  toParentPath: folderPathSchema,
+})
+
 export type ListMediaQuery = z.infer<typeof listMediaQuerySchema>
 export type ListFoldersQuery = z.infer<typeof listFoldersQuerySchema>
 export type CreateFolderBody = z.infer<typeof createFolderBodySchema>

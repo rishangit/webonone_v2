@@ -6,7 +6,6 @@ import type {
   WebsiteColorToken,
   WebsiteTheme,
   WebsiteThemeColorPalette,
-  WebsiteThemeColorRoles,
 } from '../types'
 
 export const WEBSITE_PALETTE_MIN = 1
@@ -91,91 +90,75 @@ export function swatchesToColorTokens(
   }))
 }
 
-export const THEME_COLOR_ROLE_KEYS = [
-  'pageBackgroundColorId',
-  'surfaceColorId',
-  'bodyTextColorId',
-  'accentColor1Id',
-  'accentColor2Id',
-] as const
+export const THEME_COLOR_SLOT_MAX = 6
 
-export function emptyThemeColorRoles(): WebsiteThemeColorRoles {
-  return {
-    pageBackgroundColorId: '',
-    surfaceColorId: '',
-    bodyTextColorId: '',
-    accentColor1Id: '',
-    accentColor2Id: '',
+function clampColorIndex(index: number, length: number): number {
+  if (length <= 0) return 1
+  if (!Number.isFinite(index) || index < 1) return 1
+  return Math.min(Math.floor(index), length, THEME_COLOR_SLOT_MAX)
+}
+
+export function themePaletteById(theme: WebsiteTheme, paletteId?: string | null): WebsiteThemeColorPalette | undefined {
+  const palettes = theme.colorPalettes ?? []
+  if (paletteId) {
+    const match = palettes.find((palette) => palette.id === paletteId)
+    if (match) return match
   }
+  return palettes.find((palette) => palette.id === theme.colorPaletteId) ?? palettes[0]
 }
 
-export function parseThemeColorRoles(raw: unknown): WebsiteThemeColorRoles {
-  const roles = emptyThemeColorRoles()
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return roles
-  const record = raw as Record<string, unknown>
-  for (const key of THEME_COLOR_ROLE_KEYS) {
-    const value = record[key]
-    roles[key] = typeof value === 'string' ? value : ''
-  }
-  return roles
+export function stylePaletteId(theme: WebsiteTheme, override?: string | null): string {
+  if (override && theme.colorPalettes.some((palette) => palette.id === override)) return override
+  return theme.colorPaletteId || theme.colorPalettes[0]?.id || ''
 }
 
-export function themeColorRoleIds(roles: WebsiteThemeColorRoles): string[] {
-  return THEME_COLOR_ROLE_KEYS.map((key) => roles[key])
+export function paletteOverrideForSave(themePaletteId: string, selectedPaletteId: string): string | null {
+  if (!selectedPaletteId || selectedPaletteId === themePaletteId) return null
+  return selectedPaletteId
 }
 
-function themeHasColorId(theme: WebsiteTheme, id: string): boolean {
-  return Boolean(id) && theme.colors.some((color) => color.id === id)
+export function themeSlotValue(
+  theme: WebsiteTheme,
+  paletteId: string | null | undefined,
+  index: number,
+  fallback: string,
+): string {
+  const palette = themePaletteById(theme, paletteId)
+  return palette?.colors[index - 1]?.value ?? fallback
 }
 
-function themeColorIdForHex(theme: WebsiteTheme, hex: string, preferIds?: string[]): string {
-  const normalized = hex.trim().toLowerCase()
-  if (!normalized) return ''
-  const match = (color: WebsiteColorToken) => color.value.trim().toLowerCase() === normalized
-  if (preferIds?.length) {
-    const preferred = theme.colors.find((color) => preferIds.includes(color.id) && match(color))
-    if (preferred) return preferred.id
-  }
-  return theme.colors.find(match)?.id ?? ''
-}
-
-export function resolveThemeColorValue(theme: WebsiteTheme, colorId: string, fallback: string): string {
-  return theme.colors.find((color) => color.id === colorId)?.value ?? fallback
-}
-
-export function inferThemeColorRoles(theme: WebsiteTheme): WebsiteThemeColorRoles {
-  const current = parseThemeColorRoles(theme.colorRoles)
-  const paletteId = inferThemePaletteId(theme, themeColorRoleIds(current))
-  const paletteIds = themeColorOptionsForPalette(theme, paletteId).map((color) => color.id)
-  const pool = paletteIds.length > 0 ? paletteIds : theme.colors.map((color) => color.id)
-  const pick = (...candidates: string[]) =>
-    candidates.find((id) => themeHasColorId(theme, id)) ?? pool[0] ?? ''
-  const bgMatch = themeColorIdForHex(theme, theme.pageBackground, pool)
-  const textMatch = themeColorIdForHex(theme, theme.bodyTextColor, pool)
-  return {
-    pageBackgroundColorId: pick(current.pageBackgroundColorId, 'background', bgMatch, pool[2] ?? ''),
-    surfaceColorId: pick(current.surfaceColorId, 'surface', pool[3] ?? '', pool[0] ?? ''),
-    bodyTextColorId: pick(current.bodyTextColorId, 'text', textMatch, pool[4] ?? '', pool.at(-1) ?? ''),
-    accentColor1Id: pick(current.accentColor1Id, 'primary', pool[0] ?? ''),
-    accentColor2Id: pick(current.accentColor2Id, 'secondary', pool[1] ?? '', pool[0] ?? ''),
-  }
-}
-
-export function applyThemeColorRoles(theme: WebsiteTheme, roles: WebsiteThemeColorRoles): WebsiteTheme {
-  return {
+export function applyThemeChrome(theme: WebsiteTheme): WebsiteTheme {
+  const colorPaletteId = theme.colorPaletteId || theme.colorPalettes[0]?.id || ''
+  const palette = themePaletteById({ ...theme, colorPaletteId }, colorPaletteId)
+  const length = palette?.colors.length ?? 1
+  const pageBackgroundIndex = clampColorIndex(theme.pageBackgroundIndex, length)
+  const surfaceIndex = clampColorIndex(theme.surfaceIndex, length)
+  const bodyTextIndex = clampColorIndex(theme.bodyTextIndex, length)
+  const accent1Index = clampColorIndex(theme.accent1Index, length)
+  const accent2Index = clampColorIndex(theme.accent2Index, length)
+  const next = {
     ...theme,
-    colorRoles: roles,
-    pageBackground: resolveThemeColorValue(theme, roles.pageBackgroundColorId, theme.pageBackground),
-    bodyTextColor: resolveThemeColorValue(theme, roles.bodyTextColorId, theme.bodyTextColor),
-    surfaceColor: resolveThemeColorValue(theme, roles.surfaceColorId, theme.surfaceColor ?? theme.pageBackground),
-    accentColor1: resolveThemeColorValue(theme, roles.accentColor1Id, theme.accentColor1 ?? ''),
-    accentColor2: resolveThemeColorValue(theme, roles.accentColor2Id, theme.accentColor2 ?? ''),
+    colorPaletteId,
+    colorPalettes: theme.colorPalettes ?? [],
+    pageBackgroundIndex,
+    surfaceIndex,
+    bodyTextIndex,
+    accent1Index,
+    accent2Index,
+  }
+  return {
+    ...next,
+    pageBackground: themeSlotValue(next, colorPaletteId, pageBackgroundIndex, '#ffffff'),
+    bodyTextColor: themeSlotValue(next, colorPaletteId, bodyTextIndex, '#111827'),
+    surfaceColor: themeSlotValue(next, colorPaletteId, surfaceIndex, '#ffffff'),
+    accentColor1: themeSlotValue(next, colorPaletteId, accent1Index, '#111827'),
+    accentColor2: themeSlotValue(next, colorPaletteId, accent2Index, '#111827'),
   }
 }
 
 export function themeChromeCssVars(theme: WebsiteTheme | null): CSSProperties {
   if (!theme) return {}
-  const resolved = applyThemeColorRoles(theme, inferThemeColorRoles(theme))
+  const resolved = applyThemeChrome(theme)
   const surface = resolved.surfaceColor || resolved.pageBackground
   const accent1 = resolved.accentColor1 || resolved.bodyTextColor
   const accent2 = resolved.accentColor2 || accent1
@@ -190,61 +173,15 @@ export function themeChromeCssVars(theme: WebsiteTheme | null): CSSProperties {
   }
 }
 
-function chromePatchForTheme(
-  theme: WebsiteTheme,
-  colors: WebsiteColorToken[],
-): Pick<WebsiteTheme, 'pageBackground' | 'bodyTextColor'> {
-  const next = { ...theme, colors }
-  const roles = inferThemeColorRoles(next)
-  if (!THEME_COLOR_ROLE_KEYS.some((key) => roles[key])) {
-    return pageChromeFromTokens(colors)
-  }
-  const applied = applyThemeColorRoles({ ...next, colorRoles: roles }, roles)
-  return { pageBackground: applied.pageBackground, bodyTextColor: applied.bodyTextColor }
-}
-
 export function normalizeWebsiteTheme(theme: WebsiteTheme): WebsiteTheme {
-  const next = {
+  return applyThemeChrome({
     ...theme,
     colorPalettes: (theme.colorPalettes ?? []).filter((palette) => palette.id !== THEME_LEGACY_COLORS_PALETTE_ID),
-    colorRoles: parseThemeColorRoles(theme.colorRoles),
-  }
-  return applyThemeColorRoles(next, inferThemeColorRoles(next))
+  })
 }
 
-export function collectThemeUsedColorIds(theme: WebsiteTheme): Set<string> {
-  const roles = parseThemeColorRoles(theme.colorRoles)
-  return new Set(
-    [
-      ...themeColorRoleIds(roles),
-      ...theme.textStyles.map((style) => style.colorId),
-      ...theme.buttonStyles.flatMap((style) => [
-        style.backgroundColorId,
-        style.textColorId,
-        style.borderColorId,
-      ]),
-    ].filter(Boolean),
-  )
-}
-
-export function mergePaletteOntoThemeColors(
-  theme: WebsiteTheme,
-  swatches: string[],
-  names: readonly string[],
-): Pick<WebsiteTheme, 'colors' | 'pageBackground' | 'bodyTextColor'> {
-  const colors = mergeImportedSwatches(swatches, theme.colors, names, collectThemeUsedColorIds(theme))
-  return { colors, ...pageChromeFromTokens(colors) }
-}
-
-export function themePaletteRefsToLibraryPalette(
-  ref: WebsiteThemeColorPalette,
-  colorsById: Map<string, WebsiteColorToken>,
-): WebsiteColorLibraryPalette {
-  const colors = ref.colorIds
-    .map((id) => colorsById.get(id))
-    .filter((token): token is WebsiteColorToken => Boolean(token))
-    .map((token) => ({ name: token.name, value: token.value }))
-  return colors.length > 0 ? { colors } : { colors: [{ name: ref.name, value: '#111827' }] }
+export function themePaletteToLibraryPalette(palette: WebsiteThemeColorPalette): WebsiteColorLibraryPalette {
+  return palette.colors.length > 0 ? { colors: palette.colors } : { colors: [{ name: palette.name, value: '#111827' }] }
 }
 
 export type ThemePaletteSelectOption = {
@@ -260,74 +197,42 @@ export type ThemePaletteColorOption = {
 }
 
 export function themePaletteSelectOptions(theme: WebsiteTheme): ThemePaletteSelectOption[] {
-  const colorsById = new Map(theme.colors.map((color) => [color.id, color]))
-  return (theme.colorPalettes ?? []).map((ref) => ({
-    id: ref.id,
-    name: ref.name,
-    palette: themePaletteRefsToLibraryPalette(ref, colorsById),
+  return (theme.colorPalettes ?? []).map((palette) => ({
+    id: palette.id,
+    name: palette.name,
+    palette: themePaletteToLibraryPalette(palette),
   }))
 }
 
-export function themePaletteColorValues(theme: WebsiteTheme, colorIds: string[]): string[] {
-  const paletteId = inferThemePaletteId(theme, colorIds)
-  const fromPalette = themeColorOptionsForPalette(theme, paletteId).map((color) => color.swatch)
-  if (fromPalette.length > 0) return fromPalette
-  return theme.colors.slice(0, 6).map((color) => color.value)
-}
-
 export function themeColorOptionsForPalette(theme: WebsiteTheme, paletteId: string): ThemePaletteColorOption[] {
-  const ref = (theme.colorPalettes ?? []).find((palette) => palette.id === paletteId)
-  if (!ref) return []
-  const colorsById = new Map(theme.colors.map((color) => [color.id, color]))
-  return ref.colorIds
-    .slice(0, 6)
-    .map((id) => colorsById.get(id))
-    .filter((token): token is WebsiteColorToken => Boolean(token))
-    .map((color) => ({
-      id: color.id,
-      label: `${color.name} (${color.value})`,
-      swatch: color.value,
-    }))
+  const palette = (theme.colorPalettes ?? []).find((item) => item.id === paletteId)
+  if (!palette) return []
+  return palette.colors.slice(0, THEME_COLOR_SLOT_MAX).map((color, index) => ({
+    id: String(index + 1),
+    label: `${color.name} (${color.value})`,
+    swatch: color.value,
+  }))
 }
 
-export function inferThemePaletteId(theme: WebsiteTheme, colorIds: string[]): string {
-  const palettes = theme.colorPalettes ?? []
-  if (palettes.length === 0) return ''
-  const ids = colorIds.filter(Boolean)
-  const complete = palettes.find((palette) => ids.length > 0 && ids.every((id) => palette.colorIds.includes(id)))
-  if (complete) return complete.id
-  const partial = palettes.find((palette) => ids.some((id) => palette.colorIds.includes(id)))
-  return partial?.id ?? palettes[0]?.id ?? ''
+export function themePaletteColorValues(theme: WebsiteTheme, paletteId: string | null | undefined): string[] {
+  const palette = themePaletteById(theme, stylePaletteId(theme, paletteId))
+  return (palette?.colors ?? []).slice(0, THEME_COLOR_SLOT_MAX).map((color) => color.value)
 }
 
-export function remapColorIdToPalette(
-  theme: WebsiteTheme,
-  fromPaletteId: string,
-  toPaletteId: string,
-  colorId: string,
-): string {
-  const to = (theme.colorPalettes ?? []).find((palette) => palette.id === toPaletteId)
-  if (!to || to.colorIds.length === 0) return ''
-  if (to.colorIds.includes(colorId)) return colorId
-  const from = (theme.colorPalettes ?? []).find((palette) => palette.id === fromPaletteId)
-  const index = from ? from.colorIds.indexOf(colorId) : -1
-  return (index >= 0 ? to.colorIds[index] : undefined) ?? to.colorIds[0] ?? ''
+export function remapColorIndex(theme: WebsiteTheme, toPaletteId: string, index: number): number {
+  const palette = theme.colorPalettes.find((item) => item.id === toPaletteId)
+  return clampColorIndex(index, palette?.colors.length ?? 1)
 }
 
-export function collectThemePaletteColorIds(theme: WebsiteTheme): Set<string> {
-  return new Set((theme.colorPalettes ?? []).flatMap((palette) => palette.colorIds))
-}
-
-export function pruneThemeColorPalettes(
-  colorPalettes: WebsiteThemeColorPalette[],
-  removedColorId: string,
-): WebsiteThemeColorPalette[] {
-  return colorPalettes
-    .map((palette) => ({
-      ...palette,
-      colorIds: palette.colorIds.filter((id) => id !== removedColorId),
-    }))
-    .filter((palette) => palette.colorIds.length > 0)
+function basicIndexesForPalette(colorCount: number) {
+  const length = Math.max(1, Math.min(colorCount, THEME_COLOR_SLOT_MAX))
+  return {
+    pageBackgroundIndex: clampColorIndex(length >= 3 ? 3 : 1, length),
+    surfaceIndex: clampColorIndex(length >= 4 ? 4 : 1, length),
+    bodyTextIndex: clampColorIndex(length >= 5 ? 5 : Math.min(2, length), length),
+    accent1Index: 1,
+    accent2Index: clampColorIndex(Math.min(2, length), length),
+  }
 }
 
 export function applyLibraryPaletteGroupToTheme(
@@ -337,107 +242,61 @@ export function applyLibraryPaletteGroupToTheme(
     sourceLibraryPaletteId: string | null
     entries: Array<{ name: string; value: string }>
   },
-): Pick<WebsiteTheme, 'colors' | 'colorPalettes' | 'pageBackground' | 'bodyTextColor'> {
-  const normalizedEntries = input.entries.map((entry) => ({
+): Pick<
+  WebsiteTheme,
+  | 'colorPalettes'
+  | 'colorPaletteId'
+  | 'pageBackgroundIndex'
+  | 'surfaceIndex'
+  | 'bodyTextIndex'
+  | 'accent1Index'
+  | 'accent2Index'
+> {
+  const colors = input.entries.slice(0, THEME_COLOR_SLOT_MAX).map((entry) => ({
     name: entry.name.trim(),
     value: entry.value.trim().toUpperCase(),
   }))
-  const colorPalettes = (theme.colorPalettes ?? []).filter(
-    (palette) => palette.id !== THEME_LEGACY_COLORS_PALETTE_ID,
-  )
-  const paletteRef: WebsiteThemeColorPalette = {
+  const palette: WebsiteThemeColorPalette = {
     id: nanoid(8),
     name: input.name.trim(),
     sourceLibraryPaletteId: input.sourceLibraryPaletteId,
-    colorIds: [],
+    colors,
   }
-
-  if (colorPalettes.length === 0) {
-    const merged = mergePaletteOntoThemeColors(
-      { ...theme, colors: [] },
-      normalizedEntries.map((entry) => entry.value),
-      normalizedEntries.map((entry) => entry.name),
-    )
-    const leftover = theme.colors.filter((color) => !SLOT_ID_SET.has(color.id))
-    const colors = leftover.length > 0 ? [...merged.colors, ...leftover] : merged.colors
+  const colorPalettes = [...(theme.colorPalettes ?? []).filter((item) => item.id !== THEME_LEGACY_COLORS_PALETTE_ID), palette]
+  if ((theme.colorPalettes ?? []).length > 0 && theme.colorPaletteId) {
     return {
-      colors,
-      colorPalettes: [
-        {
-          ...paletteRef,
-          colorIds: merged.colors.map((color) => color.id),
-        },
-      ],
-      ...chromePatchForTheme(theme, colors),
+      colorPalettes,
+      colorPaletteId: theme.colorPaletteId,
+      pageBackgroundIndex: theme.pageBackgroundIndex,
+      surfaceIndex: theme.surfaceIndex,
+      bodyTextIndex: theme.bodyTextIndex,
+      accent1Index: theme.accent1Index,
+      accent2Index: theme.accent2Index,
     }
   }
-
-  const newTokens = normalizedEntries.map((entry) => ({
-    id: nanoid(8),
-    name: entry.name,
-    value: entry.value,
-  }))
-  const colors = [...theme.colors, ...newTokens]
   return {
-    colors,
-    colorPalettes: [
-      ...colorPalettes,
-      {
-        ...paletteRef,
-        colorIds: newTokens.map((token) => token.id),
-      },
-    ],
-    ...chromePatchForTheme(theme, colors),
+    colorPalettes,
+    colorPaletteId: palette.id,
+    ...basicIndexesForPalette(colors.length),
   }
 }
 
 export function removeThemeColorPaletteGroup(
   theme: WebsiteTheme,
   paletteInstanceId: string,
-): Pick<WebsiteTheme, 'colors' | 'colorPalettes'> {
-  const colorPalettes = theme.colorPalettes ?? []
-  const palette = colorPalettes.find((item) => item.id === paletteInstanceId)
-  if (!palette) {
-    return { colors: theme.colors, colorPalettes }
-  }
-  const usedIds = collectThemeUsedColorIds(theme)
-  const otherPaletteColorIds = new Set(
-    colorPalettes.filter((item) => item.id !== paletteInstanceId).flatMap((item) => item.colorIds),
-  )
-  const removeColorIds = new Set(
-    palette.colorIds.filter((id) => !usedIds.has(id) && !otherPaletteColorIds.has(id)),
-  )
+): Pick<WebsiteTheme, 'colorPalettes' | 'colorPaletteId' | 'textStyles' | 'buttonStyles'> {
+  const colorPalettes = (theme.colorPalettes ?? []).filter((item) => item.id !== paletteInstanceId)
+  const colorPaletteId = theme.colorPaletteId === paletteInstanceId ? (colorPalettes[0]?.id ?? '') : theme.colorPaletteId
   return {
-    colors: theme.colors.filter((color) => !removeColorIds.has(color.id)),
-    colorPalettes: colorPalettes.filter((item) => item.id !== paletteInstanceId),
+    colorPalettes,
+    colorPaletteId,
+    textStyles: theme.textStyles.map((style) =>
+      style.colorPaletteId === paletteInstanceId ? { ...style, colorPaletteId: null } : style,
+    ),
+    buttonStyles: theme.buttonStyles.map((style) =>
+      style.colorPaletteId === paletteInstanceId ? { ...style, colorPaletteId: null } : style,
+    ),
   }
-}
-
-export function appendLibraryPaletteToTheme(
-  theme: WebsiteTheme,
-  entries: Array<{ name: string; value: string }>,
-): Pick<WebsiteTheme, 'colors' | 'pageBackground' | 'bodyTextColor'> {
-  const normalizedEntries = entries.map((entry) => ({
-    name: entry.name.trim(),
-    value: entry.value.trim().toUpperCase(),
-  }))
-  const onTheme = new Set(theme.colors.map((color) => color.value.trim().toLowerCase()))
-  const toAdd = normalizedEntries.filter((entry) => !onTheme.has(entry.value.toLowerCase()))
-  if (toAdd.length === 0) {
-    return { colors: theme.colors, ...chromePatchForTheme(theme, theme.colors) }
-  }
-  if (theme.colors.length === 0) {
-    return mergePaletteOntoThemeColors(
-      theme,
-      toAdd.map((entry) => entry.value),
-      toAdd.map((entry) => entry.name),
-    )
-  }
-  const colors = [
-    ...theme.colors,
-    ...toAdd.map((entry) => ({ id: nanoid(8), name: entry.name, value: entry.value })),
-  ]
-  return { colors, ...chromePatchForTheme(theme, colors) }
 }
 
 export function parseLibraryPaletteApplyPayload(

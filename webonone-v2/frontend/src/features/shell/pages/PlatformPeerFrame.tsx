@@ -24,6 +24,7 @@ import {
 import { useAppSelector } from '@/app/store/hooks'
 import { toThemeDto } from '@/features/settings/system-theme/services/themeApi'
 import { getIdentityOrigin } from '@/features/auth/utils/identityConfig'
+import { getMediaOrigin } from '@/features/media/utils/mediaConfig'
 import { getDataOrigin } from '@/features/data/utils/dataConfig'
 import { getDesignOrigin } from '@/features/design/utils/designConfig'
 import { getEmailOrigin } from '@/features/email/utils/emailConfig'
@@ -104,6 +105,7 @@ function listAllowedPeerDialogBodyOrigins(): Set<string> {
     getEmailOrigin(),
     getSmsOrigin(),
     getPaymentOrigin(),
+    getMediaOrigin(),
   ]
   const allowed = new Set<string>()
   for (const origin of origins) {

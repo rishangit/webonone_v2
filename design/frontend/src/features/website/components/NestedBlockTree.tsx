@@ -8,6 +8,8 @@ import {
   ADDON_OUTLINE,
   CONTENT_ELEMENT_FRAME,
   CONTENT_ELEMENT_OUTLINE,
+  CONTENT_ELEMENT_PARENT_FRAME,
+  CONTENT_ELEMENT_PARENT_OUTLINE,
 } from '../document/selectionOutline'
 import { isChromePointerTarget, shouldDeferToSelectedAncestor } from '../document/selectionPointer'
 import { useCanvasHighlight } from '../document/canvasHighlight'
@@ -109,6 +111,17 @@ export function NestedBlockTree({
     highlight.templateBlockId === block.id &&
     highlight.sliderAddonId === sliderAddonId
   const outlined = selected || highlighted
+  const parentOutlined =
+    interactive &&
+    !root &&
+    !selected &&
+    !highlighted &&
+    ((selection?.kind === 'templateAddon' &&
+      selection.templateBlockId === block.id &&
+      selection.sliderAddonId === sliderAddonId) ||
+      (selection?.kind === 'templateBlock' &&
+        selection.sliderAddonId === sliderAddonId &&
+        (block.children ?? []).some((child) => child.id === selection.templateBlockId)))
   const childSelected =
     interactive &&
     Boolean(hostBlockId && sliderAddonId) &&
@@ -126,6 +139,7 @@ export function NestedBlockTree({
         !interactive && !(selected || childSelected) && 'overflow-hidden',
         (selected || childSelected) && 'overflow-visible',
         outlined && CONTENT_ELEMENT_OUTLINE,
+        parentOutlined && CONTENT_ELEMENT_PARENT_OUTLINE,
         chromeClassName(chrome),
       )}
       data-template-block-id={block.id}
@@ -234,6 +248,7 @@ export function NestedBlockTree({
       }}
     >
       {outlined ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
+      {parentOutlined ? <div className={CONTENT_ELEMENT_PARENT_FRAME} /> : null}
       {addons.map((addon) => (
         <NestedAddonView
           key={addon.id}

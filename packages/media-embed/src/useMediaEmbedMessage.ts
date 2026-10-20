@@ -3,6 +3,7 @@ import {
   isMediaEmbedMessage,
   MEDIA_MESSAGE_TYPES,
   type MediaCancelMessage,
+  type MediaContentSizeMessage,
   type MediaCropRequestMessage,
   type MediaDeletedMessage,
   type MediaSelectionChangeMessage,
@@ -20,6 +21,7 @@ export interface UseMediaEmbedMessageOptions {
   onCancel?: (message: MediaCancelMessage) => void
   onViewerChanged?: (message: MediaViewerChangedMessage) => void
   onCropRequest?: (message: MediaCropRequestMessage) => void
+  onContentSize?: (message: MediaContentSizeMessage) => void
 }
 
 export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void {
@@ -32,6 +34,7 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
     onCancel,
     onViewerChanged,
     onCropRequest,
+    onContentSize,
   } = options
 
   useEffect(() => {
@@ -66,6 +69,9 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
         case MEDIA_MESSAGE_TYPES.CROP_REQUEST:
           onCropRequest?.(message)
           break
+        case MEDIA_MESSAGE_TYPES.CONTENT_SIZE:
+          onContentSize?.(message)
+          break
         default:
           break
       }
@@ -73,5 +79,15 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [mediaOrigin, onCancel, onCropRequest, onDeleted, onSelect, onSelectionChange, onUploaded, onViewerChanged])
+  }, [
+    mediaOrigin,
+    onCancel,
+    onContentSize,
+    onCropRequest,
+    onDeleted,
+    onSelect,
+    onSelectionChange,
+    onUploaded,
+    onViewerChanged,
+  ])
 }

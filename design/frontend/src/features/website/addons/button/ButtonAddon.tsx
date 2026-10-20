@@ -71,15 +71,7 @@ function ButtonAddonRenderer({
       customization={customization}
       placeholders={{ label }}
       baseStyle={style}
-      paletteColors={
-        theme
-          ? themePaletteColorValues(theme, [
-              buttonStyle?.backgroundColorId ?? '',
-              buttonStyle?.textColorId ?? '',
-              buttonStyle?.borderColorId ?? '',
-            ])
-          : undefined
-      }
+      paletteColors={theme ? themePaletteColorValues(theme, buttonStyle?.colorPaletteId) : undefined}
       className="inline-flex h-full w-full"
       scriptContext={{ publish, href }}
       fallback={fallback}

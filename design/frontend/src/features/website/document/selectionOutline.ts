@@ -16,3 +16,6 @@ export const CONTENT_CONTAINER_EDGE =
   'pointer-events-none absolute inset-0 z-[20000] border border-[hsl(var(--glass-border))]'
 export const CONTENT_CONTAINER_FRAME =
   'pointer-events-none absolute inset-0 z-[20001] border-2 border-primary'
+/** Immediate parent of the selection. Lighter and dashed so it stays distinct from the selected element. */
+export const CONTENT_CONTAINER_PARENT_FRAME =
+  'pointer-events-none absolute inset-0 z-[20001] border-2 border-dashed border-primary/50'

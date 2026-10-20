@@ -7,6 +7,7 @@ import {
   buildStorageKey,
   deleteBlob,
   isMimeAllowed,
+  moveBlob,
   writeBlob,
 } from './storage.service.js'
 import { ensureFolderPath } from './folder.service.js'
@@ -176,6 +177,31 @@ export async function deleteMediaItem(id: string): Promise<boolean> {
   })
 
   return true
+}
+
+export async function moveMediaItem(id: string, folderPath: string): Promise<MediaItemDto | null> {
+  const row = await db<MediaItemRow>('media_items').where({ id }).whereNull('deleted_at').first()
+  if (!row) return null
+
+  const destination = folderPath === '/' ? '/' : folderPath.replace(/\/+$/, '') || '/'
+  if (row.folder_path === destination) return rowToDto(row)
+
+  await ensureFolderPath(row.scope, destination, row.uploaded_by_user_id)
+  const nextKey = buildStorageKey(row.scope, destination, row.id, row.file_name)
+  await moveBlob(row.storage_key, nextKey)
+  try {
+    await db('media_items').where({ id }).update({
+      folder_path: destination,
+      storage_key: nextKey,
+      updated_at: db.fn.now(3),
+    })
+  } catch (err) {
+    await moveBlob(nextKey, row.storage_key).catch(() => undefined)
+    throw err
+  }
+
+  const updated = await db<MediaItemRow>('media_items').where({ id }).first()
+  return updated ? rowToDto(updated) : null
 }
 
 export async function getMediaItemRow(id: string): Promise<MediaItemRow | null> {

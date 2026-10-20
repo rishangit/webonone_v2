@@ -4,18 +4,18 @@ import type { WebsiteTheme } from '../types'
 import {
   addPaletteSlot,
   applyLibraryPaletteGroupToTheme,
-  applyThemeColorRoles,
-  inferThemeColorRoles,
-  inferThemePaletteId,
-  remapColorIdToPalette,
-  appendLibraryPaletteToTheme,
+  applyThemeChrome,
   defaultWebsitePaletteTokens,
   mergeImportedSwatches,
   pageChromeFromTokens,
+  paletteOverrideForSave,
   parseLibraryPaletteApplyPayload,
   parsePaletteSwatchesPayload,
+  remapColorIndex,
   removePaletteSlot,
+  removeThemeColorPaletteGroup,
   swatchesToColorTokens,
+  themeSlotValue,
   WEBSITE_PALETTE_MAX,
 } from './websitePalette'
 
@@ -31,10 +31,18 @@ function emptyTheme(): WebsiteTheme {
     isLocked: false,
     sourceLibraryId: null,
     fonts: [],
-    colors: [],
+    colorPaletteId: '',
+    pageBackgroundIndex: 1,
+    surfaceIndex: 1,
+    bodyTextIndex: 1,
+    accent1Index: 1,
+    accent2Index: 1,
     colorPalettes: [],
     textStyles: [],
     buttonStyles: [],
+    createdBy: null,
+    createdAt: '',
+    updatedAt: '',
   }
 }
 
@@ -113,28 +121,8 @@ describe('websitePalette', () => {
     assert.equal(parseLibraryPaletteApplyPayload({ kind: 'color' }), null)
   })
 
-  it('appends library palettes and skips duplicate hex values', () => {
-    const theme = emptyTheme()
-    const first = appendLibraryPaletteToTheme(theme, [
-      { name: 'Primary', value: '#111111' },
-      { name: 'Secondary', value: '#222222' },
-    ])
-    assert.equal(first.colors.length, 2)
-    assert.equal(first.colors[0]?.id, 'primary')
-    const second = appendLibraryPaletteToTheme(
-      { ...theme, colors: first.colors },
-      [
-        { name: 'Secondary', value: '#222222' },
-        { name: 'Accent', value: '#333333' },
-      ],
-    )
-    assert.equal(second.colors.length, 3)
-    assert.equal(second.colors[2]?.name, 'Accent')
-  })
-
-  it('tracks library palette groups on the theme', () => {
-    const theme = emptyTheme()
-    const applied = applyLibraryPaletteGroupToTheme(theme, {
+  it('stores palette colors by slot and selects the first palette as basic', () => {
+    const applied = applyLibraryPaletteGroupToTheme(emptyTheme(), {
       name: 'Brand',
       sourceLibraryPaletteId: 'lib-1',
       entries: [
@@ -142,12 +130,15 @@ describe('websitePalette', () => {
         { name: 'Secondary', value: '#222222' },
       ],
     })
-    assert.equal(applied.colorPalettes?.length, 1)
-    assert.equal(applied.colorPalettes?.[0]?.sourceLibraryPaletteId, 'lib-1')
-    assert.equal(applied.colorPalettes?.[0]?.colorIds.length, 2)
+    assert.equal(applied.colorPalettes.length, 1)
+    assert.equal(applied.colorPalettes[0]?.sourceLibraryPaletteId, 'lib-1')
+    assert.equal(applied.colorPalettes[0]?.colors.length, 2)
+    assert.equal(applied.colorPaletteId, applied.colorPalettes[0]?.id)
+    assert.equal(applied.accent1Index, 1)
+    assert.equal(applied.accent2Index, 2)
   })
 
-  it('infers and remaps button colors onto a selected palette', () => {
+  it('keeps a later palette from replacing the basic palette', () => {
     const first = applyLibraryPaletteGroupToTheme(emptyTheme(), {
       name: 'Brand',
       sourceLibraryPaletteId: 'lib-1',
@@ -156,52 +147,66 @@ describe('websitePalette', () => {
         { name: 'Secondary', value: '#222222' },
       ],
     })
-    const second = applyLibraryPaletteGroupToTheme(
-      { ...emptyTheme(), colors: first.colors, colorPalettes: first.colorPalettes ?? [] },
-      {
-        name: 'Accent',
-        sourceLibraryPaletteId: 'lib-2',
-        entries: [
-          { name: 'Primary', value: '#AA0000' },
-          { name: 'Secondary', value: '#BB0000' },
-        ],
-      },
-    )
-    const theme = { ...emptyTheme(), colors: second.colors, colorPalettes: second.colorPalettes ?? [] }
-    const brandId = second.colorPalettes?.[0]?.id ?? ''
-    const accentId = second.colorPalettes?.[1]?.id ?? ''
-    const primaryId = second.colorPalettes?.[0]?.colorIds[0] ?? ''
-    assert.equal(inferThemePaletteId(theme, [primaryId]), brandId)
-    assert.equal(remapColorIdToPalette(theme, brandId, accentId, primaryId), second.colorPalettes?.[1]?.colorIds[0])
+    const theme = applyThemeChrome({ ...emptyTheme(), ...first })
+    const second = applyLibraryPaletteGroupToTheme(theme, {
+      name: 'Accent',
+      sourceLibraryPaletteId: 'lib-2',
+      entries: [
+        { name: 'Primary', value: '#AA0000' },
+        { name: 'Secondary', value: '#BB0000' },
+      ],
+    })
+    assert.equal(second.colorPalettes.length, 2)
+    assert.equal(second.colorPaletteId, first.colorPaletteId)
+    assert.equal(second.colorPalettes[1]?.colors[0]?.value, '#AA0000')
+    assert.equal(remapColorIndex({ ...theme, ...second }, second.colorPalettes[1]!.id, 2), 2)
+    assert.equal(paletteOverrideForSave(second.colorPaletteId, second.colorPaletteId), null)
+    assert.equal(paletteOverrideForSave(second.colorPaletteId, second.colorPalettes[1]!.id), second.colorPalettes[1]!.id)
   })
 
-  it('keeps each added palette as its own list group', () => {
+  it('clears a style override when its palette is removed', () => {
     const first = applyLibraryPaletteGroupToTheme(emptyTheme(), {
       name: 'Brand',
       sourceLibraryPaletteId: 'lib-1',
-      entries: [
-        { name: 'Primary', value: '#111111' },
-        { name: 'Secondary', value: '#222222' },
+      entries: [{ name: 'Primary', value: '#111111' }],
+    })
+    const theme = applyThemeChrome({
+      ...emptyTheme(),
+      ...first,
+      textStyles: [
+        {
+          id: 'body',
+          name: 'Body',
+          fontId: '',
+          size: 16,
+          colorIndex: 1,
+          colorPaletteId: 'extra',
+        },
+      ],
+      buttonStyles: [
+        {
+          id: 'btn',
+          name: 'Button',
+          colorPaletteId: 'extra',
+          backgroundColorIndex: 1,
+          textColorIndex: 1,
+          textStyleId: 'body',
+          borderColorIndex: 1,
+          borderWidth: 0,
+          radius: 6,
+        },
       ],
     })
-    const second = applyLibraryPaletteGroupToTheme(
-      { ...emptyTheme(), colors: first.colors, colorPalettes: first.colorPalettes ?? [] },
-      {
-        name: 'Accent',
-        sourceLibraryPaletteId: 'lib-2',
-        entries: [
-          { name: 'Primary', value: '#111111' },
-          { name: 'Highlight', value: '#FFAA00' },
-        ],
-      },
+    const removed = removeThemeColorPaletteGroup(
+      { ...theme, colorPalettes: [...theme.colorPalettes, { id: 'extra', name: 'Extra', colors: [{ name: 'A', value: '#000' }] }] },
+      'extra',
     )
-    assert.equal(second.colorPalettes?.length, 2)
-    assert.equal(second.colorPalettes?.[0]?.name, 'Brand')
-    assert.equal(second.colorPalettes?.[1]?.name, 'Accent')
-    assert.notEqual(second.colorPalettes?.[0]?.colorIds[0], second.colorPalettes?.[1]?.colorIds[0])
+    assert.equal(removed.textStyles[0]?.colorPaletteId, null)
+    assert.equal(removed.buttonStyles[0]?.colorPaletteId, null)
+    assert.equal(removed.colorPaletteId, first.colorPaletteId)
   })
 
-  it('infers five theme color roles from the selected palette', () => {
+  it('reads page chrome from the basic palette slot', () => {
     const applied = applyLibraryPaletteGroupToTheme(emptyTheme(), {
       name: 'Brand',
       sourceLibraryPaletteId: 'lib-1',
@@ -211,17 +216,14 @@ describe('websitePalette', () => {
         { name: 'Background', value: '#EFF3FA' },
         { name: 'Surface', value: '#FFFFFF' },
         { name: 'Text', value: '#17211D' },
-        { name: 'Accent', value: '#F59E0B' },
       ],
     })
-    const theme = { ...emptyTheme(), colors: applied.colors, colorPalettes: applied.colorPalettes ?? [] }
-    const roles = inferThemeColorRoles(theme)
-    assert.equal(theme.colors.find((color) => color.id === roles.pageBackgroundColorId)?.value, '#EFF3FA')
-    assert.equal(theme.colors.find((color) => color.id === roles.surfaceColorId)?.value, '#FFFFFF')
-    assert.equal(theme.colors.find((color) => color.id === roles.bodyTextColorId)?.value, '#17211D')
-    assert.equal(theme.colors.find((color) => color.id === roles.accentColor1Id)?.value, '#344CE2')
-    assert.equal(theme.colors.find((color) => color.id === roles.accentColor2Id)?.value, '#3578E8')
-    const next = applyThemeColorRoles(theme, { ...roles, pageBackgroundColorId: roles.surfaceColorId })
-    assert.equal(next.pageBackground, '#FFFFFF')
+    const theme = applyThemeChrome({ ...emptyTheme(), ...applied })
+    assert.equal(theme.pageBackgroundIndex, 3)
+    assert.equal(theme.surfaceIndex, 4)
+    assert.equal(theme.bodyTextIndex, 5)
+    assert.equal(themeSlotValue(theme, theme.colorPaletteId, theme.pageBackgroundIndex, ''), '#EFF3FA')
+    assert.equal(theme.pageBackground, '#EFF3FA')
+    assert.equal(theme.bodyTextColor, '#17211D')
   })
 })

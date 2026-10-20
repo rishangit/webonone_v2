@@ -12,6 +12,7 @@ import {
 import { ensureCompanyWebsiteDefaults } from './websiteLibrary.service.js'
 import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
 import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
+import { rewriteWebsiteDocumentMedia } from '../utils/rewriteWebsiteDocumentMedia.js'
 
 export type WebsitePageDto = {
   id: string
@@ -48,7 +49,7 @@ function toDto(row: PageRowWithLayout): WebsitePageDto {
     layoutId: row.layout_id,
     layoutName: row.layout_name ?? null,
     sortOrder: row.sort_order ?? 0,
-    document: parseDocument(row.document),
+    document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
     isLocked: isLockedFlag(row.is_locked),
     sourceLibraryId: row.source_library_id ?? null,
     createdBy: row.created_by,

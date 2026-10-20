@@ -6,6 +6,7 @@ import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { emptyWebsiteDocument, websiteDocumentSchema, type WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
 import type { CreateWebsitePresetBody, UpdateWebsitePresetBody } from '../schemas/websitePresets.schema.js'
 import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
+import { rewriteWebsiteDocumentMedia } from '../utils/rewriteWebsiteDocumentMedia.js'
 
 export type WebsitePresetDto = {
   id: string
@@ -30,7 +31,7 @@ function toDto(row: DesignWebsitePresetRow): WebsitePresetDto {
     id: row.id,
     companyId: row.company_id,
     name: row.name,
-    document: parseDocument(row.document),
+    document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
     isLocked: isLockedFlag(row.is_locked),
     sourceLibraryId: row.source_library_id ?? null,
     createdBy: row.created_by,

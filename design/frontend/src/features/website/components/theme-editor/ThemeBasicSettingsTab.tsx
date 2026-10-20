@@ -1,21 +1,17 @@
 import { Card, Form, FormField, Input } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
 import {
-  applyThemeColorRoles,
-  inferThemeColorRoles,
-  inferThemePaletteId,
-  remapColorIdToPalette,
+  applyThemeChrome,
+  remapColorIndex,
   themeColorOptionsForPalette,
-  themeColorRoleIds,
   themePaletteSelectOptions,
 } from '../../utils/websitePalette'
-import type { WebsiteThemeColorRoles } from '../../types'
 import { ThemeColorPaletteSelect } from './ThemeColorPaletteSelect'
 import { ThemeTokenSelect, type ThemeTokenOption } from './ThemeTokenSelect'
 import type { ThemeBasicSettingsTabProps } from './types'
 
 const ROLE_FIELDS: Array<{
-  key: keyof WebsiteThemeColorRoles
+  key: 'pageBackgroundIndex' | 'surfaceIndex' | 'bodyTextIndex' | 'accent1Index' | 'accent2Index'
   labelKey: 'pageBackground' | 'surfaceColor' | 'mainTextColor' | 'accentColor1' | 'accentColor2'
   hintKey:
     | 'pageBackgroundHint'
@@ -24,44 +20,31 @@ const ROLE_FIELDS: Array<{
     | 'accentColor1Hint'
     | 'accentColor2Hint'
 }> = [
-  { key: 'pageBackgroundColorId', labelKey: 'pageBackground', hintKey: 'pageBackgroundHint' },
-  { key: 'surfaceColorId', labelKey: 'surfaceColor', hintKey: 'surfaceColorHint' },
-  { key: 'bodyTextColorId', labelKey: 'mainTextColor', hintKey: 'mainTextColorHint' },
-  { key: 'accentColor1Id', labelKey: 'accentColor1', hintKey: 'accentColor1Hint' },
-  { key: 'accentColor2Id', labelKey: 'accentColor2', hintKey: 'accentColor2Hint' },
+  { key: 'pageBackgroundIndex', labelKey: 'pageBackground', hintKey: 'pageBackgroundHint' },
+  { key: 'surfaceIndex', labelKey: 'surfaceColor', hintKey: 'surfaceColorHint' },
+  { key: 'bodyTextIndex', labelKey: 'mainTextColor', hintKey: 'mainTextColorHint' },
+  { key: 'accent1Index', labelKey: 'accentColor1', hintKey: 'accentColor1Hint' },
+  { key: 'accent2Index', labelKey: 'accentColor2', hintKey: 'accentColor2Hint' },
 ]
 
 export function ThemeBasicSettingsTab({ theme, onChange, fieldErrors = {} }: ThemeBasicSettingsTabProps) {
   const { t } = useTranslation('website')
-  const roles = inferThemeColorRoles(theme)
   const paletteOptions = themePaletteSelectOptions(theme)
-  const colorPaletteId = inferThemePaletteId(theme, themeColorRoleIds(roles))
+  const colorPaletteId = theme.colorPaletteId || paletteOptions[0]?.id || ''
   const colorOptions: ThemeTokenOption[] = themeColorOptionsForPalette(theme, colorPaletteId)
-  const missingTokenLabel = t('themeTokenMissing')
-  let colorOptionsWithFallback = colorOptions
-  for (const colorId of themeColorRoleIds(roles)) {
-    if (colorId && !colorOptionsWithFallback.some((entry) => entry.id === colorId)) {
-      colorOptionsWithFallback = [...colorOptionsWithFallback, { id: colorId, label: missingTokenLabel }]
-    }
-  }
-
-  function patchRoles(nextRoles: WebsiteThemeColorRoles) {
-    onChange(applyThemeColorRoles(theme, nextRoles))
-  }
 
   function onPaletteChange(nextPaletteId: string) {
-    patchRoles({
-      pageBackgroundColorId: remapColorIdToPalette(
-        theme,
-        colorPaletteId,
-        nextPaletteId,
-        roles.pageBackgroundColorId,
-      ),
-      surfaceColorId: remapColorIdToPalette(theme, colorPaletteId, nextPaletteId, roles.surfaceColorId),
-      bodyTextColorId: remapColorIdToPalette(theme, colorPaletteId, nextPaletteId, roles.bodyTextColorId),
-      accentColor1Id: remapColorIdToPalette(theme, colorPaletteId, nextPaletteId, roles.accentColor1Id),
-      accentColor2Id: remapColorIdToPalette(theme, colorPaletteId, nextPaletteId, roles.accentColor2Id),
-    })
+    onChange(
+      applyThemeChrome({
+        ...theme,
+        colorPaletteId: nextPaletteId,
+        pageBackgroundIndex: remapColorIndex(theme, nextPaletteId, theme.pageBackgroundIndex),
+        surfaceIndex: remapColorIndex(theme, nextPaletteId, theme.surfaceIndex),
+        bodyTextIndex: remapColorIndex(theme, nextPaletteId, theme.bodyTextIndex),
+        accent1Index: remapColorIndex(theme, nextPaletteId, theme.accent1Index),
+        accent2Index: remapColorIndex(theme, nextPaletteId, theme.accent2Index),
+      }),
+    )
   }
 
   return (
@@ -71,7 +54,7 @@ export function ThemeBasicSettingsTab({ theme, onChange, fieldErrors = {} }: The
           <Input
             id="theme-name"
             value={theme.name}
-            onChange={(event) => onChange({ ...theme, name: event.target.value })}
+            onChange={(event) => onChange(applyThemeChrome({ ...theme, name: event.target.value }))}
           />
         </FormField>
         {paletteOptions.length > 0 ? (
@@ -97,19 +80,21 @@ export function ThemeBasicSettingsTab({ theme, onChange, fieldErrors = {} }: The
             key={field.key}
             label={t(field.labelKey)}
             htmlFor={`theme-basic-${field.key}`}
-            required={colorOptionsWithFallback.length > 0}
-            error={fieldErrors[field.key] ?? fieldErrors[`colorRoles.${field.key}`]}
+            required={colorOptions.length > 0}
+            error={fieldErrors[field.key]}
           >
             <ThemeTokenSelect
               id={`theme-basic-${field.key}`}
-              value={roles[field.key]}
-              options={colorOptionsWithFallback}
+              value={String(theme[field.key] || '')}
+              options={colorOptions}
               allowNone={false}
               placeholder={t('pickColorRequired')}
-              onChange={(colorId) => patchRoles({ ...roles, [field.key]: colorId })}
-              disabled={colorOptionsWithFallback.length === 0}
-              aria-required={colorOptionsWithFallback.length > 0}
-              aria-invalid={Boolean(fieldErrors[field.key] ?? fieldErrors[`colorRoles.${field.key}`])}
+              onChange={(colorIndex) =>
+                onChange(applyThemeChrome({ ...theme, colorPaletteId, [field.key]: Number(colorIndex) || 1 }))
+              }
+              disabled={colorOptions.length === 0}
+              aria-required={colorOptions.length > 0}
+              aria-invalid={Boolean(fieldErrors[field.key])}
             />
             <p className="mt-1 text-xs text-muted-foreground">{t(field.hintKey)}</p>
           </FormField>

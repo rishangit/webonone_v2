@@ -130,11 +130,15 @@ export type CreateThemeBody = {
   name: string
   pageBackground?: string
   bodyTextColor?: string
-  colorRoles?: WebsiteTheme['colorRoles']
+  colorPaletteId?: string
+  pageBackgroundIndex?: number
+  surfaceIndex?: number
+  bodyTextIndex?: number
+  accent1Index?: number
+  accent2Index?: number
   isActive?: boolean
   isDefault?: boolean
   fonts?: WebsiteTheme['fonts']
-  colors?: WebsiteTheme['colors']
   colorPalettes?: WebsiteTheme['colorPalettes']
   textStyles?: WebsiteTheme['textStyles']
   buttonStyles?: WebsiteTheme['buttonStyles']

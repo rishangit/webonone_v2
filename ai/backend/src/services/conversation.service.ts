@@ -37,6 +37,7 @@ import {
 } from '../ai/tools/uniqueValues.js'
 import type { AiConversationRow, AiMessageRow, MessageRole } from '../models/db.js'
 import { keepLatestDesignerCanvas } from './designerCanvasHistory.js'
+import { designerTurnTools, headerRowCanvasArguments, heroImageCanvasArguments, pickCanvasTool } from './designerHeaderLayout.js'
 import { HttpError } from './httpError.js'
 import type { ConversationRepository } from './conversation.repository.js'
 import {
@@ -585,23 +586,39 @@ export function createConversationService(deps: {
   ): Promise<AiMessageRow> => {
     await deps.ensureCapabilitiesReady?.()
     const tools = filterToolsForContext(deps.registry?.list() ?? [], ctx)
-    const providerTools = toProviderTools(tools)
     const promptBase = entityContextSupplement
       ? `${baseSystemPrompt}\n\n${entityContextSupplement}`
       : baseSystemPrompt
-    const systemPrompt = withAvailableToolsPrompt(promptBase, tools)
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
       const history = await deps.repository.listMessages(conversation.id)
-      const completion = await provider.complete({
-        systemPrompt,
-        messages: historyToProviderMessages(history),
-        tools: providerTools.length ? providerTools : undefined,
-      })
+      const userMessage = lastUserContent(history)
+      const turnTools = designerTurnTools(tools, userMessage)
+      const providerTools = toProviderTools(turnTools)
+      const systemPrompt = withAvailableToolsPrompt(
+        userMessage.includes('[designer-canvas]')
+          ? `${promptBase} The user is editing the open designer canvas. Call the canvas tool for layout changes.`
+          : promptBase,
+        turnTools,
+      )
+      const headerLayout = round === 0 ? headerRowCanvasArguments(userMessage) ?? heroImageCanvasArguments(userMessage) : null
+      const canvasTool = headerLayout ? pickCanvasTool(turnTools, ctx.role) : undefined
+      const completion =
+        headerLayout && canvasTool
+          ? {
+              content: '',
+              toolCalls: [
+                { id: nanoid(), name: canvasTool.name, arguments: headerLayout as unknown as Record<string, unknown> },
+              ],
+            }
+          : await provider.complete({
+              systemPrompt,
+              messages: historyToProviderMessages(history),
+              tools: providerTools.length ? providerTools : undefined,
+            })
 
       let toolCalls: ToolCall[] = completion.toolCalls ?? []
       let leadContent = completion.content
-      const userMessage = lastUserContent(history)
       if (ctx.role !== 'guest' && deps.executor) {
         const resolvedCreate = resolveCreateTool({
           tools,

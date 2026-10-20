@@ -48,6 +48,21 @@ export async function renameFolder(req: AuthenticatedRequest, res: Response) {
   res.json({ folder })
 }
 
+export async function moveFolder(req: AuthenticatedRequest, res: Response) {
+  try {
+    const folder = await folderService.moveFolder({
+      scope: req.body.scope,
+      fromPath: req.body.fromPath,
+      toParentPath: req.body.toParentPath,
+      userId: req.user!.id,
+    })
+    res.json({ folder })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to move folder'
+    res.status(400).json({ message, code: 'FOLDER_MOVE_FAILED' })
+  }
+}
+
 export async function deleteFolder(req: AuthenticatedRequest, res: Response) {
   const result = await folderService.deleteFolder(String(req.params.id))
   if (!result.deleted) {

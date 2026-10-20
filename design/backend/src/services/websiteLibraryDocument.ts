@@ -1,5 +1,6 @@
 import { copyPresetDocument } from '../catalog/websiteLibrary.js'
 import type { WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
+import { rewriteWebsiteDocumentMedia } from '../utils/rewriteWebsiteDocumentMedia.js'
 
 function detachBlock(block: WebsiteBlock): WebsiteBlock {
   return {
@@ -46,8 +47,8 @@ function detachAddon(addon: WebsiteAddon): WebsiteAddon {
 /** New block ids, with company-only dataset and page links cleared. */
 export function detachCompanyDocumentRefs(document: WebsiteDocumentV1): WebsiteDocumentV1 {
   const copied = copyPresetDocument(document)
-  return {
+  return rewriteWebsiteDocumentMedia({
     ...copied,
     blocks: copied.blocks.map(detachBlock),
-  }
+  })
 }

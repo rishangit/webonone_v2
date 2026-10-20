@@ -15,8 +15,11 @@ import {
   ADDON_OUTLINE,
   CONTENT_CONTAINER_EDGE,
   CONTENT_CONTAINER_FRAME,
+  CONTENT_CONTAINER_PARENT_FRAME,
   CONTENT_ELEMENT_FRAME,
   CONTENT_ELEMENT_OUTLINE,
+  CONTENT_ELEMENT_PARENT_FRAME,
+  CONTENT_ELEMENT_PARENT_OUTLINE,
 } from '../document/selectionOutline'
 import { isChromePointerTarget, shouldDeferToSelectedAncestor } from '../document/selectionPointer'
 import { CanvasHighlightProvider, useCanvasHighlight } from '../document/canvasHighlight'
@@ -43,6 +46,8 @@ interface DocumentRendererProps {
   selection?: DesignerSelection | null
   /** Tree hover. Outlines the matching element without changing selection. */
   highlight?: DesignerSelection | null
+  /** Column and row lines. Shown while an element is dragged or resized. */
+  showGrid?: boolean
   pages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   companyId?: string
@@ -115,6 +120,7 @@ export function DocumentRenderer({
   fit = 'canvas',
   selection,
   highlight = null,
+  showGrid = false,
   pages = [],
   currentPageId = null,
   companyId,
@@ -159,6 +165,11 @@ export function DocumentRenderer({
   const sortedBlocks = [...renderDocument.blocks].sort((a, b) => a.zIndex - b.zIndex)
   const containerSelected = interactive && selection?.kind === 'container'
   const containerHighlighted = interactive && highlight?.kind === 'container' && !containerSelected
+  const containerParent =
+    interactive &&
+    !containerSelected &&
+    selection?.kind === 'block' &&
+    renderDocument.blocks.some((block) => block.id === selection.blockId)
   const contentHeight = documentContentHeight(renderDocument, breakpoint)
   const canvasHeight = renderDocument.container.height
   const overlayHeight =
@@ -183,7 +194,7 @@ export function DocumentRenderer({
       }}
       onClick={() => onSelect?.({ kind: 'container' })}
     >
-      {interactive ? (
+      {interactive && showGrid ? (
         <>
           <div className="pointer-events-none absolute inset-0 grid grid-cols-12">
             {Array.from({ length: 12 }, (_, index) => (
@@ -204,6 +215,7 @@ export function DocumentRenderer({
           currentPageId={currentPageId}
           companyId={companyId}
           interactive={interactive}
+          showGrid={showGrid}
           publish={publish}
           canManage={canManage}
           dataItemByBlockId={dataItemByBlockId}
@@ -232,6 +244,7 @@ export function DocumentRenderer({
       {/* Paint above blocks so flush-to-edge content cannot hide the container border. */}
       {interactive ? <div className={CONTENT_CONTAINER_EDGE} aria-hidden /> : null}
       {containerSelected || containerHighlighted ? <div className={CONTENT_CONTAINER_FRAME} aria-hidden /> : null}
+      {containerParent ? <div className={CONTENT_CONTAINER_PARENT_FRAME} aria-hidden /> : null}
     </div>
     </CanvasHighlightProvider>
   )
@@ -246,6 +259,7 @@ function BlockView({
   currentPageId = null,
   companyId,
   interactive,
+  showGrid,
   publish,
   canManage,
   dataItemByBlockId = {},
@@ -278,6 +292,7 @@ function BlockView({
   currentPageId?: string | null
   companyId?: string
   interactive: boolean
+  showGrid: boolean
   publish: boolean
   canManage: boolean
   dataItemByBlockId?: Record<string, Record<string, unknown>>
@@ -311,6 +326,11 @@ function BlockView({
   const selected = selection?.kind === 'block' && selection.blockId === block.id
   const highlighted = highlight?.kind === 'block' && highlight.blockId === block.id
   const outlined = selected || highlighted
+  const parentOutlined =
+    interactive &&
+    !selected &&
+    !highlighted &&
+    isImmediateParent(block, selection)
   const blockGrabbed: DesignerSelection = { kind: 'block', blockId: block.id }
   const childSelected =
     (selection?.kind === 'addon' && selection.blockId === block.id) ||
@@ -329,8 +349,9 @@ function BlockView({
     <div
       className={cn(
         interactive && !block.backgroundColor && 'bg-primary/5',
-        selected || childSelected || highlighted ? 'overflow-visible' : 'overflow-hidden',
+        selected || childSelected || highlighted || parentOutlined ? 'overflow-visible' : 'overflow-hidden',
         outlined && CONTENT_ELEMENT_OUTLINE,
+        parentOutlined && CONTENT_ELEMENT_PARENT_OUTLINE,
         chromeClassName(chrome),
       )}
       style={{
@@ -339,7 +360,7 @@ function BlockView({
         ...(!chrome.backgroundColor && (publish || !interactive) && theme?.surfaceColor
           ? { backgroundColor: theme.surfaceColor }
           : {}),
-        zIndex: selected || childSelected ? 10000 + block.zIndex : highlighted ? 9000 + block.zIndex : block.zIndex,
+        zIndex: selected || childSelected || parentOutlined ? 10000 + block.zIndex : highlighted ? 9000 + block.zIndex : block.zIndex,
         cursor: interactive ? 'move' : undefined,
         touchAction: interactive ? 'none' : undefined,
         userSelect: interactive ? 'none' : undefined,
@@ -409,7 +430,7 @@ function BlockView({
           style={{ touchAction: 'none' }}
         />
       ) : null}
-      {interactive ? (
+      {interactive && showGrid ? (
         <>
           <div className="pointer-events-none absolute inset-0 z-[2] grid grid-cols-12">
             {Array.from({ length: 12 }, (_, index) => (
@@ -420,6 +441,7 @@ function BlockView({
         </>
       ) : null}
       {outlined ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
+      {parentOutlined ? <div className={CONTENT_ELEMENT_PARENT_FRAME} /> : null}
       {addons.map((addon) => (
         <AddonView
           key={addon.id}
@@ -469,6 +491,7 @@ function BlockView({
           currentPageId={currentPageId}
           companyId={companyId}
           interactive={interactive}
+          showGrid={showGrid}
           publish={publish}
           canManage={canManage}
           dataItemByBlockId={dataItemByBlockId}
@@ -748,6 +771,20 @@ function RowGridOverlay({
       ))}
     </div>
   )
+}
+
+function isImmediateParent(block: WebsiteBlock, selection: DesignerSelection | null | undefined): boolean {
+  if (!selection) return false
+  if (selection.kind === 'addon') return selection.blockId === block.id
+  if (selection.kind === 'block') return (block.children ?? []).some((child) => child.id === selection.blockId)
+  if (selection.kind !== 'templateBlock' && selection.kind !== 'templateAddon') return false
+  if (selection.hostBlockId !== block.id) return false
+  const slider = block.addons.find((addon) => addon.id === selection.sliderAddonId)
+  if (!slider || slider.type !== 'slider') return false
+  const shell = slider.props.slideTemplate
+  if (!shell) return false
+  if (selection.kind === 'templateAddon') return selection.templateBlockId === shell.id
+  return (shell.children ?? []).some((child) => child.id === selection.templateBlockId)
 }
 
 function isBlockOrDescendantSelected(block: WebsiteBlock, selection: DesignerSelection): boolean {

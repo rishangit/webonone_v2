@@ -76,6 +76,13 @@ export async function deleteMediaItem(id: string): Promise<void> {
   await apiClient(`/media/${id}`, { method: 'DELETE' })
 }
 
+export async function moveMediaItem(id: string, folderPath: string): Promise<{ item: MediaItemDto }> {
+  return apiClient(`/media/${id}/folder`, {
+    method: 'PATCH',
+    body: JSON.stringify({ folderPath }),
+  })
+}
+
 export async function listFolders(scope: string, parentPath = '/'): Promise<{ folders: MediaFolderDto[] }> {
   const search = new URLSearchParams({ scope, parentPath })
   return apiClient(`/folders?${search.toString()}`)
@@ -90,6 +97,17 @@ export async function createFolder(scope: string, path: string, name: string): P
 
 export async function deleteFolder(id: string): Promise<void> {
   await apiClient(`/folders/${id}`, { method: 'DELETE' })
+}
+
+export async function moveMediaFolder(input: {
+  scope: string
+  fromPath: string
+  toParentPath: string
+}): Promise<{ folder: MediaFolderDto }> {
+  return apiClient('/folders/move', {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
 }
 
 /** Create each segment of a nested folder path if it does not exist. */

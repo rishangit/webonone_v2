@@ -15,43 +15,57 @@ function theme(): WebsiteTheme {
     isLocked: false,
     sourceLibraryId: null,
     fonts: [{ id: 'font-1', name: 'Inter', googleFontUrl: 'https://fonts.googleapis.com/css2?family=Inter', family: 'Inter' }],
-    colors: [
-      { id: 'color-1', name: 'Blue', value: '#344CE2' },
-      { id: 'color-2', name: 'White', value: '#FFFFFF' },
+    colorPaletteId: 'palette-1',
+    pageBackgroundIndex: 1,
+    surfaceIndex: 1,
+    bodyTextIndex: 2,
+    accent1Index: 1,
+    accent2Index: 2,
+    colorPalettes: [
+      {
+        id: 'palette-1',
+        name: 'Brand',
+        colors: [
+          { name: 'Blue', value: '#344CE2' },
+          { name: 'White', value: '#FFFFFF' },
+        ],
+      },
     ],
-    colorPalettes: [],
     textStyles: [
-      { id: 'text-shared', name: 'Body', fontId: 'font-1', colorId: 'color-1', size: 16 },
-      { id: 'text-owned', name: 'Primary', fontId: 'font-1', colorId: 'color-2', size: 18 },
+      { id: 'text-shared', name: 'Body', fontId: 'font-1', colorIndex: 1, colorPaletteId: null, size: 16 },
+      { id: 'text-owned', name: 'Primary', fontId: 'font-1', colorIndex: 2, colorPaletteId: null, size: 18 },
     ],
     buttonStyles: [
       {
         id: 'btn-a',
         name: 'A',
-        backgroundColorId: 'color-1',
-        textColorId: 'color-2',
+        colorPaletteId: null,
+        backgroundColorIndex: 1,
+        textColorIndex: 2,
         textStyleId: 'text-shared',
-        borderColorId: 'color-1',
+        borderColorIndex: 1,
         borderWidth: 0,
         radius: 6,
       },
       {
         id: 'btn-b',
         name: 'B',
-        backgroundColorId: 'color-1',
-        textColorId: 'color-2',
+        colorPaletteId: null,
+        backgroundColorIndex: 1,
+        textColorIndex: 2,
         textStyleId: 'text-shared',
-        borderColorId: 'color-1',
+        borderColorIndex: 1,
         borderWidth: 0,
         radius: 6,
       },
       {
         id: 'btn-c',
         name: 'C',
-        backgroundColorId: 'color-1',
-        textColorId: 'color-2',
+        colorPaletteId: null,
+        backgroundColorIndex: 1,
+        textColorIndex: 2,
         textStyleId: 'text-owned',
-        borderColorId: 'color-1',
+        borderColorIndex: 1,
         borderWidth: 1,
         radius: 8,
       },
@@ -69,8 +83,9 @@ describe('emptyButtonDraft', () => {
     assert.notEqual(draft.labelStyle.id, 'text-owned')
     assert.equal(draft.button.textStyleId, draft.labelStyle.id)
     assert.equal(draft.labelStyle.fontId, 'font-1')
-    assert.equal(draft.button.backgroundColorId, 'color-1')
-    assert.equal(draft.button.textColorId, draft.labelStyle.colorId)
+    assert.equal(draft.button.backgroundColorIndex, 1)
+    assert.equal(draft.button.textColorIndex, draft.labelStyle.colorIndex)
+    assert.equal(draft.button.colorPaletteId, null)
   })
 
   it('keeps an owned label style when editing', () => {

@@ -4,8 +4,9 @@ import type { WebsiteButtonStyle, WebsiteTextStyle, WebsiteTheme } from '../../t
 import { applyButtonBasicToDraft, resolveOwnedButtonLabelStyle } from '../../utils/ownedButtonLabelStyle'
 import { upsertById } from '../../utils/upsertById'
 import {
-  inferThemePaletteId,
-  remapColorIdToPalette,
+  paletteOverrideForSave,
+  remapColorIndex,
+  stylePaletteId,
   themeColorOptionsForPalette,
   themePaletteColorValues,
   themePaletteSelectOptions,
@@ -73,10 +74,10 @@ export function ThemeButtonStyleEditPanel({
     fontSize: snap.fontSize,
   }
   const customization = normalizeWebsiteElementCustomization(values.customization)
-  const textColorId = previewLabelStyle.colorId || values.textColorId
+  const textColorIndex = previewLabelStyle.colorIndex || values.textColorIndex
   const elementVisual = withPaletteColors(
     buttonVisualFromResolved(snap),
-    themePaletteColorValues(theme, [values.backgroundColorId, textColorId, values.borderColorId]),
+    themePaletteColorValues(theme, values.colorPaletteId),
   )
   const defaultHtml = defaultElementHtml('button', values.id, elementVisual)
   const fontOptions = theme.fonts.map((font) => ({
@@ -85,11 +86,7 @@ export function ThemeButtonStyleEditPanel({
     fontFamily: font.family,
   }))
   const paletteOptions = themePaletteSelectOptions(theme)
-  const colorPaletteId = inferThemePaletteId(theme, [
-    values.backgroundColorId,
-    textColorId,
-    values.borderColorId,
-  ])
+  const colorPaletteId = stylePaletteId(theme, values.colorPaletteId)
   const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId)
   const missingTokenLabel = t('themeTokenMissing')
   const withTokenFallback = (options: ButtonStyleBasicSettingsOption[], id: string) =>
@@ -98,16 +95,16 @@ export function ThemeButtonStyleEditPanel({
       : options
   const fontOptionsWithFallback = withTokenFallback(fontOptions, previewLabelStyle.fontId)
   let colorOptionsWithFallback: ButtonStyleBasicSettingsOption[] = colorOptions
-  for (const colorId of [values.backgroundColorId, textColorId, values.borderColorId]) {
+  for (const colorId of [values.backgroundColorIndex, textColorIndex, values.borderColorIndex].map(String)) {
     colorOptionsWithFallback = withTokenFallback(colorOptionsWithFallback, colorId)
   }
   const basicValues: ButtonStyleBasicSettingsValues = {
     name: values.name,
     fontId: previewLabelStyle.fontId,
     colorPaletteId,
-    backgroundColorId: values.backgroundColorId,
-    textColorId,
-    borderColorId: values.borderColorId,
+    backgroundColorId: String(values.backgroundColorIndex || ''),
+    textColorId: String(textColorIndex || ''),
+    borderColorId: String(values.borderColorIndex || ''),
     textSize: previewLabelStyle.size,
     borderWidth: values.borderWidth,
     radius: values.radius,
@@ -122,17 +119,23 @@ export function ThemeButtonStyleEditPanel({
         const remapped = paletteChanged
           ? {
               ...next,
-              backgroundColorId: remapColorIdToPalette(
-                theme,
-                colorPaletteId,
-                next.colorPaletteId,
-                next.backgroundColorId,
-              ),
-              textColorId: remapColorIdToPalette(theme, colorPaletteId, next.colorPaletteId, next.textColorId),
-              borderColorId: remapColorIdToPalette(theme, colorPaletteId, next.colorPaletteId, next.borderColorId),
+              backgroundColorId: String(remapColorIndex(theme, next.colorPaletteId, Number(next.backgroundColorId) || 1)),
+              textColorId: String(remapColorIndex(theme, next.colorPaletteId, Number(next.textColorId) || 1)),
+              borderColorId: String(remapColorIndex(theme, next.colorPaletteId, Number(next.borderColorId) || 1)),
             }
           : next
-        const draft = applyButtonBasicToDraft(values, labelStyle, remapped)
+        const override = paletteOverrideForSave(theme.colorPaletteId, remapped.colorPaletteId)
+        const draft = applyButtonBasicToDraft(values, labelStyle, {
+          name: remapped.name,
+          fontId: remapped.fontId,
+          colorPaletteId: override,
+          backgroundColorIndex: Number(remapped.backgroundColorId) || 1,
+          textColorIndex: Number(remapped.textColorId) || 1,
+          borderColorIndex: Number(remapped.borderColorId) || 1,
+          textSize: remapped.textSize,
+          borderWidth: remapped.borderWidth,
+          radius: remapped.radius,
+        })
         onDraftChange(draft.button, draft.labelStyle)
       }}
       fieldErrors={fieldErrors}

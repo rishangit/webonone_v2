@@ -114,12 +114,13 @@ export type ColorLibraryPaletteSeed = {
   name: string
   sortOrder: number
   palette: {
-    color_1: string
-    color_2: string
-    color_3: string
-    color_4: string
-    color_5: string
-    color_6: string
+    colors: Array<{ name: string; value: string }>
+  }
+}
+
+function paletteColors(values: string[]) {
+  return {
+    colors: values.map((value, index) => ({ name: `Color ${index + 1}`, value })),
   }
 }
 
@@ -128,27 +129,13 @@ export const COLOR_LIBRARY_PALETTES: ColorLibraryPaletteSeed[] = [
     id: 'lib-ocean-teal',
     name: 'Ocean teal',
     sortOrder: 1,
-    palette: {
-      color_1: '#175E83',
-      color_2: '#317EAA',
-      color_3: '#37A1BE',
-      color_4: '#4EB5F7',
-      color_5: '#4BC1CC',
-      color_6: '#D9F1F1',
-    },
+    palette: paletteColors(['#175E83', '#317EAA', '#37A1BE', '#4EB5F7', '#4BC1CC', '#D9F1F1']),
   },
   {
     id: 'lib-default-brand',
     name: 'Default brand',
     sortOrder: 2,
-    palette: {
-      color_1: PRIMARY,
-      color_2: '#3578E8',
-      color_3: '#EFF3FA',
-      color_4: SURFACE,
-      color_5: TEXT_COLOR,
-      color_6: '#3578E8',
-    },
+    palette: paletteColors([PRIMARY, '#3578E8', '#EFF3FA', SURFACE, TEXT_COLOR, '#3578E8']),
   },
 ]
 
@@ -230,17 +217,17 @@ function buildTheme(): StarterTheme {
       { id: 'surface', name: 'Surface', value: SURFACE },
     ],
     textStyles: [
-      { id: 'text-heading', name: 'Heading', fontId: 'font-heading', size: 48, colorId: 'text' },
-      { id: 'text-body', name: 'Body', fontId: 'font-body', size: 18, colorId: 'text' },
+      { id: 'text-heading', name: 'Heading', fontId: 'font-heading', size: 48, colorIndex: 3 },
+      { id: 'text-body', name: 'Body', fontId: 'font-body', size: 18, colorIndex: 3 },
     ],
     buttonStyles: [
       {
         id: 'button-primary',
         name: 'Primary',
-        backgroundColorId: 'primary',
-        textColorId: 'surface',
+        backgroundColorIndex: 1,
+        textColorIndex: 5,
         textStyleId: 'text-body',
-        borderColorId: 'primary',
+        borderColorIndex: 1,
         borderWidth: 0,
         radius: 6,
       },
@@ -289,10 +276,9 @@ export type ButtonLibrarySeed = {
 function buildTextLibrarySeeds(): TextLibrarySeed[] {
   const theme = buildTheme()
   const fonts = new Map(theme.fonts.map((font) => [font.id, font]))
-  const colors = new Map(theme.colors.map((color) => [color.id, color]))
   return theme.textStyles.map((style, index) => {
     const font = fonts.get(style.fontId)!
-    const color = colors.get(style.colorId)!
+    const color = theme.colors[style.colorIndex - 1]!
     return {
       id: `lib-${style.id}`,
       name: style.name,
@@ -312,16 +298,15 @@ function buildTextLibrarySeeds(): TextLibrarySeed[] {
 
 function buildButtonLibrarySeeds(): ButtonLibrarySeed[] {
   const theme = buildTheme()
-  const colors = new Map(theme.colors.map((color) => [color.id, color]))
   const textStyles = new Map(theme.textStyles.map((style) => [style.id, style]))
   const fonts = new Map(theme.fonts.map((font) => [font.id, font]))
   return theme.buttonStyles.map((button, index) => {
-    const background = colors.get(button.backgroundColorId)!
-    const textColor = colors.get(button.textColorId)!
-    const border = colors.get(button.borderColorId)!
+    const background = theme.colors[button.backgroundColorIndex - 1]!
+    const textColor = theme.colors[button.textColorIndex - 1]!
+    const border = theme.colors[button.borderColorIndex - 1]!
     const textStyle = textStyles.get(button.textStyleId)!
     const font = fonts.get(textStyle.fontId)!
-    const labelColor = colors.get(textStyle.colorId)!
+    const labelColor = theme.colors[textStyle.colorIndex - 1]!
     return {
       id: `lib-${button.id}`,
       name: button.name,

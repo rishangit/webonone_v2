@@ -37,7 +37,7 @@ const WEBSITE_SECTIONS: WebsiteSectionNav[] = [
   { section: 'colors', label: 'Colors', icon: Droplets, superAdmin: true },
   { section: 'texts', label: 'Texts', icon: Text, superAdmin: true },
   { section: 'buttons', label: 'Buttons', icon: RectangleHorizontal, superAdmin: true },
-  { section: 'media', label: 'Media', icon: Image, superAdmin: false },
+  { section: 'media', label: 'Media', icon: Image, superAdmin: true },
   { section: 'settings', label: 'Settings', icon: Settings, superAdmin: false },
 ]
 

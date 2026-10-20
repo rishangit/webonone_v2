@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type DragEvent } from 'react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
   Alert,
@@ -13,7 +13,8 @@ import { getMediaListQueryKey, mediaActions } from '@/features/media/store'
 import { FolderTree } from './FolderTree'
 import { MediaGrid } from './MediaGrid'
 import { UploadDropzone } from './UploadDropzone'
-import { createFolder, deleteMediaItem, type MediaFolderDto } from '../services/mediaApi'
+import { createFolder, deleteMediaItem, moveMediaFolder, moveMediaItem, type MediaFolderDto } from '../services/mediaApi'
+import { canDropMediaOnFolder, endMediaDrag, readMediaDrag } from '../utils/mediaDrag'
 
 interface MediaPickerProps {
   scope: string
@@ -55,6 +56,8 @@ export function MediaPicker({
   const [error, setError] = useState<string | null>(null)
   const [newFolderName, setNewFolderName] = useState('')
   const [folderError, setFolderError] = useState<string | undefined>()
+  const [dropTargetPath, setDropTargetPath] = useState<string | null>(null)
+  const [isMoving, setIsMoving] = useState(false)
 
   const listQueryKey = getMediaListQueryKey({ scope, folderPath })
   const {
@@ -72,7 +75,9 @@ export function MediaPicker({
   const listReady = storeQueryKey === listQueryKey
   const displayItems = useMemo(() => (listReady ? items : []), [items, listReady])
   const displayFolders: MediaFolderDto[] = listReady ? folders : []
-  const loading = !listReady || listStatus === 'loading' || uploadStatus === 'uploading'
+  const loading =
+    uploadStatus === 'uploading' ||
+    ((!listReady || listStatus === 'loading') && displayItems.length === 0)
 
   useEffect(() => {
     dispatch(mediaActions.loadListRequested({ scope, folderPath }))
@@ -135,6 +140,42 @@ export function MediaPicker({
     })
   }
 
+  function clearDrag() {
+    endMediaDrag()
+    setDropTargetPath(null)
+  }
+
+  function handleFolderDragOver(event: DragEvent, path: string) {
+    if (!canDropMediaOnFolder(path)) return
+    event.preventDefault()
+    event.stopPropagation()
+    event.dataTransfer.dropEffect = 'move'
+    setDropTargetPath(path)
+  }
+
+  async function handleFolderDrop(event: DragEvent, path: string) {
+    event.preventDefault()
+    event.stopPropagation()
+    const drag = readMediaDrag()
+    const allowed = canDropMediaOnFolder(path)
+    clearDrag()
+    if (!drag || !allowed || isMoving) return
+    setIsMoving(true)
+    setError(null)
+    try {
+      if (drag.kind === 'file') {
+        await moveMediaItem(drag.id, path)
+      } else {
+        await moveMediaFolder({ scope, fromPath: drag.path, toParentPath: path })
+      }
+      dispatch(mediaActions.loadListRequested({ scope, folderPath, page: 1, force: true }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to move')
+    } finally {
+      setIsMoving(false)
+    }
+  }
+
   function handleUpload(files: File[]) {
     setError(null)
     dispatch(
@@ -184,7 +225,18 @@ export function MediaPicker({
   return (
     <div className="flex h-full min-h-[400px] gap-4">
       <aside className="w-48 shrink-0 border-r pr-3">
-        <FolderTree folders={displayFolders} currentPath={folderPath} onSelectFolder={setFolderPath} />
+        <FolderTree
+          folders={displayFolders}
+          currentPath={folderPath}
+          dropTargetPath={dropTargetPath}
+          onSelectFolder={setFolderPath}
+          onDragOverFolder={handleFolderDragOver}
+          onDragLeaveFolder={(_event, path) =>
+            setDropTargetPath((current) => (current === path ? null : current))
+          }
+          onDropOnFolder={(event, path) => void handleFolderDrop(event, path)}
+          onDragEnd={clearDrag}
+        />
         <Form className="mt-4 space-y-2" onSubmit={(e) => void handleCreateFolder(e)}>
           <FormField label="New folder" htmlFor="new-folder" error={folderError}>
             <Input
@@ -225,6 +277,7 @@ export function MediaPicker({
             selectedIds={selectedIds}
             onToggleSelect={toggleSelect}
             onDelete={handleDelete}
+            onDragEnd={clearDrag}
           />
         )}
       </div>

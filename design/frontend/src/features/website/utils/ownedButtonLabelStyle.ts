@@ -11,13 +11,8 @@ export function emptyOwnedLabelStyle(
     id: nanoid(8),
     name: name.trim() || 'Button',
     fontId: existing?.fontId || theme.fonts[0]?.id || '',
-    colorId:
-      existing?.colorId ||
-      theme.colorPalettes?.[0]?.colorIds[1] ||
-      theme.colorPalettes?.[0]?.colorIds[0] ||
-      theme.colors[1]?.id ||
-      theme.colors[0]?.id ||
-      '',
+    colorIndex: existing?.colorIndex || Math.min(2, theme.colorPalettes?.[0]?.colors.length || 1),
+    colorPaletteId: existing?.colorPaletteId ?? null,
     size: existing?.size ?? 18,
     sizeByBreakpoint: existing?.sizeByBreakpoint,
   }
@@ -41,15 +36,15 @@ export function emptyButtonDraft(
 ): { button: WebsiteButtonStyle; labelStyle: WebsiteTextStyle } {
   if (initial) {
     const labelStyle = resolveOwnedButtonLabelStyle(theme, initial)
-    const textColorId = labelStyle.colorId || initial.textColorId
+    const textColorIndex = labelStyle.colorIndex || initial.textColorIndex
     return {
       button: {
         ...initial,
-        textColorId,
+        textColorIndex,
         textStyleId: labelStyle.id,
         customization: normalizeWebsiteElementCustomization(initial.customization),
       },
-      labelStyle: { ...labelStyle, colorId: textColorId },
+      labelStyle: { ...labelStyle, colorIndex: textColorIndex, colorPaletteId: initial.colorPaletteId ?? null },
     }
   }
 
@@ -59,15 +54,11 @@ export function emptyButtonDraft(
     button: {
       id: buttonId,
       name: '',
-      backgroundColorId: theme.colorPalettes?.[0]?.colorIds[0] ?? theme.colors[0]?.id ?? '',
-      textColorId:
-        theme.colorPalettes?.[0]?.colorIds[1] ??
-        theme.colorPalettes?.[0]?.colorIds[0] ??
-        theme.colors[1]?.id ??
-        theme.colors[0]?.id ??
-        '',
+      colorPaletteId: null,
+      backgroundColorIndex: 1,
+      textColorIndex: labelStyle.colorIndex,
       textStyleId: labelStyle.id,
-      borderColorId: theme.colorPalettes?.[0]?.colorIds[0] ?? theme.colors[0]?.id ?? '',
+      borderColorIndex: 1,
       borderWidth: 0,
       radius: 6,
       customization: emptyWebsiteElementCustomization(),
@@ -82,9 +73,10 @@ export function applyButtonBasicToDraft(
   next: {
     name: string
     fontId: string
-    backgroundColorId: string
-    textColorId: string
-    borderColorId: string
+    colorPaletteId: string | null
+    backgroundColorIndex: number
+    textColorIndex: number
+    borderColorIndex: number
     textSize: number
     borderWidth: number
     radius: number
@@ -95,9 +87,10 @@ export function applyButtonBasicToDraft(
     button: {
       ...button,
       name,
-      backgroundColorId: next.backgroundColorId,
-      textColorId: next.textColorId,
-      borderColorId: next.borderColorId,
+      colorPaletteId: next.colorPaletteId,
+      backgroundColorIndex: next.backgroundColorIndex,
+      textColorIndex: next.textColorIndex,
+      borderColorIndex: next.borderColorIndex,
       borderWidth: next.borderWidth,
       radius: next.radius,
       textStyleId: labelStyle.id,
@@ -106,7 +99,8 @@ export function applyButtonBasicToDraft(
       ...labelStyle,
       name: name.trim() || labelStyle.name,
       fontId: next.fontId,
-      colorId: next.textColorId,
+      colorPaletteId: next.colorPaletteId,
+      colorIndex: next.textColorIndex,
       size: next.textSize,
     },
   }

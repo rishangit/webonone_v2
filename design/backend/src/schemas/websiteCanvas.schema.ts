@@ -104,6 +104,115 @@ function hasGridPosition(row: Record<string, unknown>): boolean {
   return ['col', 'row', 'cols', 'rows'].some((key) => row[key] != null && row[key] !== '')
 }
 
+function addonTypeFromLabel(value: unknown): 'text' | 'button' | 'image' | 'slider' | 'menu' | undefined {
+  if (typeof value !== 'string') return undefined
+  const text = value.toLowerCase()
+  if (/\b(logo|image|photo|picture|icon)\b/.test(text)) return 'image'
+  if (/\b(menu|navigation|nav)\b/.test(text)) return 'menu'
+  if (/\bbutton\b/.test(text)) return 'button'
+  if (/\b(slider|carousel)\b/.test(text)) return 'slider'
+  return undefined
+}
+
+function hasMenuItems(row: Record<string, unknown>): boolean {
+  return Array.isArray(row.items) && row.items.some((item) => typeof item === 'string' && item.trim())
+}
+
+const ADDON_TYPE_ALIASES = new Set(['hero', 'banner', 'photo', 'picture', 'logo', 'background'])
+
+function canonicalOp(value: unknown): string {
+  const raw = typeof value === 'string' ? value.trim().toLowerCase().replace(/[\s-]+/g, '_') : ''
+  if (CANVAS_OPS.has(raw)) return raw
+  if (
+    raw === 'add_image' ||
+    raw === 'insert_image' ||
+    raw === 'create_image' ||
+    raw === 'add_hero_image' ||
+    raw === 'add_text' ||
+    raw === 'insert_text' ||
+    raw === 'create_text' ||
+    raw === 'add_button' ||
+    raw === 'insert_button' ||
+    raw === 'add_menu' ||
+    raw === 'insert_menu' ||
+    raw === 'add_slider' ||
+    raw === 'insert_slider' ||
+    raw === 'add_carousel'
+  ) {
+    return 'add_addon'
+  }
+  if (raw === 'add_section' || raw === 'create_section' || raw === 'insert_section' || raw === 'add_hero' || raw === 'add_group' || raw === 'insert_group') {
+    return 'add_block'
+  }
+  return ''
+}
+
+function typeFromOpAlias(value: unknown): 'text' | 'button' | 'image' | 'slider' | 'menu' | undefined {
+  const raw = typeof value === 'string' ? value.trim().toLowerCase().replace(/[\s-]+/g, '_') : ''
+  if (raw === 'add_text' || raw === 'insert_text' || raw === 'create_text') return 'text'
+  if (raw === 'add_button' || raw === 'insert_button') return 'button'
+  if (raw === 'add_menu' || raw === 'insert_menu') return 'menu'
+  if (raw === 'add_slider' || raw === 'insert_slider' || raw === 'add_carousel') return 'slider'
+  if (raw === 'add_image' || raw === 'insert_image' || raw === 'create_image' || raw === 'add_hero_image' || /\bimage\b/.test(raw)) {
+    return 'image'
+  }
+  return undefined
+}
+
+function phraseOperation(text: string): Record<string, unknown> | null {
+  const value = text.toLowerCase()
+  const image = /\b(image|photo|picture|banner)\b/.test(value)
+  const section = /\b(section|block)\b/.test(value)
+  const name = text.trim().slice(0, 64)
+  if (image && !section) return { op: 'add_addon', type: 'image', name: name || 'Hero image', span: 'full' }
+  if (section) return { op: 'add_block', name: name || 'Hero image' }
+  if (/\bhero\b/.test(value)) return { op: 'add_addon', type: 'image', name: name || 'Hero image', span: 'full' }
+  return null
+}
+
+function normalizeCanvasOperation(operation: unknown): unknown {
+  if (typeof operation === 'string') return phraseOperation(operation) ?? operation
+  if (!operation || typeof operation !== 'object' || Array.isArray(operation)) return operation
+  let row = operation as Record<string, unknown>
+  const rawOp = [row.op, row.operation, row.action].find((value) => typeof value === 'string')
+  const declared = canonicalOp(row.op) || canonicalOp(row.operation) || canonicalOp(row.action)
+  let op = declared
+  const typeText = typeof row.type === 'string' ? row.type.trim().toLowerCase() : ''
+  const label = typeof row.name === 'string' ? row.name : ''
+  if (!op) {
+    if (ADDON_TYPE_ALIASES.has(typeText) || typeText === 'image' || typeText === 'text' || typeText === 'button' || typeText === 'menu' || typeText === 'slider') {
+      op = 'add_addon'
+    } else if (typeText === 'section' || typeText === 'block' || typeText === 'group' || row.group === true) {
+      op = 'add_block'
+    } else if (/\b(image|photo|picture|banner)\b/i.test(label) && !/\b(section|block)\b/i.test(label)) {
+      op = 'add_addon'
+    } else if (/\b(section|block)\b/i.test(label)) {
+      op = 'add_block'
+    } else if (addonTypeFromLabel(label)) {
+      op = 'add_addon'
+    }
+  }
+  if (op) row = { ...row, op }
+  if (typeof rawOp === 'string' && /group/.test(rawOp.toLowerCase())) row = { ...row, op: 'add_block', group: true }
+  if (row.op === 'add_addon') {
+    const aliased = ADDON_TYPE_ALIASES.has(typeText) ? 'image' : undefined
+    const fromOp = typeFromOpAlias(rawOp)
+    const named = addonTypeFromLabel(label)
+    if (typeof row.type !== 'string' || !['text', 'button', 'image', 'slider', 'menu'].includes(typeText)) {
+      const type =
+        aliased ??
+        (typeText === 'image' ? 'image' : undefined) ??
+        named ??
+        fromOp
+      if (type) row = { ...row, type }
+    }
+    if ((/\bhero\b/i.test(label) || /\bhero\b/i.test(String(row.op))) && row.span == null) {
+      row = { ...row, span: 'full' }
+    }
+  }
+  return row
+}
+
 function gridField(value: unknown, key: 'col' | 'row' | 'cols' | 'rows', min: number, max: number): Record<string, number> {
   const number = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : Number.NaN
   if (!Number.isFinite(number)) return {}
@@ -118,8 +227,9 @@ function withInferredAddonTypes(value: unknown): unknown {
   return {
     ...body,
     operations: body.operations.map((operation) => {
-      if (!operation || typeof operation !== 'object' || Array.isArray(operation)) return operation
-      let row = operation as Record<string, unknown>
+      const normalized = normalizeCanvasOperation(operation)
+      if (!normalized || typeof normalized !== 'object' || Array.isArray(normalized)) return normalized
+      let row = normalized as Record<string, unknown>
       if ((typeof row.op !== 'string' || !CANVAS_OPS.has(row.op)) && hasGridPosition(row) && (row.blockId != null || row.addonId != null)) {
         row = { ...row, op: 'move' }
       }
@@ -135,11 +245,24 @@ function withInferredAddonTypes(value: unknown): unknown {
           ...gridField(row.rows, 'rows', 1, 80),
         }
       }
-      if (row.op !== 'add_addon' || typeof row.type === 'string') return operation
-      const items = Array.isArray(row.items) ? row.items : []
-      if (items.some((item) => typeof item === 'string' && item.trim())) return { ...row, type: 'menu' }
+      if (row.op === 'update_menu' && !hasMenuItems(row) && row.addonId == null) {
+        row = { ...row, op: 'add_addon', type: 'menu' }
+      }
+      if (
+        row.op === 'update_text' &&
+        !(typeof row.text === 'string' && row.text.trim()) &&
+        row.addonId == null &&
+        row.blockId == null
+      ) {
+        const named = addonTypeFromLabel(row.name)
+        if (named) row = { ...row, op: 'add_addon', type: named }
+      }
+      if (row.op !== 'add_addon' || typeof row.type === 'string') return row === operation ? operation : row
+      if (hasMenuItems(row)) return { ...row, type: 'menu' }
       if (typeof row.text === 'string' && row.text.trim()) return { ...row, type: 'text' }
-      return operation
+      const named = addonTypeFromLabel(row.name)
+      if (named) return { ...row, type: named }
+      return row
     }),
   }
 }

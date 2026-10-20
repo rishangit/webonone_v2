@@ -7,7 +7,7 @@ import { websiteThemesActions } from '../store'
 import type { WebsiteTheme } from '../types'
 import { mapThemeFieldErrors } from '../utils/mapThemeFieldErrors'
 import { writeThemeDraft } from '../utils/themeDraftStorage'
-import { inferThemeColorRoles, normalizeWebsiteTheme, parseThemeColorRoles } from '../utils/websitePalette'
+import { normalizeWebsiteTheme } from '../utils/websitePalette'
 
 export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme: WebsiteTheme) => void) {
   const { t } = useTranslation('website')
@@ -46,11 +46,13 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
       }
       const parsed = websiteThemeEditorSchema.safeParse({
         name: next.name,
-        pageBackground: next.pageBackground,
-        bodyTextColor: next.bodyTextColor,
-        colorRoles: inferThemeColorRoles({ ...next, colorRoles: parseThemeColorRoles(next.colorRoles) }),
+        colorPaletteId: next.colorPaletteId,
+        pageBackgroundIndex: next.pageBackgroundIndex,
+        surfaceIndex: next.surfaceIndex,
+        bodyTextIndex: next.bodyTextIndex,
+        accent1Index: next.accent1Index,
+        accent2Index: next.accent2Index,
         fonts: next.fonts,
-        colors: next.colors,
         colorPalettes: next.colorPalettes ?? [],
         textStyles: next.textStyles,
         buttonStyles: next.buttonStyles,
@@ -75,13 +77,15 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
           id: next.id,
           body: {
             name: parsed.data.name,
-            pageBackground: parsed.data.pageBackground,
-            bodyTextColor: parsed.data.bodyTextColor,
-            colorRoles: parsed.data.colorRoles,
+            colorPaletteId: parsed.data.colorPaletteId,
+            pageBackgroundIndex: parsed.data.pageBackgroundIndex,
+            surfaceIndex: parsed.data.surfaceIndex,
+            bodyTextIndex: parsed.data.bodyTextIndex,
+            accent1Index: parsed.data.accent1Index,
+            accent2Index: parsed.data.accent2Index,
             isActive: next.isActive,
             isDefault: next.isDefault,
             fonts: parsed.data.fonts,
-            colors: parsed.data.colors,
             colorPalettes: parsed.data.colorPalettes,
             textStyles: parsed.data.textStyles,
             buttonStyles: parsed.data.buttonStyles,

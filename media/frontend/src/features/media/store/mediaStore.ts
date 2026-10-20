@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { MediaItemDto } from '@webonone/media-embed'
 import { combineEpics, ofType, type Epic } from 'redux-observable'
-import { forkJoin, from, merge, of } from 'rxjs'
+import { forkJoin, from, merge, Observable, of } from 'rxjs'
 import {
   catchError,
   debounceTime,
@@ -42,6 +42,8 @@ interface MediaState {
   page: number
   pageSize: number
   listQueryKey: string
+  listScope: string
+  listFolderPath: string
   lastFetchedAt: number | null
   listStatus: 'idle' | 'loading' | 'error'
   listError: string | null
@@ -63,6 +65,8 @@ const initialState: MediaState = {
   page: 1,
   pageSize: 12,
   listQueryKey: '',
+  listScope: '',
+  listFolderPath: '/',
   lastFetchedAt: null,
   listStatus: 'idle',
   listError: null,
@@ -85,6 +89,41 @@ function buildListQueryKey(query: {
   mimeType?: string
 }): string {
   return serializeQuery(query)
+}
+
+function normalizeFolderPath(folderPath: string): string {
+  const trimmed = folderPath.trim() || '/'
+  if (trimmed === '/') return '/'
+  return trimmed.replace(/\/+$/, '')
+}
+
+function listShowsFolder(state: MediaState, scope: string, folderPath: string): boolean {
+  return (
+    state.page === 1 &&
+    state.listScope === scope &&
+    normalizeFolderPath(state.listFolderPath) === normalizeFolderPath(folderPath)
+  )
+}
+
+function prependUploadedItems(
+  state: MediaState,
+  input: { scope: string; folderPath: string; items: MediaItemDto[] },
+) {
+  if (!listShowsFolder(state, input.scope, input.folderPath)) return
+  const existing = new Set(state.items.map((item) => item.id))
+  const incoming = input.items.filter((item) => item.id && !existing.has(item.id))
+  if (!incoming.length) return
+  state.items = [...incoming, ...state.items]
+  state.total += incoming.length
+}
+
+const MEDIA_UPLOAD_CHANNEL = 'webonone-media-uploads'
+
+function announceUploadedMedia(input: { scope: string; folderPath: string; items: MediaItemDto[] }) {
+  if (typeof BroadcastChannel === 'undefined' || input.items.length === 0) return
+  const channel = new BroadcastChannel(MEDIA_UPLOAD_CHANNEL)
+  channel.postMessage(input)
+  channel.close()
 }
 
 export const mediaSlice = createSlice({
@@ -121,6 +160,8 @@ export const mediaSlice = createSlice({
       state,
       action: PayloadAction<{
         queryKey: string
+        scope: string
+        folderPath: string
         items: MediaItemDto[]
         folders: MediaFolderDto[]
         total: number
@@ -135,6 +176,8 @@ export const mediaSlice = createSlice({
           : action.payload.items
       if (!action.payload.append) {
         state.folders = action.payload.folders
+        state.listScope = action.payload.scope
+        state.listFolderPath = action.payload.folderPath
       }
       state.total = action.payload.total
       state.page = action.payload.page
@@ -183,12 +226,21 @@ export const mediaSlice = createSlice({
       action: PayloadAction<{
         items: MediaItemDto[]
         failed: { fileName: string; reason: string }[]
+        scope: string
+        folderPath: string
       }>,
     ) {
       state.uploadStatus = 'idle'
       state.lastUploadedItems = action.payload.items
       state.lastUploadFailed = action.payload.failed
       state.lastFetchedAt = null
+      prependUploadedItems(state, action.payload)
+    },
+    prependUploaded(
+      state,
+      action: PayloadAction<{ scope: string; folderPath: string; items: MediaItemDto[] }>,
+    ) {
+      prependUploadedItems(state, action.payload)
     },
     uploadFailed(state, action: PayloadAction<string>) {
       state.uploadStatus = 'error'
@@ -265,6 +317,8 @@ const loadListEpic: Epic = (action$, state$) => {
       map(({ media: mediaResult, folders: folderResult }) =>
         mediaActions.loadListSucceeded({
           queryKey,
+          scope: payload.scope,
+          folderPath,
           items: mediaResult.items,
           folders: folderResult.folders,
           total: mediaResult.total,
@@ -308,6 +362,7 @@ const loadListEpic: Epic = (action$, state$) => {
     distinctUntilChanged(([a], [b]) => {
       const payloadA = (a as ReturnType<typeof mediaActions.loadListRequested>).payload
       const payloadB = (b as ReturnType<typeof mediaActions.loadListRequested>).payload
+      if (payloadA.force || payloadB.force) return false
       return (
         serializeQuery({
           scope: payloadA.scope,
@@ -381,15 +436,50 @@ const uploadEpic: Epic = (action$) =>
           : from(uploadMediaBatch(files, scope, folderPath))
 
       return request.pipe(
-        mergeMap((result) =>
-          of(
-            mediaActions.uploadSucceeded(result),
-            mediaActions.loadListRequested({ scope, folderPath, force: true }),
-          ),
-        ),
+        mergeMap((result) => {
+          announceUploadedMedia({ scope, folderPath, items: result.items })
+          return of(
+            mediaActions.uploadSucceeded({ ...result, scope, folderPath }),
+            mediaActions.loadListRequested({ scope, folderPath, page: 1, force: true }),
+          )
+        }),
         catchError((err: Error) => of(mediaActions.uploadFailed(err.message))),
       )
     }),
   )
 
-export const mediaEpics = combineEpics(loadListEpic, fetchDetailEpic, uploadEpic)
+const remoteUploadEpic: Epic = () =>
+  new Observable((subscriber) => {
+    if (typeof BroadcastChannel === 'undefined') {
+      return
+    }
+    const channel = new BroadcastChannel(MEDIA_UPLOAD_CHANNEL)
+    channel.onmessage = (event: MessageEvent) => {
+      const data = event.data as {
+        scope?: string
+        folderPath?: string
+        items?: MediaItemDto[]
+      }
+      if (!data?.scope || !data.folderPath || !Array.isArray(data.items) || data.items.length === 0) {
+        return
+      }
+      subscriber.next(
+        mediaActions.prependUploaded({
+          scope: data.scope,
+          folderPath: data.folderPath,
+          items: data.items,
+        }),
+      )
+      subscriber.next(
+        mediaActions.loadListRequested({
+          scope: data.scope,
+          folderPath: data.folderPath,
+          page: 1,
+          force: true,
+        }),
+      )
+    }
+    return () => channel.close()
+  })
+
+export const mediaEpics = combineEpics(loadListEpic, fetchDetailEpic, uploadEpic, remoteUploadEpic)
