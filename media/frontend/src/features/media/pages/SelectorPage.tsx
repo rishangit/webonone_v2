@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { MediaItemDto } from '@webonone/media-embed'
+import { MEDIA_MESSAGE_TYPES, type MediaItemDto } from '@webonone/media-embed'
 import { Button, Callout, CalloutDescription, Spinner } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { mediaActions } from '@/features/media/store'
@@ -15,6 +15,7 @@ export function SelectorPage() {
   const dispatch = useAppDispatch()
   const embed = useEmbedMode()
   const { accessToken } = useMediaEmbedAuth(embed)
+  const [contentNode, setContentNode] = useState<HTMLDivElement | null>(null)
   const { postSelect, postSelectionChange, postCropRequest } = useMediaPostMessage(
     embed.parentOrigin,
     embed.scope,
@@ -158,8 +159,25 @@ export function SelectorPage() {
 
   const selectedIds = new Set(selectedItems.map((item) => item.id))
 
+  useEffect(() => {
+    if (!embed.listPage || !embed.parentOrigin || !contentNode) return
+    const parentOrigin = embed.parentOrigin
+    const postHeight = () => {
+      const height = Math.ceil(contentNode.getBoundingClientRect().height)
+      if (height <= 0) return
+      window.parent.postMessage({ type: MEDIA_MESSAGE_TYPES.CONTENT_SIZE, height }, parentOrigin)
+    }
+    postHeight()
+    const observer = new ResizeObserver(postHeight)
+    observer.observe(contentNode)
+    return () => observer.disconnect()
+  }, [contentNode, embed.listPage, embed.parentOrigin])
+
   const content = (
-    <div className="flex h-full min-h-0 flex-col gap-3">
+    <div
+      ref={embed.listPage ? setContentNode : undefined}
+      className={embed.listPage ? 'flex w-full flex-col gap-3' : 'flex h-full min-h-0 flex-col gap-3'}
+    >
       <ScopedFolderBrowser
         scope={scope}
         scopedRoot={embed.scopedRoot}
@@ -172,6 +190,8 @@ export function SelectorPage() {
         onNavigate={setCurrentPath}
         showIconToolbar
         gridLayout={false}
+        parentOrigin={embed.parentOrigin}
+        pageScroll={embed.listPage}
         allowDelete
         enableUpload={showUpload}
         uploadAccept="image/*"
@@ -197,7 +217,8 @@ export function SelectorPage() {
       <EmbedLayout
         title=""
         chromeless
-        inset
+        inset={!embed.listPage}
+        fill={embed.listPage}
         parentOrigin={embed.isEmbed ? embed.parentOrigin : undefined}
       >
         {content}

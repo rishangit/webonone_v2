@@ -27,6 +27,7 @@ export const MediaSelectorFrame = forwardRef<HTMLIFrameElement, SelectorFramePro
       maxSizeBytes,
       selectorUpload,
       cropAspectPresets,
+      listPage,
       ...rest
     },
     ref,
@@ -48,6 +49,7 @@ export const MediaSelectorFrame = forwardRef<HTMLIFrameElement, SelectorFramePro
           maxSizeBytes,
           selectorUpload,
           cropAspectPresets,
+          listPage,
         }}
       />
     )

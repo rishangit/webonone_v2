@@ -136,17 +136,57 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
+function addonTypeFromLabel(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const text = value.toLowerCase()
+  if (/\b(logo|image|photo|picture|icon)\b/.test(text)) return 'image'
+  if (/\b(menu|navigation|nav)\b/.test(text)) return 'menu'
+  if (/\bbutton\b/.test(text)) return 'button'
+  if (/\b(slider|carousel)\b/.test(text)) return 'slider'
+  return undefined
+}
+
 function inferredAddonType(op: Record<string, unknown>): string | undefined {
-  if (typeof op.type === 'string') return op.type
+  const rawOp = typeof op.op === 'string' ? op.op.trim().toLowerCase().replace(/[\s-]+/g, '_') : ''
+  if (rawOp === 'add_text' || rawOp === 'insert_text' || rawOp === 'create_text') return 'text'
+  if (rawOp === 'add_button' || rawOp === 'insert_button') return 'button'
+  if (rawOp === 'add_menu' || rawOp === 'insert_menu') return 'menu'
+  if (rawOp === 'add_slider' || rawOp === 'insert_slider' || rawOp === 'add_carousel') return 'slider'
+  if (rawOp === 'add_image' || rawOp === 'insert_image' || rawOp === 'create_image' || rawOp === 'add_hero_image' || /\bimage\b/.test(rawOp)) {
+    return 'image'
+  }
+  if (typeof op.type === 'string') {
+    const type = op.type.trim().toLowerCase()
+    if (ADDON_TYPES.has(type)) return type
+    if (type === 'hero' || type === 'banner' || type === 'photo' || type === 'picture' || type === 'logo' || type === 'background') {
+      return 'image'
+    }
+  }
   const items = Array.isArray(op.items) ? op.items : []
   if (items.some((item) => typeof item === 'string' && item.trim())) return 'menu'
   if (typeof op.text === 'string' && op.text.trim()) return 'text'
+  return addonTypeFromLabel(op.name)
+}
+
+/** Logo sits on the left of a header and the menu sits on the right. */
+function headerChromeSide(
+  changeName: string | undefined,
+  label: string | undefined,
+  type: string | undefined,
+): CanvasOp['align'] {
+  if (!changeName || !/\bheader\b/i.test(changeName)) return undefined
+  const text = `${label ?? ''}`.toLowerCase()
+  if (/\b(logo|brand)\b/.test(text) || /\bleft\b/.test(text) || type === 'image') return 'start'
+  if (/\b(menu|navigation|nav)\b/.test(text) || /\bright\b/.test(text) || type === 'menu') return 'end'
   return undefined
 }
 
 function readOps(args: Record<string, unknown>): CanvasOp[] {
   if (!Array.isArray(args.operations)) return []
-  return args.operations.filter(isRecord).map((op) => ({
+  return args.operations.flatMap((operation) => {
+    const op = normalizeCanvasOp(operation)
+    if (!op) return []
+    return [{
     op: inferredCanvasOp(op),
     type: inferredAddonType(op),
     blockId: typeof op.blockId === 'string' ? op.blockId : undefined,
@@ -155,7 +195,7 @@ function readOps(args: Record<string, unknown>): CanvasOp[] {
     items: Array.isArray(op.items) ? op.items.filter((item): item is string => typeof item === 'string') : undefined,
     span: typeof op.span === 'string' && SPANS.has(op.span) ? op.span : undefined,
     role: typeof op.role === 'string' && ROLES.has(op.role) ? op.role : undefined,
-    group: op.group === true,
+    group: op.group === true || (typeof op.op === 'string' && /group/i.test(op.op)),
     align: typeof op.align === 'string' && PLACES.has(op.align) ? (op.align as CanvasOp['align']) : undefined,
     col: readGrid(op.col, 1, 12),
     row: readGrid(op.row, 0, 200),
@@ -165,13 +205,60 @@ function readOps(args: Record<string, unknown>): CanvasOp[] {
       typeof op.name === 'string' ? op.name : undefined,
       op.op === 'rename' && typeof op.text === 'string' ? op.text : undefined,
     ),
-  }))
+  }]
+  })
+}
+
+function normalizeCanvasOp(operation: unknown): Record<string, unknown> | null {
+  if (typeof operation === 'string') {
+    const value = operation.toLowerCase()
+    const image = /\b(image|photo|picture|banner)\b/.test(value)
+    const section = /\b(section|block)\b/.test(value)
+    const name = operation.trim().slice(0, 64)
+    if (image && !section) return { op: 'add_addon', type: 'image', name: name || 'Hero image', span: 'full' }
+    if (section) return { op: 'add_block', name: name || 'Hero image' }
+    if (/\bhero\b/.test(value)) return { op: 'add_addon', type: 'image', name: name || 'Hero image', span: 'full' }
+    return null
+  }
+  return isRecord(operation) ? operation : null
 }
 
 function inferredCanvasOp(op: Record<string, unknown>): string {
-  if (typeof op.op === 'string' && op.op.trim()) return op.op.trim()
+  const raw = typeof op.op === 'string' ? op.op.trim().toLowerCase().replace(/[\s-]+/g, '_') : ''
+  if (raw === 'add_block' || raw === 'add_addon' || raw === 'update_text' || raw === 'update_button' || raw === 'update_menu' || raw === 'rename' || raw === 'place_block' || raw === 'move' || raw === 'delete_block' || raw === 'delete_addon') {
+    return raw
+  }
+  if (
+    raw === 'add_image' ||
+    raw === 'insert_image' ||
+    raw === 'create_image' ||
+    raw === 'add_hero_image' ||
+    raw === 'add_text' ||
+    raw === 'insert_text' ||
+    raw === 'create_text' ||
+    raw === 'add_button' ||
+    raw === 'insert_button' ||
+    raw === 'add_menu' ||
+    raw === 'insert_menu' ||
+    raw === 'add_slider' ||
+    raw === 'insert_slider' ||
+    raw === 'add_carousel'
+  ) {
+    return 'add_addon'
+  }
+  if (raw === 'add_section' || raw === 'create_section' || raw === 'insert_section' || raw === 'add_hero' || raw === 'add_group' || raw === 'insert_group') {
+    return 'add_block'
+  }
   const hasGrid = ['col', 'row', 'cols', 'rows'].some((key) => op[key] != null && op[key] !== '')
   if (hasGrid && (typeof op.blockId === 'string' || typeof op.addonId === 'string')) return 'move'
+  const type = typeof op.type === 'string' ? op.type.trim().toLowerCase() : ''
+  if (type === 'image' || type === 'hero' || type === 'banner' || type === 'photo' || type === 'text' || type === 'button' || type === 'menu' || type === 'slider') {
+    return 'add_addon'
+  }
+  if (type === 'section' || type === 'block' || type === 'group') return 'add_block'
+  const label = typeof op.name === 'string' ? op.name : ''
+  if (/\b(image|photo|picture|banner)\b/i.test(label) && !/\b(section|block)\b/i.test(label)) return 'add_addon'
+  if (/\b(section|block)\b/i.test(label)) return 'add_block'
   return ''
 }
 
@@ -946,11 +1033,13 @@ function widenParentRow(document: WebsiteDocumentV1, parentId: string): WebsiteD
 export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<string, unknown>): CanvasApplyResult {
   let next = document
   const preserveExisting = document.blocks.length > 0
-  const requestedPlace = alignFromLabel(typeof args.name === 'string' ? args.name : undefined)
+  const changeName = typeof args.name === 'string' ? args.name : undefined
+  const requestedPlace = alignFromLabel(changeName)
   const touched = new Set<string>()
   const fitTouched = (doc: WebsiteDocumentV1, blockId: string) =>
     preserveExisting ? growFromBlock(doc, blockId) : fitFromBlock(doc, blockId)
   let applied = 0
+  const heroImages = new Set<string>()
   let selection: DesignerSelection | null = null
   let pendingBlockId = lastRootBlockId(next)
   let pendingSectionId = pendingBlockId
@@ -993,6 +1082,10 @@ export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<
       next = nameBlock(next, childId, op.elementName)
       touched.add(childId)
       next = fitTouched(next, childId)
+      const groupSide = op.align ?? headerChromeSide(changeName, op.elementName, undefined)
+      if (groupSide) {
+        next = preserveExisting ? pinBlockAlign(next, childId, groupSide) : placeBlock(next, childId, groupSide)
+      }
       next = fitContainer(next)
       pendingBlockId = childId
       applied += 1
@@ -1005,13 +1098,31 @@ export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<
       const createdBlock = !(op.blockId ?? pendingBlockId) || !findBlock(next, op.blockId ?? pendingBlockId ?? '')
       const ensured = ensureBlock(next, op.blockId ?? pendingBlockId)
       next = ensured.document
-      const blockId = ensured.blockId
+      let blockId = ensured.blockId
       if (!blockId) continue
       if (createdBlock) {
         next = placeNewBlock(beforeDocument, blockId, next)
         pendingSectionId = blockId
       }
-      pendingBlockId = blockId
+      const addonSide = op.align ?? headerChromeSide(changeName, op.elementName, op.type)
+      let nestedBeside = false
+      if (addonSide && parentBlockId(next.blocks, blockId, null) === null) {
+        next = addBlock(next, blockId)
+        const childId = findBlock(next, blockId)?.children.at(-1)?.id
+        if (childId) {
+          next = placeChildBlock(next, blockId, childId)
+          next = nameBlock(next, childId, op.elementName)
+          pendingSectionId = blockId
+          blockId = childId
+          nestedBeside = true
+        }
+      } else if (addonSide && parentBlockId(next.blocks, blockId, null)) {
+        const host = findBlock(next, blockId)
+        if (host && !host.place) {
+          next = preserveExisting ? pinBlockAlign(next, blockId, addonSide) : placeBlock(next, blockId, addonSide)
+        }
+      }
+      pendingBlockId = nestedBeside && pendingSectionId ? pendingSectionId : blockId
       const before = findBlock(next, blockId)
       const layout = flowAddonLayout(before?.addons ?? [], op.type, op.text, op.items, op.role)
       const created = createPlacedAddon(op.type as WebsiteAddon['type'], before?.addons.length ?? 0, layout)
@@ -1028,8 +1139,12 @@ export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<
         return { ...block, addons }
       })
       const addonId = patched.id
+      if (patched.type === 'image' && isHeroImage(changeName, op.elementName, op.span)) heroImages.add(addonId)
       touched.add(blockId)
       next = fitTouched(next, blockId)
+      if (nestedBeside && addonSide) {
+        next = preserveExisting ? pinBlockAlign(next, blockId, addonSide) : placeBlock(next, blockId, addonSide)
+      }
       next = fitContainer(next)
       applied += 1
       selection = { kind: 'addon', blockId, addonId }
@@ -1135,16 +1250,19 @@ export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<
       continue
     }
 
-    if (op.op === 'update_menu' && op.addonId && op.items && op.items.length > 0) {
-      const blockId = hostBlockId(next, op)
-      if (!blockId) continue
-      const addon = findBlock(next, blockId)?.addons.find((item) => item.id === op.addonId)
-      if (!addon || addon.type !== 'menu') continue
+    if (op.op === 'update_menu' && op.items && op.items.length > 0) {
+      const hostedId = hostBlockId(next, op)
+      const hosted = hostedId ? findBlock(next, hostedId)?.addons.find((item) => item.id === op.addonId) : undefined
+      const block = op.blockId ? findBlock(next, op.blockId) : undefined
+      const menus = block?.addons.filter((item) => item.type === 'menu') ?? []
+      const addon = hosted?.type === 'menu' ? hosted : menus.length === 1 ? menus[0] : undefined
+      const blockId = hosted?.type === 'menu' ? hostedId : addon ? op.blockId : undefined
+      if (!blockId || !addon || addon.type !== 'menu') continue
       next = updateAddon(next, blockId, { ...withMenuItems(addon, op.items), name: op.elementName ?? addon.name })
       touched.add(blockId)
       applied += 1
       pendingBlockId = blockId
-      selection = { kind: 'addon', blockId, addonId: op.addonId }
+      selection = { kind: 'addon', blockId, addonId: addon.id }
       continue
     }
 
@@ -1171,9 +1289,101 @@ export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<
     }
   }
 
-  if (!preserveExisting) return { document: layoutFromChildren(next), applied, selection }
+  const finish = (document: WebsiteDocumentV1) => ({
+    document: expandHeroImages(balanceEqualHeaderColumns(document, changeName), heroImages),
+    applied,
+    selection,
+  })
+  if (!preserveExisting) return finish(layoutFromChildren(next))
   for (const blockId of touched) next = widenForContent(next, blockId)
-  return { document: fitContainer(next), applied, selection }
+  return finish(fitContainer(next))
+}
+
+function isHeroImage(changeName: string | undefined, label: string | undefined, span: string | undefined): boolean {
+  if (span === 'full') return true
+  const text = `${changeName ?? ''} ${label ?? ''}`.toLowerCase()
+  if (/\bheader\b/.test(text)) return false
+  return /\b(hero|banner)\b/.test(text) || (/\bimage\b/.test(text) && /\b(full[\s-]?width|large)\b/.test(text))
+}
+
+function heroHeight(breakpoint: WebsiteBreakpoint): number {
+  const width = WEBSITE_CANVAS_WIDTH[breakpoint]
+  return Math.max(ROW_HEIGHT, Math.round((width * 0.42) / ROW_HEIGHT) * ROW_HEIGHT)
+}
+
+/** A home-page hero image fills the page width and stays tall enough to read as a banner. */
+function expandHeroImages(document: WebsiteDocumentV1, addonIds: Set<string>): WebsiteDocumentV1 {
+  if (addonIds.size === 0) return document
+  let next = document
+  for (const addonId of addonIds) {
+    const hostId = findAddonHostId(next.blocks, addonId)
+    const host = hostId ? findBlock(next, hostId) : undefined
+    const addon = host?.addons.find((item) => item.id === addonId)
+    if (!hostId || !addon || addon.type !== 'image') continue
+    const layout = { ...addon.layout }
+    for (const breakpoint of FLOW_BREAKPOINTS) {
+      layout[breakpoint] = { col: 1, colSpan: 12, top: 0, height: heroHeight(breakpoint) }
+    }
+    next = updateAddon(next, hostId, { ...addon, layout })
+    let current: string | null = hostId
+    while (current) {
+      const blockId: string = current
+      for (const breakpoint of FLOW_BREAKPOINTS) {
+        const block = findBlock(next, blockId)
+        if (!block) continue
+        const rect = resolveLayoutRect(block.layout, breakpoint)
+        const height = Math.max(rect.height, heroHeight(breakpoint))
+        next = updateBlockById(next, blockId, (item) => ({
+          ...item,
+          layout: { ...item.layout, [breakpoint]: { ...rect, col: 1, colSpan: 12, height } },
+        }))
+      }
+      const parent = parentBlockId(next.blocks, blockId, null)
+      current = parent ?? null
+    }
+  }
+  return fitContainer(next)
+}
+
+/** A header row with a left block and a right block shares the width evenly. */
+function balanceEqualHeaderColumns(document: WebsiteDocumentV1, changeName: string | undefined): WebsiteDocumentV1 {
+  if (!changeName || !/\bheader\b/i.test(changeName)) return document
+  let next = document
+  for (const section of collectBlocks(next.blocks)) {
+    const children = section.children ?? []
+    if (children.length !== 2) continue
+    const left = children.find((child) => child.place === 'start')
+    const right = children.find((child) => child.place === 'end')
+    if (!left || !right) continue
+    for (const breakpoint of FLOW_BREAKPOINTS) {
+      const leftRect = resolveLayoutRect(findBlock(next, left.id)?.layout ?? left.layout, breakpoint)
+      const rightRect = resolveLayoutRect(findBlock(next, right.id)?.layout ?? right.layout, breakpoint)
+      const height = Math.max(leftRect.height, rightRect.height, 1)
+      next = updateBlockById(next, left.id, (block) => ({
+        ...block,
+        layout: { ...block.layout, [breakpoint]: { col: 1, colSpan: 6, top: 0, height } },
+      }))
+      next = updateBlockById(next, right.id, (block) => ({
+        ...block,
+        layout: { ...block.layout, [breakpoint]: { col: 7, colSpan: 6, top: 0, height } },
+      }))
+      const parentRect = resolveLayoutRect(findBlock(next, section.id)?.layout ?? section.layout, breakpoint)
+      next = updateBlockById(next, section.id, (block) => ({
+        ...block,
+        layout: { ...block.layout, [breakpoint]: { ...parentRect, col: 1, colSpan: 12, height } },
+      }))
+    }
+  }
+  return fitContainer(next)
+}
+
+function collectBlocks(blocks: WebsiteBlock[]): WebsiteBlock[] {
+  const all: WebsiteBlock[] = []
+  for (const block of blocks) {
+    all.push(block)
+    if (block.children?.length) all.push(...collectBlocks(block.children))
+  }
+  return all
 }
 
 function gridLabel(layout: LayoutByBreakpoint): string {
@@ -1237,13 +1447,13 @@ export function formatDesignerCanvasContext(input: {
     `kind: ${input.kind}`,
     `id: ${input.id}`,
     `name: ${input.name}`,
-    'To add, change, or remove elements on this open canvas, call apply_design_canvas when it is available, otherwise apply_design_library_canvas.',
+    'This canvas is a page, header, footer, or preset. Use the same tool for all of them: apply_design_canvas when it is available, otherwise apply_design_library_canvas.',
     'Copy block and addon ids from this outline. Never invent ids.',
     focus
       ? `The user copied this element into the assistant. Change this element unless they name a different one: ${focus}.`
       : 'No element was copied. Ask which element to change when the request is ambiguous.',
     'This outline is the canvas right now, including every change the user made by hand. Ignore any earlier designer-canvas outline. Edit these ids in place. Do not recreate a block that is already listed, and do not change text, items, or positions you were not asked to change.',
-    'Create with add_block and add_addon, each with name. To rename an existing block or add-on, send rename with its id from this outline and the new name. Do not recreate it. update_text, update_button, and update_menu change content. To move or resize, send move with the id and col, row, cols, or rows. Each line shows the current grid cell. The named element keeps that cell and size. Anything it would cover moves to the next free cell. place_block only sets align start, center, or end. delete_block and delete_addon remove an existing id. Do not name an element Block, Text, Button, Image, Slider, or Menu. A parent stays tall enough for its children. Do not send span. Set role heading or body on text.',
+    'Create with add_block and add_addon. add_addon type is text, button, image, slider, or menu. group true nests a block in the current section. rename, update_text, update_button, and update_menu edit an existing id. move uses col, row, cols, and rows from this outline. place_block align is start, center, or end. delete_block and delete_addon remove an existing id. Do not recreate an element to rename it. Do not name an element Block, Text, Button, Image, Slider, or Menu. Set role heading or body on text. span full is only for a wide image.',
     'Do not create a new page, header, footer, preset, layout, or theme unless the user asked for a new record.',
     'Images have no media until the user picks one. Do not invent media ids.',
     'blocks:',

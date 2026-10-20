@@ -16,6 +16,8 @@ interface EmbedLayoutProps {
   chromeless?: boolean
   /** Responsive inset padding for chromeless embeds inside a parent dialog. */
   inset?: boolean
+  /** Fill the parent list page instead of the viewport. */
+  fill?: boolean
 }
 
 export function EmbedLayout({
@@ -25,6 +27,7 @@ export function EmbedLayout({
   parentOrigin,
   chromeless = false,
   inset = false,
+  fill = false,
 }: EmbedLayoutProps) {
   useEmbedThemeListener(parentOrigin)
   const listPageMode = useListPageModeValue(parentOrigin)
@@ -36,10 +39,16 @@ export function EmbedLayout({
       <UiThemeProvider theme={uiTheme}>
         <ListPageModeProvider mode={listPageMode}>
           <ListDisplayModeProvider mode={listDisplayMode}>
-        <div className={cn('flex h-dvh min-h-0 w-full flex-col overflow-hidden text-foreground')}>
+        <div
+          className={cn(
+            'flex w-full flex-col text-foreground',
+            fill ? 'min-h-full' : 'h-dvh min-h-0 overflow-hidden',
+          )}
+        >
           <main
             className={cn(
-              'flex min-h-0 flex-1 flex-col overflow-hidden',
+              'flex flex-col',
+              fill ? 'min-h-full' : 'min-h-0 flex-1 overflow-hidden',
               inset && 'px-3 py-3 sm:px-4 sm:py-4 md:px-5 md:py-5',
             )}
           >

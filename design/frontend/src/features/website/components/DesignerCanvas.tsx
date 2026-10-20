@@ -348,6 +348,7 @@ export function DesignerCanvas({
   const changeDocumentRef = useRef(onChangeDocument)
   changeDocumentRef.current = onChangeDocument
   const [addAddonOpen, setAddAddonOpen] = useState(false)
+  const [showGrid, setShowGrid] = useState(false)
   const [viewportWidth, setViewportWidth] = useState(0)
 
   const addAddonExcludeTypes = useMemo((): readonly WebsiteAddon['type'][] => {
@@ -410,7 +411,10 @@ export function DesignerCanvas({
           points[0].x,
           points[0].y,
         )
-        if (live) dragRef.current = { ...live, pinchStart: spans }
+        if (live) {
+          dragRef.current = { ...live, pinchStart: spans }
+          setShowGrid(true)
+        }
         return
       }
 
@@ -428,6 +432,7 @@ export function DesignerCanvas({
       )
       if (!session) return
       dragRef.current = { ...session, pinchStart: spans }
+      setShowGrid(true)
     }
 
     function onPointerDown(event: PointerEvent) {
@@ -483,6 +488,7 @@ export function DesignerCanvas({
       if (drag.handle === 'pinch') {
         if (pointersRef.current.size >= 2) return
         dragRef.current = null
+        setShowGrid(false)
         try {
           canvasRootRef.current?.releasePointerCapture(drag.pointerId)
         } catch {
@@ -496,6 +502,7 @@ export function DesignerCanvas({
       const moved =
         Math.abs(event.clientX - drag.startX) > 3 || Math.abs(event.clientY - drag.startY) > 3
       dragRef.current = null
+      setShowGrid(false)
       try {
         canvasRootRef.current?.releasePointerCapture(event.pointerId)
       } catch {
@@ -549,6 +556,7 @@ export function DesignerCanvas({
     )
     if (!session) return
     dragRef.current = session
+    setShowGrid(true)
     try {
       canvasRootRef.current?.setPointerCapture(event.pointerId)
     } catch {
@@ -568,9 +576,11 @@ export function DesignerCanvas({
       onResizeContainer(snapRowSpan(nextHeight, minRowSpan))
     }
     function onUp() {
+      setShowGrid(false)
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
     }
+    setShowGrid(true)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
   }
@@ -612,6 +622,7 @@ export function DesignerCanvas({
         mode={mode}
         selection={selection}
         highlight={mode === 'edit' ? highlight : null}
+        showGrid={mode === 'edit' && showGrid}
         pages={pages}
         currentPageId={currentPageId}
         canManage={canManage}

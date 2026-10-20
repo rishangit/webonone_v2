@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { Check, FileIcon, Folder, FolderPlus, LayoutGrid, List, Upload } from 'lucide-react'
 import type { MediaItemDto } from '@webonone/media-embed'
 import {
@@ -24,6 +24,7 @@ import {
   ListPageBody,
   SearchInput,
   LoadingState,
+  ListDisplayModeProvider,
   ListPageFooter,
   Select,
   SelectContent,
@@ -44,8 +45,11 @@ import {
   createFolder,
   deleteFolder,
   deleteMediaItem,
+  moveMediaFolder,
+  moveMediaItem,
   type MediaFolderDto,
 } from '../services/mediaApi'
+import { beginMediaDrag, canDropMediaOnFolder, endMediaDrag, readMediaDrag } from '../utils/mediaDrag'
 import { formatFileSize, formatMediaDate } from '../utils/formatMedia'
 import { usePlatformLoading } from '@/features/shell/context/PlatformLoadingContext'
 
@@ -76,6 +80,10 @@ interface ScopedFolderBrowserProps {
   onUploadFiles?: (files: File[]) => void | Promise<void>
   /** When true, report loading via AppLayout overlay instead of inline LoadingState. */
   hostLoading?: boolean
+  /** Set when this browser is inside a parent iframe so New folder opens there. */
+  parentOrigin?: string | null
+  /** Website media page: the page scrolls the list instead of a nested scroller. */
+  pageScroll?: boolean
 }
 
 function companyRootLabel(scope: string, scopedRoot: string): string {
@@ -103,6 +111,8 @@ export function ScopedFolderBrowser({
   uploadError = null,
   onUploadFiles,
   hostLoading = false,
+  parentOrigin = null,
+  pageScroll = false,
 }: ScopedFolderBrowserProps) {
   const dispatch = useAppDispatch()
   const rootLabel = companyRootLabel(scope, scopedRoot)
@@ -124,6 +134,8 @@ export function ScopedFolderBrowser({
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [isMoving, setIsMoving] = useState(false)
+  const [dropTargetPath, setDropTargetPath] = useState<string | null>(null)
   const [localError, setLocalError] = useState<string | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [fileNameQuery, setFileNameQuery] = useState('')
@@ -151,7 +163,7 @@ export function ScopedFolderBrowser({
   const loadingMore = listStatus === 'loading' && items.length > 0
   const error = localError ?? (listReady ? listError : null)
   const mediaTotal = listReady ? total : 0
-  const loadingLabel = isUploading ? 'Uploading…' : loading ? 'Loading media…' : null
+  const loadingLabel = isMoving ? 'Moving…' : isUploading ? 'Uploading…' : loading ? 'Loading media…' : null
 
   usePlatformLoading(loadingLabel, hostLoading)
 
@@ -180,7 +192,7 @@ export function ScopedFolderBrowser({
   }, [items, fileNameQuery, listReady, mimeFilter])
 
   const loadList = useCallback(
-    (nextPage: number, nextPageSize: number, append = false) => {
+    (nextPage: number, nextPageSize: number, append = false, force = false) => {
       dispatch(
         mediaActions.loadListRequested({
           scope,
@@ -188,6 +200,7 @@ export function ScopedFolderBrowser({
           page: nextPage,
           pageSize: nextPageSize,
           append,
+          force,
         }),
       )
     },
@@ -196,7 +209,7 @@ export function ScopedFolderBrowser({
 
   useEffect(() => {
     setMediaPage(1)
-    loadList(1, mediaPageSize)
+    loadList(1, mediaPageSize, false, refreshKey > 0)
   }, [currentPath, refreshKey, loadList, mediaPageSize])
 
   useEffect(() => {
@@ -278,6 +291,68 @@ export function ScopedFolderBrowser({
     }
   }
 
+  function clearDrag() {
+    endMediaDrag()
+    setDropTargetPath(null)
+  }
+
+  function handleDragStart(
+    event: DragEvent,
+    payload: { kind: 'file' | 'folder'; id: string; path: string; name: string },
+  ) {
+    beginMediaDrag(payload)
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', payload.name)
+    event.stopPropagation()
+  }
+
+  function handleFolderDragOver(event: DragEvent, path: string) {
+    if (!canDropMediaOnFolder(path, scopedRoot)) return
+    event.preventDefault()
+    event.stopPropagation()
+    event.dataTransfer.dropEffect = 'move'
+    setDropTargetPath(path)
+  }
+
+  function handleFolderDragLeave(event: DragEvent, path: string) {
+    event.stopPropagation()
+    const next = event.relatedTarget
+    if (next instanceof Node && event.currentTarget.contains(next)) return
+    setDropTargetPath((current) => (current === path ? null : current))
+  }
+
+  async function handleFolderDrop(event: DragEvent, path: string) {
+    event.preventDefault()
+    event.stopPropagation()
+    const drag = readMediaDrag()
+    const allowed = canDropMediaOnFolder(path, scopedRoot)
+    clearDrag()
+    if (!drag || !allowed || isMoving) return
+    setIsMoving(true)
+    setLocalError(null)
+    try {
+      if (drag.kind === 'file') {
+        await moveMediaItem(drag.id, path)
+      } else {
+        await moveMediaFolder({ scope, fromPath: drag.path, toParentPath: path })
+      }
+      setMediaPage(1)
+      loadList(1, mediaPageSize, false, true)
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : 'Failed to move')
+    } finally {
+      setIsMoving(false)
+    }
+  }
+
+  function folderDropHandlers(path: string) {
+    return {
+      onDragOver: (event: DragEvent) => handleFolderDragOver(event, path),
+      onDragLeave: (event: DragEvent) => handleFolderDragLeave(event, path),
+      onDrop: (event: DragEvent) => void handleFolderDrop(event, path),
+    }
+  }
+
   async function handleFilesSelected(fileList: FileList | null) {
     if (!fileList?.length || !onUploadFiles) return
     const files = Array.from(fileList)
@@ -345,14 +420,17 @@ export function ScopedFolderBrowser({
 
   function renderBreadcrumb() {
     return (
-      <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-1 text-sm text-muted-foreground">
+      <nav className="flex w-full min-w-0 flex-wrap items-center gap-1 text-sm text-muted-foreground">
         {breadcrumbSegments.map((segment, index) => (
           <span key={segment.path} className="flex items-center gap-1">
             {index > 0 ? <span>/</span> : null}
             <button
               type="button"
-              className="truncate hover:text-foreground"
+              className={`truncate hover:text-foreground ${
+                dropTargetPath === segment.path ? 'rounded-sm ring-2 ring-primary' : ''
+              }`}
               onClick={() => navigateTo(segment.path)}
+              {...folderDropHandlers(segment.path)}
             >
               {segment.label}
             </button>
@@ -364,14 +442,14 @@ export function ScopedFolderBrowser({
 
   function renderToolbar() {
     return (
-      <ListPageActions className="shrink-0">
+      <ListPageActions className="w-full min-w-0 max-w-full">
         <SearchInput
           value={fileNameQuery}
           onChange={(event) => setFileNameQuery(event.target.value)}
           onClear={() => setFileNameQuery('')}
           placeholder="File or folder name"
           aria-label="Search files and folders"
-          className="w-64"
+          className="w-full min-w-0 max-w-64"
         />
         <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
         {enableUpload ? (
@@ -503,7 +581,23 @@ export function ScopedFolderBrowser({
         renderListItem={(row) => {
           if (row.kind === 'folder') {
             return (
-              <ItemListItem>
+              <ItemListItem
+                draggable
+                className={cn(
+                  'cursor-grab active:cursor-grabbing',
+                  dropTargetPath === row.folder.path && 'ring-2 ring-primary',
+                )}
+                onDragStart={(event) =>
+                  handleDragStart(event, {
+                    kind: 'folder',
+                    id: row.folder.id,
+                    path: row.folder.path,
+                    name: row.folder.name,
+                  })
+                }
+                onDragEnd={clearDrag}
+                {...folderDropHandlers(row.folder.path)}
+              >
                 <ItemListContent>
                   <button
                     type="button"
@@ -522,8 +616,21 @@ export function ScopedFolderBrowser({
           const isSelected = selectedIds.has(row.item.id)
           return (
             <ItemListItem
-              className={cn(isSelected && itemListRowActiveClassName)}
+              draggable
+              className={cn(
+                'cursor-grab active:cursor-grabbing',
+                isSelected && itemListRowActiveClassName,
+              )}
               aria-selected={isSelected}
+              onDragStart={(event) =>
+                handleDragStart(event, {
+                  kind: 'file',
+                  id: row.item.id,
+                  path: currentPath,
+                  name: row.item.fileName,
+                })
+              }
+              onDragEnd={clearDrag}
             >
               <ItemListContent>
                 <button
@@ -549,6 +656,23 @@ export function ScopedFolderBrowser({
         renderCard={(row) => {
           if (row.kind === 'folder') {
             return (
+              <div
+                draggable
+                className={cn(
+                  'cursor-grab rounded-lg active:cursor-grabbing',
+                  dropTargetPath === row.folder.path && 'ring-2 ring-primary',
+                )}
+                onDragStart={(event) =>
+                  handleDragStart(event, {
+                    kind: 'folder',
+                    id: row.folder.id,
+                    path: row.folder.path,
+                    name: row.folder.name,
+                  })
+                }
+                onDragEnd={clearDrag}
+                {...folderDropHandlers(row.folder.path)}
+              >
               <ItemListCollectionCard
                 image={
                   <div className="flex h-full w-full items-center justify-center bg-muted/40">
@@ -558,14 +682,28 @@ export function ScopedFolderBrowser({
                 menu={showIconToolbar ? renderFolderMenu(row.folder) : undefined}
                 onBodyClick={() => handleFolderOpen(row.folder)}
               >
-                <p className="truncate font-medium">{row.folder.name}</p>
+                <p className="line-clamp-2 min-w-0 break-words font-medium">{row.folder.name}</p>
                 <p className="text-xs text-muted-foreground">Folder</p>
               </ItemListCollectionCard>
+              </div>
             )
           }
           const isSelected = selectedIds.has(row.item.id)
           const isImage = row.item.mimeType.startsWith('image/')
           return (
+            <div
+              draggable
+              className="cursor-grab rounded-lg active:cursor-grabbing"
+              onDragStart={(event) =>
+                handleDragStart(event, {
+                  kind: 'file',
+                  id: row.item.id,
+                  path: currentPath,
+                  name: row.item.fileName,
+                })
+              }
+              onDragEnd={clearDrag}
+            >
             <ItemListCollectionCard
               className={cn(isSelected && itemListRowActiveClassName)}
               image={
@@ -584,12 +722,13 @@ export function ScopedFolderBrowser({
               menu={showIconToolbar ? renderFileMenu(row.item) : undefined}
               onBodyClick={() => handleFileClick(row.item)}
             >
-              <p className="truncate font-medium">{row.item.fileName}</p>
+              <p className="line-clamp-2 min-w-0 break-words font-medium">{row.item.fileName}</p>
               {renderFileMeta(row.item)}
               {isSelected ? (
                 <Check className="mt-2 h-5 w-5 text-primary" aria-hidden />
               ) : null}
             </ItemListCollectionCard>
+            </div>
           )
         }}
       />
@@ -614,7 +753,21 @@ export function ScopedFolderBrowser({
         {filteredFolders.map((folder) => (
           <div
             key={folder.id}
-            className="glass-card group relative overflow-hidden rounded-lg"
+            draggable
+            className={cn(
+              'glass-card group relative cursor-grab overflow-hidden rounded-lg active:cursor-grabbing',
+              dropTargetPath === folder.path && 'ring-2 ring-primary',
+            )}
+            onDragStart={(event) =>
+              handleDragStart(event, {
+                kind: 'folder',
+                id: folder.id,
+                path: folder.path,
+                name: folder.name,
+              })
+            }
+            onDragEnd={clearDrag}
+            {...folderDropHandlers(folder.path)}
           >
             <button
               type="button"
@@ -644,9 +797,20 @@ export function ScopedFolderBrowser({
           return (
             <div
               key={item.id}
-              className={`glass-card group relative overflow-hidden rounded-lg ${
-                isSelected ? 'ring-2 ring-primary' : ''
-              }`}
+              draggable
+              className={cn(
+                'glass-card group relative cursor-grab overflow-hidden rounded-lg active:cursor-grabbing',
+                isSelected && 'ring-2 ring-primary',
+              )}
+              onDragStart={(event) =>
+                handleDragStart(event, {
+                  kind: 'file',
+                  id: item.id,
+                  path: currentPath,
+                  name: item.fileName,
+                })
+              }
+              onDragEnd={clearDrag}
             >
               <button
                 type="button"
@@ -659,6 +823,7 @@ export function ScopedFolderBrowser({
                     <img
                       src={item.url}
                       alt={item.fileName}
+                      draggable={false}
                       className="h-full w-full object-cover"
                     />
                   ) : (
@@ -693,7 +858,7 @@ export function ScopedFolderBrowser({
   const dropZoneEnabled = enableUpload && Boolean(onUploadFiles)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2">
+    <div className="flex min-h-0 w-full min-w-0 max-w-full flex-1 flex-col gap-2">
       <ListFilterPanel
         open={filterOpen}
         onOpenChange={setFilterOpen}
@@ -718,21 +883,21 @@ export function ScopedFolderBrowser({
       </ListFilterPanel>
 
       {showIconToolbar ? (
-        <header className="flex shrink-0 flex-col gap-2 border-b pb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <header className="flex w-full min-w-0 shrink-0 flex-col gap-2 border-b pb-2">
           {renderBreadcrumb()}
           {renderToolbar()}
         </header>
       ) : (
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex w-full min-w-0 flex-col gap-2">
           {renderBreadcrumb()}
-          <ListPageActions className="shrink-0">
+          <ListPageActions className="w-full min-w-0 max-w-full">
             <SearchInput
               value={fileNameQuery}
               onChange={(event) => setFileNameQuery(event.target.value)}
               onClear={() => setFileNameQuery('')}
               placeholder="File or folder name"
               aria-label="Search files and folders"
-              className="w-64"
+              className="w-full min-w-0 max-w-64"
             />
             <ListFilterTrigger active={hasActiveFilters} onClick={() => setFilterOpen(true)} />
           </ListPageActions>
@@ -750,17 +915,17 @@ export function ScopedFolderBrowser({
       <ListPageBody className="min-h-0 flex-1">
         <div
           ref={setListScrollRoot}
-          className={`flex min-h-0 flex-1 flex-col overflow-auto scrollbar-themed rounded-md transition-colors ${
-            dropZoneEnabled && isDragging ? 'bg-primary/5 ring-2 ring-primary/30' : ''
-          }`}
+          className={`flex flex-col rounded-md transition-colors ${
+            pageScroll ? 'min-h-0' : 'min-h-0 flex-1 overflow-auto scrollbar-themed'
+          } ${dropZoneEnabled && isDragging ? 'bg-primary/5 ring-2 ring-primary/30' : ''}`}
           onDragOver={(e) => {
-            if (!dropZoneEnabled || isUploading) return
+            if (readMediaDrag() || !dropZoneEnabled || isUploading) return
             e.preventDefault()
             setIsDragging(true)
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={(e) => {
-            if (!dropZoneEnabled || isUploading) return
+            if (readMediaDrag() || !dropZoneEnabled || isUploading) return
             e.preventDefault()
             setIsDragging(false)
             void handleFilesSelected(e.dataTransfer.files)
@@ -773,9 +938,11 @@ export function ScopedFolderBrowser({
             />
           ) : null}
           {showListContent ? (
-            gridLayout && viewMode === 'thumb' && showIconToolbar
-              ? renderThumbView()
-              : renderListView()
+            <ListDisplayModeProvider mode={listDisplayMode}>
+              {gridLayout && viewMode === 'thumb' && showIconToolbar
+                ? renderThumbView()
+                : renderListView()}
+            </ListDisplayModeProvider>
           ) : null}
         </div>
 
@@ -816,6 +983,20 @@ export function ScopedFolderBrowser({
         open={createFolderOpen}
         onOpenChange={setCreateFolderOpen}
         onCreate={handleCreateFolder}
+        parentOrigin={parentOrigin}
+        scope={scope}
+        folderPath={currentPath}
+        onHostedCreated={() => {
+          dispatch(
+            mediaActions.loadListRequested({
+              scope,
+              folderPath: currentPath,
+              page: mediaPage,
+              pageSize: mediaPageSize,
+              force: true,
+            }),
+          )
+        }}
       />
       <MediaPreviewDialog
         item={previewItem}

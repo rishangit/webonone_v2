@@ -13,7 +13,11 @@ const LOCAL_MEDIA_FILE =
 
 function rewriteMediaFileUrl(url: string): string {
   const base = env.mediaPublicBaseUrl.replace(/\/$/, '')
-  return url.replace(LOCAL_MEDIA_FILE, `${base}$1`)
+  const local = url.replace(LOCAL_MEDIA_FILE, `${base}$1`)
+  if (local !== url) return local
+  if (url.startsWith('/api/v1/files/')) return `${base}${url.slice('/api/v1'.length)}`
+  if (url.startsWith('/files/')) return `${base}${url}`
+  return url
 }
 
 function resolveMediaRefUrl(ref: MediaRef | undefined): MediaRef | undefined {

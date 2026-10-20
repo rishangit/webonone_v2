@@ -11,6 +11,7 @@ import { UploadDialogPage } from '@/features/media/pages/UploadDialogPage'
 import { SelectorPage } from '@/features/media/pages/SelectorPage'
 import { ViewerPage } from '@/features/media/pages/ViewerPage'
 import { CropDialogPage } from '@/features/media/pages/CropDialogPage'
+import { CreateFolderEmbedPage } from '@/features/media/pages/CreateFolderEmbedPage'
 import { FullDialogPage } from '@/features/media/pages/FullDialogPage'
 import { useAppSelector } from '@/app/store/hooks'
 
@@ -44,6 +45,7 @@ export function App() {
         <Route path="/upload-dialog" element={<UploadDialogPage />} />
         <Route path="/selector" element={<SelectorPage />} />
         <Route path="/crop-dialog" element={<CropDialogPage />} />
+        <Route path="/embed/dialogs/folders/create" element={<CreateFolderEmbedPage />} />
         <Route path="/viewer" element={<ViewerPage />} />
         <Route path="/dialog" element={<FullDialogPage />} />
         <Route

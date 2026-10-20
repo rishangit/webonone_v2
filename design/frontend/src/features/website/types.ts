@@ -322,11 +322,16 @@ export type WebsiteColorToken = {
   value: string
 }
 
+export type WebsiteThemePaletteColor = {
+  name: string
+  value: string
+}
+
 export type WebsiteThemeColorPalette = {
   id: string
   name: string
   sourceLibraryPaletteId?: string | null
-  colorIds: string[]
+  colors: WebsiteThemePaletteColor[]
 }
 
 export type WebsiteElementCustomization = {
@@ -341,7 +346,8 @@ export type WebsiteTextStyle = {
   fontId: string
   size: number
   sizeByBreakpoint?: Partial<Record<WebsiteBreakpoint, number>>
-  colorId: string
+  colorIndex: number
+  colorPaletteId?: string | null
   sourceLibraryId?: string | null
   customization?: WebsiteElementCustomization
 }
@@ -349,10 +355,11 @@ export type WebsiteTextStyle = {
 export type WebsiteButtonStyle = {
   id: string
   name: string
-  backgroundColorId: string
-  textColorId: string
+  colorPaletteId?: string | null
+  backgroundColorIndex: number
+  textColorIndex: number
   textStyleId: string
-  borderColorId: string
+  borderColorIndex: number
   borderWidth: number
   radius: number
   sourceLibraryId?: string | null
@@ -403,14 +410,6 @@ export type WebsiteButtonLibraryItem = {
   sortOrder: number
 }
 
-export type WebsiteThemeColorRoles = {
-  pageBackgroundColorId: string
-  surfaceColorId: string
-  bodyTextColorId: string
-  accentColor1Id: string
-  accentColor2Id: string
-}
-
 export type WebsiteTheme = {
   id: string
   companyId: string
@@ -420,13 +419,17 @@ export type WebsiteTheme = {
   surfaceColor?: string
   accentColor1?: string
   accentColor2?: string
-  colorRoles?: WebsiteThemeColorRoles
+  colorPaletteId: string
+  pageBackgroundIndex: number
+  surfaceIndex: number
+  bodyTextIndex: number
+  accent1Index: number
+  accent2Index: number
   isActive: boolean
   isDefault: boolean
   isLocked: boolean
   sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
-  colors: WebsiteColorToken[]
   colorPalettes: WebsiteThemeColorPalette[]
   textStyles: WebsiteTextStyle[]
   buttonStyles: WebsiteButtonStyle[]

@@ -83,9 +83,7 @@ function ListPageActionsStandalone({ children, className }: ListPageActionsProps
         <div className="relative min-h-9 min-w-0 max-sm:flex-1 sm:hidden">
           <div ref={setOverlayEl} className={overlayClasses} />
         </div>
-        <div
-          className="flex shrink-0 items-center justify-end gap-2 max-sm:flex-nowrap sm:flex-wrap sm:justify-end"
-        >
+        <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 sm:w-full">
           {children}
         </div>
       </div>

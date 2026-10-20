@@ -101,6 +101,19 @@ export async function readLocalBlob(storageKey: string): Promise<Buffer> {
   return fs.readFile(fullPath)
 }
 
+export async function moveLocalBlob(fromKey: string, toKey: string): Promise<void> {
+  if (fromKey === toKey) return
+  const fromPath = storageKeyToLocalPath(fromKey)
+  const toPath = storageKeyToLocalPath(toKey)
+  await fs.mkdir(path.dirname(toPath), { recursive: true })
+  try {
+    await fs.rename(fromPath, toPath)
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return
+    throw err
+  }
+}
+
 export async function deleteLocalBlob(storageKey: string): Promise<void> {
   const fullPath = storageKeyToLocalPath(storageKey)
   try {
@@ -132,6 +145,13 @@ export async function deleteBlob(storageKey: string): Promise<void> {
     throw new Error('S3 storage driver is not configured for local development')
   }
   await deleteLocalBlob(storageKey)
+}
+
+export async function moveBlob(fromKey: string, toKey: string): Promise<void> {
+  if (env.storageDriver === 's3') {
+    throw new Error('S3 storage driver is not configured for local development')
+  }
+  await moveLocalBlob(fromKey, toKey)
 }
 
 export function isMimeAllowed(mimeType: string): boolean {

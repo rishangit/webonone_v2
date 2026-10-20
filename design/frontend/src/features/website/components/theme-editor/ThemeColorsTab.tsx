@@ -12,8 +12,9 @@ import { ColorPaletteHubListItem } from '../ColorPaletteHubListItem'
 import type { WebsiteColorLibraryItem } from '../../types'
 import {
   applyLibraryPaletteGroupToTheme,
+  applyThemeChrome,
   removeThemeColorPaletteGroup,
-  themePaletteRefsToLibraryPalette,
+  themePaletteToLibraryPalette,
 } from '../../utils/websitePalette'
 import { writeThemeDraft } from '../../utils/themeDraftStorage'
 import { ThemeColorPaletteAddDialog } from './ThemeColorPaletteAddDialog'
@@ -34,22 +35,22 @@ export function ThemeColorsTab({ theme, onPersist, saving }: ThemeEditorTabProps
         .filter((id): id is string => Boolean(id)),
     [theme.colorPalettes],
   )
-  const colorsById = useMemo(() => new Map(theme.colors.map((color) => [color.id, color])), [theme.colors])
-
   function applyLibraryItem(item: WebsiteColorLibraryItem) {
     const entries = item.palette.colors.map((entry) => ({ name: entry.name, value: entry.value }))
-    onPersist({
-      ...theme,
-      ...applyLibraryPaletteGroupToTheme(theme, {
-        name: item.name,
-        sourceLibraryPaletteId: item.id,
-        entries,
+    onPersist(
+      applyThemeChrome({
+        ...theme,
+        ...applyLibraryPaletteGroupToTheme(theme, {
+          name: item.name,
+          sourceLibraryPaletteId: item.id,
+          entries,
+        }),
       }),
-    })
+    )
   }
 
   function removePalette(paletteInstanceId: string) {
-    onPersist({ ...theme, ...removeThemeColorPaletteGroup(theme, paletteInstanceId) })
+    onPersist(applyThemeChrome({ ...theme, ...removeThemeColorPaletteGroup(theme, paletteInstanceId) }))
   }
 
   const hasPalettes = colorPalettes.length > 0
@@ -71,7 +72,7 @@ export function ThemeColorsTab({ theme, onPersist, saving }: ThemeEditorTabProps
       ) : (
         <ItemList>
           {colorPalettes.map((paletteRef) => {
-            const palette = themePaletteRefsToLibraryPalette(paletteRef, colorsById)
+            const palette = themePaletteToLibraryPalette(paletteRef)
             const detailPath = `/website/themes/${theme.id}/palettes/${paletteRef.id}`
             return (
               <ColorPaletteHubListItem

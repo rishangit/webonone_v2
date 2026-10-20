@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef } from 'react'
+import { forwardRef, useEffect, useRef, type CSSProperties } from 'react'
 import { isPlatformReadyMessage, sendPlatformInit } from '@webonone/platform-embed'
 
 export interface MediaEmbedFrameProps<T extends object> {
@@ -10,6 +10,7 @@ export interface MediaEmbedFrameProps<T extends object> {
   onLoad?: () => void
   title?: string
   className?: string
+  style?: CSSProperties
 }
 
 export function createMediaEmbedFrame<T extends object>(defaultTitle: string) {
@@ -23,6 +24,7 @@ export function createMediaEmbedFrame<T extends object>(defaultTitle: string) {
       onLoad,
       title = defaultTitle,
       className,
+      style,
     },
     ref,
   ) {
@@ -85,6 +87,7 @@ export function createMediaEmbedFrame<T extends object>(defaultTitle: string) {
         src={src}
         title={title}
         className={className ?? 'h-full min-h-0 w-full border-0 bg-transparent'}
+        style={style}
         allow="clipboard-read; clipboard-write"
       />
     )

@@ -24,6 +24,15 @@ export function getMediaCropDialogUrl(): string {
   return `${getMediaOrigin()}/crop-dialog`
 }
 
+function toPublicMediaUrl(url: string): string {
+  const base = getMediaPublicBaseUrl()
+  const local = url.replace(LOCAL_MEDIA_FILE, `${base}$1`)
+  if (local !== url) return local
+  if (url.startsWith('/api/v1/files/')) return `${base}${url.slice('/api/v1'.length)}`
+  if (url.startsWith('/files/')) return `${base}${url}`
+  return url
+}
+
 /** Resolve a stored MediaRef to a URL that works on the live public site. */
 export function resolveMediaRefUrl(
   ref: { fileId: string; url?: string; fileName?: string } | undefined | null,
@@ -31,16 +40,15 @@ export function resolveMediaRefUrl(
   if (!ref?.fileId) return null
 
   const trimmedUrl = ref.url?.trim()
-  if (trimmedUrl) {
-    const base = getMediaPublicBaseUrl()
-    return trimmedUrl.replace(LOCAL_MEDIA_FILE, `${base}$1`)
-  }
+  if (trimmedUrl) return toPublicMediaUrl(trimmedUrl)
 
   const fileName = ref.fileName?.trim() || 'file'
   return `${getMediaPublicBaseUrl()}/files/${encodeURIComponent(ref.fileId)}/${encodeURIComponent(fileName)}`
 }
 
-/** Scope webonone:company:{companyId} → disk webonone/companies/{companyId}/ */
+/** Shared website library. File bytes are public by URL, so any company design can show them. */
+export const WEBSITE_LIBRARY_MEDIA_SCOPE = 'webonone:platform:website-library'
+
 export function buildWebsiteMediaScope(companyId: string): string {
   return `webonone:company:${companyId}`
 }

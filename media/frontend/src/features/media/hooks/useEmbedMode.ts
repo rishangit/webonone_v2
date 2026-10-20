@@ -30,6 +30,8 @@ export interface EmbedModeState {
   selectable: boolean
   enableSelectorUpload: boolean
   cropAspectPresets: CropAspectPreset[] | null
+  /** Website media route: fill the parent page and keep the file list. */
+  listPage: boolean
 }
 
 function parseMediaType(value: string | null): MediaTypePreset | null {
@@ -103,6 +105,7 @@ export function useEmbedMode(): EmbedModeState {
     const selectable = searchParams.get('selectable') === 'true'
     const enableSelectorUpload = searchParams.get('selectorUpload') === 'true'
     const cropAspectPresets = parseCropAspectPresets(searchParams.get('cropAspectPresets'))
+    const listPage = searchParams.get('listPage') === 'true'
 
     return {
       isEmbed,
@@ -123,6 +126,7 @@ export function useEmbedMode(): EmbedModeState {
       selectable,
       enableSelectorUpload,
       cropAspectPresets,
+      listPage,
     }
   }, [searchParams])
 }

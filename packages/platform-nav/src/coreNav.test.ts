@@ -367,7 +367,7 @@ describe('coreNav', () => {
     }
   })
 
-  it('gives super admin a Website group without Forms, Data Sets, Media, or Settings', () => {
+  it('gives super admin a Website group without Forms, Data Sets, or Settings', () => {
     const defs = getPlatformNavDefs('superAdmin')
     const website = defs.find((item) => item.kind === 'group' && item.label === 'Website')
     assert.equal(defs.some((item) => item.label === 'Forms'), false)
@@ -376,7 +376,7 @@ describe('coreNav', () => {
     if (website?.kind === 'group') {
       assert.deepEqual(
         website.children.map((child) => child.label),
-        ['Pages', 'Layouts', 'Headers', 'Footers', 'Presets', 'Themes', 'Fonts', 'Colors', 'Texts', 'Buttons'],
+        ['Pages', 'Layouts', 'Headers', 'Footers', 'Presets', 'Themes', 'Fonts', 'Colors', 'Texts', 'Buttons', 'Media'],
       )
       assert.equal(website.children[0]?.externalService, 'design')
       assert.equal(website.children[0]?.externalPath, '/website/pages')
@@ -395,6 +395,10 @@ describe('coreNav', () => {
       assert.equal(
         website.children.find((child) => child.label === 'Buttons')?.externalPath,
         '/website/buttons',
+      )
+      assert.equal(
+        website.children.find((child) => child.label === 'Media')?.externalPath,
+        '/website/media',
       )
     }
   })

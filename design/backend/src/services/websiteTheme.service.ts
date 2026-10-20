@@ -9,12 +9,10 @@ import type {
   CreateWebsiteThemeBody,
   UpdateWebsiteThemeBody,
   WebsiteButtonStyle,
-  WebsiteColorToken,
   WebsiteFontToken,
-  WebsiteThemeColorPalette,
-  WebsiteThemeColorRoles,
   WebsiteTextStyle,
 } from '../schemas/websiteThemes.schema.js'
+import { patchThemeColorFields, readThemeColorFields, writeThemeColorFields } from '../utils/themeColorStorage.js'
 
 export type WebsiteThemeDto = {
   id: string
@@ -27,9 +25,16 @@ export type WebsiteThemeDto = {
   isLocked: boolean
   sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
-  colors: WebsiteColorToken[]
-  colorPalettes: WebsiteThemeColorPalette[]
-  colorRoles: WebsiteThemeColorRoles
+  colorPaletteId: string
+  pageBackgroundIndex: number
+  surfaceIndex: number
+  bodyTextIndex: number
+  accent1Index: number
+  accent2Index: number
+  surfaceColor: string
+  accentColor1: string
+  accentColor2: string
+  colorPalettes: ReturnType<typeof readThemeColorFields>['colorPalettes']
   textStyles: WebsiteTextStyle[]
   buttonStyles: WebsiteButtonStyle[]
   createdBy: string | null
@@ -50,34 +55,6 @@ function parseJsonArray<T>(raw: string | unknown[]): T[] {
   return []
 }
 
-const EMPTY_COLOR_ROLES: WebsiteThemeColorRoles = {
-  pageBackgroundColorId: '',
-  surfaceColorId: '',
-  bodyTextColorId: '',
-  accentColor1Id: '',
-  accentColor2Id: '',
-}
-
-function parseColorRoles(raw: unknown): WebsiteThemeColorRoles {
-  let value: unknown = raw
-  if (typeof raw === 'string') {
-    try {
-      value = JSON.parse(raw) as unknown
-    } catch {
-      return { ...EMPTY_COLOR_ROLES }
-    }
-  }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...EMPTY_COLOR_ROLES }
-  const record = value as Record<string, unknown>
-  return {
-    pageBackgroundColorId: typeof record.pageBackgroundColorId === 'string' ? record.pageBackgroundColorId : '',
-    surfaceColorId: typeof record.surfaceColorId === 'string' ? record.surfaceColorId : '',
-    bodyTextColorId: typeof record.bodyTextColorId === 'string' ? record.bodyTextColorId : '',
-    accentColor1Id: typeof record.accentColor1Id === 'string' ? record.accentColor1Id : '',
-    accentColor2Id: typeof record.accentColor2Id === 'string' ? record.accentColor2Id : '',
-  }
-}
-
 function toBool(value: number | boolean): boolean {
   return value === true || value === 1
 }
@@ -87,16 +64,12 @@ function toDto(row: DesignWebsiteThemeRow): WebsiteThemeDto {
     id: row.id,
     companyId: row.company_id,
     name: row.name,
-    pageBackground: row.page_background,
-    bodyTextColor: row.body_text_color,
     isActive: toBool(row.is_active),
     isDefault: toBool(row.is_default),
     isLocked: toBool(row.is_locked),
     sourceLibraryId: row.source_library_id ?? null,
     fonts: parseJsonArray<WebsiteFontToken>(row.fonts),
-    colors: parseJsonArray<WebsiteColorToken>(row.colors),
-    colorPalettes: parseJsonArray<WebsiteThemeColorPalette>(row.color_palettes ?? []),
-    colorRoles: parseColorRoles(row.color_roles),
+    ...readThemeColorFields(row),
     textStyles: parseJsonArray<WebsiteTextStyle>(row.text_styles),
     buttonStyles: parseJsonArray<WebsiteButtonStyle>(row.button_styles),
     createdBy: row.created_by,
@@ -165,14 +138,10 @@ export async function createWebsiteTheme(input: {
     id,
     company_id: input.companyId,
     name: input.body.name,
-    page_background: input.body.pageBackground,
-    body_text_color: input.body.bodyTextColor,
+    ...writeThemeColorFields(input.body),
     is_active: input.body.isActive,
     is_default: input.body.isDefault,
     fonts: JSON.stringify(input.body.fonts),
-    colors: JSON.stringify(input.body.colors),
-    color_palettes: JSON.stringify(input.body.colorPalettes ?? []),
-    color_roles: JSON.stringify(parseColorRoles(input.body.colorRoles)),
     text_styles: JSON.stringify(input.body.textStyles),
     button_styles: JSON.stringify(input.body.buttonStyles),
     created_by: input.userId,
@@ -195,14 +164,10 @@ export async function updateWebsiteTheme(input: {
   if (input.body.isDefault) await clearDefaults(input.companyId)
   const updates: Record<string, unknown> = { updated_at: db.fn.now(3) }
   if (input.body.name != null) updates.name = input.body.name
-  if (input.body.pageBackground != null) updates.page_background = input.body.pageBackground
-  if (input.body.bodyTextColor != null) updates.body_text_color = input.body.bodyTextColor
   if (input.body.isActive != null) updates.is_active = input.body.isActive
   if (input.body.isDefault != null) updates.is_default = input.body.isDefault
   if (input.body.fonts != null) updates.fonts = JSON.stringify(input.body.fonts)
-  if (input.body.colors != null) updates.colors = JSON.stringify(input.body.colors)
-  if (input.body.colorPalettes != null) updates.color_palettes = JSON.stringify(input.body.colorPalettes)
-  if (input.body.colorRoles != null) updates.color_roles = JSON.stringify(parseColorRoles(input.body.colorRoles))
+  Object.assign(updates, patchThemeColorFields(existing, input.body))
   if (input.body.textStyles != null) updates.text_styles = JSON.stringify(input.body.textStyles)
   if (input.body.buttonStyles != null) updates.button_styles = JSON.stringify(input.body.buttonStyles)
   await db('design_website_themes').where({ id: input.id }).update(updates)

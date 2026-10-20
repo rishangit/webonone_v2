@@ -11,6 +11,7 @@ import {
   ItemListEmpty,
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
+import { beginMediaDrag, endMediaDrag } from '../utils/mediaDrag'
 
 interface MediaGridProps {
   items: MediaItemDto[]
@@ -18,6 +19,7 @@ interface MediaGridProps {
   onToggleSelect: (item: MediaItemDto) => void
   onDelete: (id: string) => void | Promise<void>
   selectionEnabled?: boolean
+  onDragEnd?: () => void
 }
 
 export function MediaGrid({
@@ -26,6 +28,7 @@ export function MediaGrid({
   onToggleSelect,
   onDelete,
   selectionEnabled = true,
+  onDragEnd,
 }: MediaGridProps) {
   const [deleteTarget, setDeleteTarget] = useState<MediaItemDto | null>(null)
 
@@ -45,9 +48,24 @@ export function MediaGrid({
           return (
             <div
               key={item.id}
-              className={`group relative overflow-hidden rounded-lg border ${
+              draggable
+              className={`group relative cursor-grab overflow-hidden rounded-lg border active:cursor-grabbing ${
                 isSelected ? 'border-primary ring-2 ring-primary/40' : 'border-border'
               }`}
+              onDragStart={(event) => {
+                beginMediaDrag({
+                  kind: 'file',
+                  id: item.id,
+                  path: item.folderPath || '/',
+                  name: item.fileName,
+                })
+                event.dataTransfer.effectAllowed = 'move'
+                event.dataTransfer.setData('text/plain', item.fileName)
+              }}
+              onDragEnd={() => {
+                endMediaDrag()
+                onDragEnd?.()
+              }}
             >
               <button
                 type="button"
@@ -57,7 +75,7 @@ export function MediaGrid({
               >
                 <div className="aspect-square bg-muted">
                   {isImage ? (
-                    <img src={item.url} alt={item.fileName} className="h-full w-full object-cover" />
+                    <img src={item.url} alt={item.fileName} draggable={false} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full items-center justify-center p-2 text-xs text-muted-foreground">
                       {item.fileName}

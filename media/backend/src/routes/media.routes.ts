@@ -19,6 +19,7 @@ router.post(
   mediaController.uploadBatch,
 )
 router.get('/media', requireAuth, mediaController.listItems)
+router.patch('/media/:id/folder', requireAuth, mediaController.moveItem)
 router.get('/media/:id', requireAuth, mediaController.getItem)
 router.delete('/media/:id', requireAuth, mediaController.deleteItem)
 

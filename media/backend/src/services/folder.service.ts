@@ -1,6 +1,15 @@
 import { nanoid } from 'nanoid'
 import { db } from '../models/db.js'
 import type { CreateFolderBody, ListFoldersQuery, MediaFolderDto } from '../schemas/mediaSchemas.js'
+import { buildStorageKey, moveBlob } from './storage.service.js'
+import {
+  folderDropRejection,
+  folderNameOf,
+  joinFolder,
+  likeChildPrefix,
+  normalizeStoredFolderPath,
+  rebaseFolderPath,
+} from '../utils/folderPaths.js'
 
 interface MediaFolderRow {
   id: string
@@ -214,4 +223,127 @@ export async function deleteFolder(id: string): Promise<{ deleted: boolean; reas
   })
 
   return { deleted: true }
+}
+
+interface MovedBlob {
+  fromKey: string
+  toKey: string
+  itemId: string
+  previousFolder: string
+}
+
+async function revertMovedBlobs(moved: MovedBlob[]): Promise<void> {
+  for (const entry of [...moved].reverse()) {
+    await moveBlob(entry.toKey, entry.fromKey).catch(() => undefined)
+    await db('media_items').where({ id: entry.itemId }).update({
+      folder_path: entry.previousFolder,
+      storage_key: entry.fromKey,
+      updated_at: db.fn.now(3),
+    })
+  }
+}
+
+/** Move a folder, its subfolders, and the files inside them onto another folder. */
+export async function moveFolder(input: {
+  scope: string
+  fromPath: string
+  toParentPath: string
+  userId: string
+}): Promise<MediaFolderDto> {
+  const fromPath = normalizeStoredFolderPath(input.fromPath)
+  const toParentPath = normalizeStoredFolderPath(input.toParentPath)
+  const rejection = folderDropRejection(fromPath, toParentPath)
+  if (rejection && rejection !== 'Already in this folder') {
+    throw new Error(rejection)
+  }
+  if (rejection === 'Already in this folder') {
+    const current = await db<MediaFolderRow>('media_folders')
+      .where({ scope: input.scope, path: fromPath })
+      .whereNull('deleted_at')
+      .first()
+    if (current) return rowToDto(current)
+    return {
+      id: `inferred:${input.scope}:${fromPath}`,
+      scope: input.scope,
+      path: fromPath,
+      name: folderNameOf(fromPath),
+      createdAt: new Date(0).toISOString(),
+    }
+  }
+
+  const newPath = joinFolder(toParentPath, folderNameOf(fromPath))
+  const collision = await db<MediaFolderRow>('media_folders')
+    .where({ scope: input.scope, path: newPath })
+    .whereNull('deleted_at')
+    .first()
+  if (collision) {
+    throw new Error('A folder with that name already exists')
+  }
+
+  await ensureFolderPath(input.scope, toParentPath, input.userId)
+
+  const childLike = likeChildPrefix(fromPath)
+  const folderRows = await db<MediaFolderRow>('media_folders')
+    .where({ scope: input.scope })
+    .whereNull('deleted_at')
+    .andWhere((builder) => {
+      builder.where('path', fromPath).orWhereRaw("path LIKE ? ESCAPE '\\\\'", [childLike])
+    })
+
+  const itemRows = (await db('media_items')
+    .where({ scope: input.scope })
+    .whereNull('deleted_at')
+    .andWhere((builder) => {
+      builder.where('folder_path', fromPath).orWhereRaw("folder_path LIKE ? ESCAPE '\\\\'", [childLike])
+    })) as {
+    id: string
+    folder_path: string
+    file_name: string
+    storage_key: string
+  }[]
+
+  const moved: MovedBlob[] = []
+  try {
+    for (const item of itemRows) {
+      const nextFolder = rebaseFolderPath(item.folder_path, fromPath, newPath)
+      const nextKey = buildStorageKey(input.scope, nextFolder, item.id, item.file_name)
+      await moveBlob(item.storage_key, nextKey)
+      await db('media_items').where({ id: item.id }).update({
+        folder_path: nextFolder,
+        storage_key: nextKey,
+        updated_at: db.fn.now(3),
+      })
+      moved.push({
+        fromKey: item.storage_key,
+        toKey: nextKey,
+        itemId: item.id,
+        previousFolder: item.folder_path,
+      })
+    }
+
+    for (const folder of folderRows) {
+      const nextPath = rebaseFolderPath(folder.path, fromPath, newPath)
+      await db('media_folders').where({ id: folder.id }).update({
+        path: nextPath,
+        name: folderNameOf(nextPath),
+        updated_at: db.fn.now(3),
+      })
+    }
+  } catch (err) {
+    await revertMovedBlobs(moved)
+    throw err
+  }
+
+  const updated = await db<MediaFolderRow>('media_folders')
+    .where({ scope: input.scope, path: newPath })
+    .whereNull('deleted_at')
+    .first()
+  if (updated) return rowToDto(updated)
+
+  return createFolder({
+    scope: input.scope,
+    path: newPath,
+    name: folderNameOf(newPath),
+    userId: input.userId,
+  })
 }

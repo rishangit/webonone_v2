@@ -2,12 +2,12 @@ import { nanoid } from 'nanoid'
 import type {
   WebsiteButtonLibraryItem,
   WebsiteButtonStyle,
-  WebsiteColorToken,
   WebsiteElementCustomization,
   WebsiteFontToken,
   WebsiteTextLibraryItem,
   WebsiteTextStyle,
   WebsiteTheme,
+  WebsiteThemeColorPalette,
 } from '../types'
 import { upsertById } from './upsertById'
 
@@ -37,7 +37,7 @@ function remapElementScope(
 
 export type ThemeTokenPatch = {
   fonts?: WebsiteFontToken[]
-  colors?: WebsiteColorToken[]
+  colorPalettes?: WebsiteThemeColorPalette[]
   textStyles?: WebsiteTextStyle[]
 }
 
@@ -65,16 +65,41 @@ function upsertFontOnTheme(
 function upsertColorOnTheme(
   theme: WebsiteTheme,
   spec: { name: string; value: string },
-): { theme: WebsiteTheme; color: WebsiteColorToken; created: boolean } {
+): { theme: WebsiteTheme; index: number; palette: WebsiteThemeColorPalette | null; created: boolean } {
   const normalized = normalizeColorValue(spec.value)
-  const existing = theme.colors.find((color) => normalizeColorValue(color.value) === normalized)
-  if (existing) return { theme, color: existing, created: false }
-  const color: WebsiteColorToken = {
-    id: nanoid(8),
-    name: spec.name,
-    value: spec.value.trim(),
+  const paletteId = theme.colorPaletteId || theme.colorPalettes[0]?.id
+  const current = theme.colorPalettes.find((palette) => palette.id === paletteId) ?? theme.colorPalettes[0]
+  if (!current) {
+    const palette: WebsiteThemeColorPalette = {
+      id: nanoid(8),
+      name: 'Palette',
+      sourceLibraryPaletteId: null,
+      colors: [{ name: spec.name, value: spec.value.trim() }],
+    }
+    return {
+      theme: { ...theme, colorPaletteId: palette.id, colorPalettes: [palette] },
+      index: 1,
+      palette,
+      created: true,
+    }
   }
-  return { theme: { ...theme, colors: [...theme.colors, color] }, color, created: true }
+  const existingIndex = current.colors.findIndex((color) => normalizeColorValue(color.value) === normalized)
+  if (existingIndex >= 0) return { theme, index: existingIndex + 1, palette: null, created: false }
+  if (current.colors.length >= 6) return { theme, index: 1, palette: null, created: false }
+  const palette: WebsiteThemeColorPalette = {
+    ...current,
+    colors: [...current.colors, { name: spec.name, value: spec.value.trim() }],
+  }
+  return {
+    theme: {
+      ...theme,
+      colorPaletteId: theme.colorPaletteId || palette.id,
+      colorPalettes: theme.colorPalettes.map((item) => (item.id === palette.id ? palette : item)),
+    },
+    index: palette.colors.length,
+    palette,
+    created: true,
+  }
 }
 
 export function materializeTextLibraryItem(
@@ -97,13 +122,14 @@ export function materializeTextLibraryItem(
 
   const colorResult = upsertColorOnTheme(next, { name: d.colorName, value: d.colorValue })
   next = colorResult.theme
-  if (colorResult.created) patch.colors = [...(patch.colors ?? []), colorResult.color]
+  if (colorResult.palette) patch.colorPalettes = [colorResult.palette]
 
   const textStyle: WebsiteTextStyle = {
     id: textId,
     name: item.name,
     fontId: fontResult.font.id,
-    colorId: colorResult.color.id,
+    colorIndex: colorResult.index,
+    colorPaletteId: null,
     size: d.size,
     sizeByBreakpoint: d.sizeByBreakpoint,
     sourceLibraryId: item.id,
@@ -133,13 +159,14 @@ export function materializeButtonLibraryItem(
 
   const labelColorResult = upsertColorOnTheme(next, { name: d.labelColorName, value: d.labelColorValue })
   next = labelColorResult.theme
-  if (labelColorResult.created) patch.colors = [...(patch.colors ?? []), labelColorResult.color]
+  if (labelColorResult.palette) patch.colorPalettes = [labelColorResult.palette]
 
   const textStyle: WebsiteTextStyle = {
     id: options.keepTextStyleId ?? nanoid(8),
     name: d.textStyleName,
     fontId: fontResult.font.id,
-    colorId: labelColorResult.color.id,
+    colorIndex: labelColorResult.index,
+    colorPaletteId: null,
     size: d.textSize,
   }
   patch.textStyles = [textStyle]
@@ -147,22 +174,23 @@ export function materializeButtonLibraryItem(
 
   const bgResult = upsertColorOnTheme(next, { name: d.backgroundColorName, value: d.backgroundColorValue })
   next = bgResult.theme
-  if (bgResult.created) patch.colors = [...(patch.colors ?? []), bgResult.color]
+  if (bgResult.palette) patch.colorPalettes = [bgResult.palette]
 
   const textColorResult = upsertColorOnTheme(next, { name: d.textColorName, value: d.textColorValue })
   next = textColorResult.theme
-  if (textColorResult.created) patch.colors = [...(patch.colors ?? []), textColorResult.color]
+  if (textColorResult.palette) patch.colorPalettes = [textColorResult.palette]
 
   const borderResult = upsertColorOnTheme(next, { name: d.borderColorName, value: d.borderColorValue })
-  if (borderResult.created) patch.colors = [...(patch.colors ?? []), borderResult.color]
+  if (borderResult.palette) patch.colorPalettes = [borderResult.palette]
 
   const buttonStyle: WebsiteButtonStyle = {
     id: buttonId,
     name: item.name,
-    backgroundColorId: bgResult.color.id,
-    textColorId: textColorResult.color.id,
+    colorPaletteId: null,
+    backgroundColorIndex: bgResult.index,
+    textColorIndex: textColorResult.index,
     textStyleId: textStyle.id,
-    borderColorId: borderResult.color.id,
+    borderColorIndex: borderResult.index,
     borderWidth: d.borderWidth,
     radius: d.radius,
     sourceLibraryId: item.id,
@@ -180,9 +208,9 @@ export function applyThemeTokenPatch(theme: WebsiteTheme, patch?: ThemeTokenPatc
       next = { ...next, fonts: upsertById(next.fonts, font) }
     }
   }
-  if (patch.colors?.length) {
-    for (const color of patch.colors) {
-      next = { ...next, colors: upsertById(next.colors, color) }
+  if (patch.colorPalettes?.length) {
+    for (const palette of patch.colorPalettes) {
+      next = { ...next, colorPalettes: upsertById(next.colorPalettes, palette) }
     }
   }
   if (patch.textStyles?.length) {

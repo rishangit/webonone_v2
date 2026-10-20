@@ -12,16 +12,15 @@ import type {
   CreateWebsiteThemeBody,
   UpdateWebsiteThemeBody,
   WebsiteButtonStyle,
-  WebsiteColorToken,
   WebsiteFontToken,
   WebsiteTextStyle,
-  WebsiteThemeColorPalette,
-  WebsiteThemeColorRoles,
 } from '../schemas/websiteThemes.schema.js'
+import { patchThemeColorFields, readThemeColorFields, writeThemeColorFields } from '../utils/themeColorStorage.js'
 import { detachCompanyDocumentRefs } from './websiteLibraryDocument.js'
 import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
 import type { WebsiteChromeKind } from './websiteChrome.service.js'
 import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
+import { rewriteWebsiteDocumentMedia } from '../utils/rewriteWebsiteDocumentMedia.js'
 
 type Sql = Knex | Knex.Transaction
 
@@ -76,31 +75,15 @@ function parseJsonArray<T>(raw: unknown): T[] {
   return []
 }
 
-const EMPTY_COLOR_ROLES: WebsiteThemeColorRoles = {
-  pageBackgroundColorId: '',
-  surfaceColorId: '',
-  bodyTextColorId: '',
-  accentColor1Id: '',
-  accentColor2Id: '',
-}
-
-function parseColorRoles(raw: unknown): WebsiteThemeColorRoles {
-  let value: unknown = raw
-  if (typeof raw === 'string') {
-    try {
-      value = JSON.parse(raw) as unknown
-    } catch {
-      return { ...EMPTY_COLOR_ROLES }
-    }
-  }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...EMPTY_COLOR_ROLES }
-  const record = value as Record<string, unknown>
+function copiedThemeColorColumns(source: ThemeRow) {
   return {
-    pageBackgroundColorId: typeof record.pageBackgroundColorId === 'string' ? record.pageBackgroundColorId : '',
-    surfaceColorId: typeof record.surfaceColorId === 'string' ? record.surfaceColorId : '',
-    bodyTextColorId: typeof record.bodyTextColorId === 'string' ? record.bodyTextColorId : '',
-    accentColor1Id: typeof record.accentColor1Id === 'string' ? record.accentColor1Id : '',
-    accentColor2Id: typeof record.accentColor2Id === 'string' ? record.accentColor2Id : '',
+    color_palette_id: source.color_palette_id,
+    page_background_index: source.page_background_index,
+    surface_index: source.surface_index,
+    body_text_index: source.body_text_index,
+    accent_1_index: source.accent_1_index,
+    accent_2_index: source.accent_2_index,
+    color_palettes: JSON.stringify(parseJsonArray(source.color_palettes ?? [])),
   }
 }
 
@@ -170,7 +153,7 @@ function toPageDto(row: PageRow): LibraryPageDto {
     layoutId: row.layout_id,
     layoutName: row.layout_name ?? null,
     sortOrder: row.sort_order ?? 0,
-    document: parseDocument(row.document),
+    document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
     isLocked: false,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -301,7 +284,7 @@ function toChromeDto(row: ChromeRow): LibraryChromeDto {
     name: row.name,
     isDefault: toBool(row.is_default),
     isLocked: false,
-    document: parseDocument(row.document),
+    document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -404,7 +387,7 @@ function toPresetDto(row: PresetRow): LibraryPresetDto {
     id: row.id,
     companyId: '',
     name: row.name,
-    document: parseDocument(row.document),
+    document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
     isLocked: false,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -469,9 +452,16 @@ export type LibraryThemeDto = {
   isDefault: boolean
   isLocked: boolean
   fonts: WebsiteFontToken[]
-  colors: WebsiteColorToken[]
-  colorPalettes: WebsiteThemeColorPalette[]
-  colorRoles: WebsiteThemeColorRoles
+  colorPaletteId: string
+  pageBackgroundIndex: number
+  surfaceIndex: number
+  bodyTextIndex: number
+  accent1Index: number
+  accent2Index: number
+  surfaceColor: string
+  accentColor1: string
+  accentColor2: string
+  colorPalettes: ReturnType<typeof readThemeColorFields>['colorPalettes']
   textStyles: WebsiteTextStyle[]
   buttonStyles: WebsiteButtonStyle[]
   createdBy: string | null
@@ -482,14 +472,16 @@ export type LibraryThemeDto = {
 type ThemeRow = {
   id: string
   name: string
-  page_background: string
-  body_text_color: string
+  color_palette_id: string | null
+  page_background_index: number
+  surface_index: number
+  body_text_index: number
+  accent_1_index: number
+  accent_2_index: number
   is_active: number | boolean
   is_default: number | boolean
   fonts: unknown
-  colors: unknown
   color_palettes: unknown
-  color_roles: unknown
   text_styles: unknown
   button_styles: unknown
   created_by: string | null
@@ -502,15 +494,11 @@ function toThemeDto(row: ThemeRow): LibraryThemeDto {
     id: row.id,
     companyId: '',
     name: row.name,
-    pageBackground: row.page_background,
-    bodyTextColor: row.body_text_color,
     isActive: toBool(row.is_active),
     isDefault: toBool(row.is_default),
     isLocked: false,
     fonts: parseJsonArray<WebsiteFontToken>(row.fonts),
-    colors: parseJsonArray<WebsiteColorToken>(row.colors),
-    colorPalettes: parseJsonArray<WebsiteThemeColorPalette>(row.color_palettes ?? []),
-    colorRoles: parseColorRoles(row.color_roles),
+    ...readThemeColorFields(row),
     textStyles: parseJsonArray<WebsiteTextStyle>(row.text_styles),
     buttonStyles: parseJsonArray<WebsiteButtonStyle>(row.button_styles),
     createdBy: row.created_by,
@@ -550,14 +538,10 @@ export async function createLibraryTheme(input: { userId: string; body: CreateWe
   await db(LIB.themes).insert({
     id,
     name: input.body.name,
-    page_background: input.body.pageBackground,
-    body_text_color: input.body.bodyTextColor,
+    ...writeThemeColorFields(input.body),
     is_active: input.body.isActive,
     is_default: input.body.isDefault,
     fonts: JSON.stringify(input.body.fonts),
-    colors: JSON.stringify(input.body.colors),
-    color_palettes: JSON.stringify(input.body.colorPalettes ?? []),
-    color_roles: JSON.stringify(parseColorRoles(input.body.colorRoles)),
     text_styles: JSON.stringify(input.body.textStyles),
     button_styles: JSON.stringify(input.body.buttonStyles),
     created_by: input.userId,
@@ -572,14 +556,10 @@ export async function updateLibraryTheme(input: { id: string; body: UpdateWebsit
   if (input.body.isDefault) await clearLibraryDefault(LIB.themes)
   const updates: Record<string, unknown> = { updated_at: db.fn.now(3) }
   if (input.body.name != null) updates.name = input.body.name
-  if (input.body.pageBackground != null) updates.page_background = input.body.pageBackground
-  if (input.body.bodyTextColor != null) updates.body_text_color = input.body.bodyTextColor
   if (input.body.isActive != null) updates.is_active = input.body.isActive
   if (input.body.isDefault != null) updates.is_default = input.body.isDefault
   if (input.body.fonts != null) updates.fonts = JSON.stringify(input.body.fonts)
-  if (input.body.colors != null) updates.colors = JSON.stringify(input.body.colors)
-  if (input.body.colorPalettes != null) updates.color_palettes = JSON.stringify(input.body.colorPalettes)
-  if (input.body.colorRoles != null) updates.color_roles = JSON.stringify(parseColorRoles(input.body.colorRoles))
+  Object.assign(updates, patchThemeColorFields(existing, input.body))
   if (input.body.textStyles != null) updates.text_styles = JSON.stringify(input.body.textStyles)
   if (input.body.buttonStyles != null) updates.button_styles = JSON.stringify(input.body.buttonStyles)
   await db(LIB.themes).where({ id: input.id }).update(updates)
@@ -785,15 +765,11 @@ async function copyThemeRow(conn: Sql, input: { companyId: string; userId: strin
     id,
     company_id: input.companyId,
     name: await availableName(conn, COMPANY.themes, input.companyId, source.name),
-    page_background: source.page_background,
-    body_text_color: source.body_text_color,
+    ...copiedThemeColorColumns(source),
     is_active: true,
     is_default: false,
     is_locked: false,
     fonts: JSON.stringify(parseJsonArray(source.fonts)),
-    colors: JSON.stringify(parseJsonArray(source.colors)),
-    color_palettes: JSON.stringify(parseJsonArray(source.color_palettes ?? [])),
-    color_roles: JSON.stringify(parseColorRoles(source.color_roles)),
     text_styles: JSON.stringify(parseJsonArray(source.text_styles)),
     button_styles: JSON.stringify(parseJsonArray(source.button_styles)),
     source_library_id: source.id,
@@ -1033,12 +1009,8 @@ async function restoreCompanyTheme(
     return copyThemeRow(conn, { companyId: input.companyId, userId: input.userId, libraryId: input.libraryId })
   }
   await conn(COMPANY.themes).where({ id: existingId }).update({
-    page_background: source.page_background,
-    body_text_color: source.body_text_color,
+    ...copiedThemeColorColumns(source),
     fonts: JSON.stringify(parseJsonArray(source.fonts)),
-    colors: JSON.stringify(parseJsonArray(source.colors)),
-    color_palettes: JSON.stringify(parseJsonArray(source.color_palettes ?? [])),
-    color_roles: JSON.stringify(parseColorRoles(source.color_roles)),
     text_styles: JSON.stringify(parseJsonArray(source.text_styles)),
     button_styles: JSON.stringify(parseJsonArray(source.button_styles)),
     updated_at: db.fn.now(3),
@@ -1099,12 +1071,8 @@ export async function revertLibraryTheme(input: { companyId: string; id: string 
     const source = await trx<ThemeRow>(LIB.themes).where({ id: libraryId }).first()
     if (!source) throw libraryMissing('WEBSITE_THEME_NOT_FOUND')
     await trx(COMPANY.themes).where({ id: input.id }).update({
-      page_background: source.page_background,
-      body_text_color: source.body_text_color,
+      ...copiedThemeColorColumns(source),
       fonts: JSON.stringify(parseJsonArray(source.fonts)),
-      colors: JSON.stringify(parseJsonArray(source.colors)),
-      color_palettes: JSON.stringify(parseJsonArray(source.color_palettes ?? [])),
-      color_roles: JSON.stringify(parseColorRoles(source.color_roles)),
       text_styles: JSON.stringify(parseJsonArray(source.text_styles)),
       button_styles: JSON.stringify(parseJsonArray(source.button_styles)),
       updated_at: db.fn.now(3),

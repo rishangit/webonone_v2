@@ -105,16 +105,18 @@ export interface DesignWebsiteThemeRow {
   id: string
   company_id: string
   name: string
-  page_background: string
-  body_text_color: string
+  color_palette_id: string | null
+  page_background_index: number
+  surface_index: number
+  body_text_index: number
+  accent_1_index: number
+  accent_2_index: number
   is_active: number | boolean
   is_default: number | boolean
   is_locked: number | boolean
   source_library_id: string | null
   fonts: string | unknown[]
-  colors: string | unknown[]
   color_palettes: string | unknown[] | null
-  color_roles: string | Record<string, unknown> | null
   text_styles: string | unknown[]
   button_styles: string | unknown[]
   created_by: string | null

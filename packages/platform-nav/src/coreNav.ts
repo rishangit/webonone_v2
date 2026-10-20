@@ -456,6 +456,7 @@ const WEBSITE_SUPER_ADMIN_SECTIONS: ReadonlyArray<readonly [section: string, lab
   ['colors', 'Colors'],
   ['texts', 'Texts'],
   ['buttons', 'Buttons'],
+  ['media', 'Media'],
 ]
 
 function websiteSectionLeaf(section: string, label: string): CoreNavLeaf {

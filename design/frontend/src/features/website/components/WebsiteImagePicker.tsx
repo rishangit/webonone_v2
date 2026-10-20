@@ -17,6 +17,7 @@ import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useAppSelector } from '@/app/store/hooks'
 import { WebsiteMediaCropDialog, useWebsiteMediaCrop } from './WebsiteMediaCropDialog'
 import {
+  WEBSITE_LIBRARY_MEDIA_SCOPE,
   buildWebsiteFolderPath,
   buildWebsiteMediaScope,
   getMediaOrigin,
@@ -46,8 +47,7 @@ export function WebsiteImagePicker({ open, onClose, onSelect }: WebsiteImagePick
   const hostRequestIdRef = useRef<string | null>(null)
   const [selected, setSelected] = useState<MediaItemDto | null>(null)
   const [openKey, setOpenKey] = useState(0)
-  const scope =
-    role === 'super_admin' ? 'webonone:platform:website-library' : buildWebsiteMediaScope(companyId)
+  const scope = role === 'super_admin' ? WEBSITE_LIBRARY_MEDIA_SCOPE : buildWebsiteMediaScope(companyId)
   const folderPath = buildWebsiteFolderPath()
   const crop = useWebsiteMediaCrop()
 

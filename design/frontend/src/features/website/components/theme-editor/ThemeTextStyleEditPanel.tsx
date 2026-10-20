@@ -3,8 +3,9 @@ import { FormField, Input, Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { fallbackTextSize, resolveTextStyle } from '../../document/theme'
 import { WEBSITE_BREAKPOINTS, type WebsiteBreakpoint, type WebsiteTextStyle, type WebsiteTheme } from '../../types'
 import {
-  inferThemePaletteId,
-  remapColorIdToPalette,
+  paletteOverrideForSave,
+  remapColorIndex,
+  stylePaletteId,
   themeColorOptionsForPalette,
   themePaletteColorValues,
   themePaletteSelectOptions,
@@ -63,11 +64,11 @@ export function ThemeTextStyleEditPanel({
       fontFamily: snap.fontFamily,
       fontSize: snap.size,
     },
-    themePaletteColorValues(theme, [values.colorId]),
+    themePaletteColorValues(theme, values.colorPaletteId),
   )
   const defaultHtml = defaultElementHtml('text', values.id, elementVisual)
   const paletteOptions = themePaletteSelectOptions(theme)
-  const colorPaletteId = inferThemePaletteId(theme, [values.colorId])
+  const colorPaletteId = stylePaletteId(theme, values.colorPaletteId)
   const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId)
   const missingTokenLabel = t('themeTokenMissing')
   const withTokenFallback = (options: TextStyleBasicSettingsOption[], id: string) =>
@@ -83,7 +84,7 @@ export function ThemeTextStyleEditPanel({
     })),
     values.fontId,
   )
-  const colorOptionsWithFallback = withTokenFallback(colorOptions, values.colorId)
+  const colorOptionsWithFallback = withTokenFallback(colorOptions, String(values.colorIndex || ''))
 
   const generalFields = (
     <TextStyleBasicSettingsFields
@@ -93,7 +94,7 @@ export function ThemeTextStyleEditPanel({
         name: values.name,
         fontId: values.fontId,
         colorPaletteId,
-        colorId: values.colorId,
+        colorId: String(values.colorIndex || ''),
         size: values.size,
       }}
       onChange={(next) => {
@@ -102,9 +103,10 @@ export function ThemeTextStyleEditPanel({
           ...values,
           name: next.name,
           fontId: next.fontId,
-          colorId: paletteChanged
-            ? remapColorIdToPalette(theme, colorPaletteId, next.colorPaletteId, next.colorId)
-            : next.colorId,
+          colorPaletteId: paletteOverrideForSave(theme.colorPaletteId, next.colorPaletteId),
+          colorIndex: paletteChanged
+            ? remapColorIndex(theme, next.colorPaletteId, Number(next.colorId) || 1)
+            : Number(next.colorId) || 1,
         })
       }}
       fieldErrors={fieldErrors}

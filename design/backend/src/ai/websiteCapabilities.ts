@@ -145,18 +145,20 @@ const themeProperties = {
     title: 'Main text color',
     description: 'Headings and body text default as #RRGGBB. Keep it readable on the page background.',
   },
-  colorRoles: {
-    type: 'object',
-    title: 'Palette color roles',
-    description:
-      'Theme Basic settings colors picked from the selected palette: pageBackgroundColorId, surfaceColorId, bodyTextColorId, accentColor1Id, accentColor2Id. Each value is a color token id from the theme palette.',
-    properties: {
-      pageBackgroundColorId: { type: 'string', title: 'Page background color id' },
-      surfaceColorId: { type: 'string', title: 'Surface color id' },
-      bodyTextColorId: { type: 'string', title: 'Main text color id' },
-      accentColor1Id: { type: 'string', title: 'Accent color 1 id' },
-      accentColor2Id: { type: 'string', title: 'Accent color 2 id' },
-    },
+  colorPaletteId: {
+    type: 'string',
+    title: 'Basic color palette',
+    description: 'Palette id from the theme color palettes. Text and button styles use this palette unless they set their own.',
+  },
+  pageBackgroundIndex: {
+    type: 'integer',
+    title: 'Page background color',
+    description: 'Color slot on the basic palette, from 1 to 6.',
+  },
+  bodyTextIndex: {
+    type: 'integer',
+    title: 'Main text color',
+    description: 'Color slot on the basic palette, from 1 to 6.',
   },
   isActive: {
     type: 'boolean',
@@ -260,13 +262,13 @@ const canvasOperationSchema = {
       type: 'string',
       enum: ['add_block', 'add_addon', 'update_text', 'update_button', 'update_menu', 'rename', 'place_block', 'move', 'delete_block', 'delete_addon'],
       description:
-        'Create: add_block, add_addon. Read ids and names from the latest canvas outline. Update content: update_text, update_button, update_menu. Rename an existing block or add-on: rename with its id and the new name. Move or resize on the canvas grid: move with the id and col, row, cols, or rows. place_block only slides a block to start, center, or end. Delete: delete_block, delete_addon. Do not recreate an element to rename or edit it.',
+        'Same operations on a page, header, footer, or preset. Create: add_block, or add_addon with type text, button, image, slider, or menu. Edit: update_text, update_button, update_menu, rename. Place: move, or place_block with align start, center, or end. Remove: delete_block, delete_addon. Copy ids from the latest canvas outline. Never invent ids.',
     },
     type: {
       type: 'string',
       enum: ['text', 'button', 'image', 'slider', 'menu'],
       description:
-        'Required for add_addon. Use text for a name, contact lines, a link list, or copyright. Use image for a logo. Use menu with items for page links.',
+        'Required for add_addon. text is a heading or paragraph. button is a labeled action. image is a logo or a full-width picture (empty until the user picks media). slider is a content slider. menu is a row of page links and needs items.',
     },
     name: {
       type: 'string',
@@ -359,13 +361,13 @@ const canvasToolSchema = {
       maxItems: 24,
       items: canvasOperationSchema,
       description:
-        'Ordered canvas edits. Create with add_block and add_addon, each with name. Rename an existing block or add-on with rename, its id from the outline, and the new name. Update content with update_text, update_button, or update_menu. Move or resize with move: copy the id and send col, row, cols, or rows from the canvas grid. place_block only sets align start, center, or end. Delete with delete_block or delete_addon. Do not recreate an element to change its name. New sections still use add_block, then group true, then at least two related add_addon calls. Do not send span.',
+        'Ordered edits for the open page, header, footer, or preset. Each item is one element: a block, a group (add_block with group true), or an add-on (text, button, image, slider, menu). Create, rename, update, move, align, or delete only what the user asked for.',
     },
   },
 }
 
 const canvasToolDescription =
-  'Change the website designer canvas that is already open. Use this when the user asks to add, edit, or remove a heading, paragraph, button, image, slider, menu, or block on the current page, header, footer, or preset. Do not create a new page, header, footer, preset, layout, or theme for that request. The designer-canvas outline in the latest user message is the only current canvas, including manual edits. Ignore every earlier outline. Copy blockId and addonId from that latest outline. Never invent ids. Canvas CRUD uses this one tool. Create with add_block and add_addon. Read ids and current names from the latest outline. Update text, a button label, or menu items with update_text, update_button, or update_menu. Rename an existing block or add-on with rename, copying its blockId or addonId from the outline and sending the new name. Do not recreate it and do not use update_text only to change the tree name. Move or resize an existing block or add-on with move. The canvas is a 12-column grid. Each outline line shows col, cols, row, and rows. Copy that id. Set col and row to place it, cols for width, and rows for height. Omit a field to keep the current value. The named element keeps that cell and size. If another element would overlap it, that other element moves to the next free cell. place_block only sets align start, center, or end. Delete with delete_block or delete_addon. Leave every element the user did not mention as it is now, except an element that would cover the one just placed. blockId is enough for an edit. Add or delete only when the user wants new structure. Build new content from small groups. add_block starts a section sized to its content. Each following add_block with group true is one small group inside that section and must contain at least two related elements. Prefer several small groups over one flat list. Each parent takes its width and height from its children so text and buttons are fully visible. Showing the full content comes before a tight box. Do not send span. Use move when the user asks for a grid cell, a width, or a height. add_addon needs type and is placed inside the current group. Every new block and add-on needs name, a short label for the content tree, such as Contact us or Address. Do not name an element Block, Text, Button, Image, Slider, or Menu. Set role heading or body on text. Images are empty until the user picks media. One call can hold several operations. The user confirms once, the canvas updates, and they still press Save in the designer.'
+  'Edit the website designer canvas that is already open. The same tool covers a page, header, footer, or preset. Do not create another record for that request. The designer-canvas outline in the latest user message is the only current canvas. Ignore every earlier outline. Copy blockId and addonId from that outline. Never invent ids. One call can hold several operations. The user confirms once, the canvas updates, and they still press Save. Elements you can create or edit: block (add_block; group true nests it in the current section), text (add_addon type text, role heading or body, update_text), button (add_addon type button, update_button), image (add_addon type image; it stays empty until the user picks media; span full makes it a wide banner), slider (add_addon type slider), menu (add_addon type menu with items, update_menu). rename changes the content-tree name and leaves the element in place. move sets col, row, cols, or rows on the 12-column grid. place_block sets align start, center, or end. delete_block and delete_addon remove an existing id. Leave every element the user did not mention as it is. Do not name an element Block, Text, Button, Image, Slider, or Menu.'
 
 function canvasTool(name: string, roles: ToolDefinition['requiredRoles'], permission: string): ToolDefinition {
   return designTool({

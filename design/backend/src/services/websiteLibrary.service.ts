@@ -16,11 +16,9 @@ import {
 import {
   buttonLibraryDefinitionSchema,
   textLibraryDefinitionSchema,
-  websiteButtonStyleSchema,
   websiteColorLibraryPaletteSchema,
   websiteColorTokenSchema,
   websiteFontTokenSchema,
-  websiteTextStyleSchema,
 } from '../schemas/websiteThemes.schema.js'
 import {
   normalizeColorLibraryPalette,
@@ -28,6 +26,7 @@ import {
   type WebsiteColorLibraryPalette,
 } from '../utils/colorLibraryPalette.js'
 import { normalizeStoredCustomization } from '../utils/websiteElementRoot.js'
+import { starterThemeColumns } from '../utils/themeColorStorage.js'
 
 const starterThemeSchema = z.object({
   name: z.string().min(1),
@@ -35,8 +34,8 @@ const starterThemeSchema = z.object({
   bodyTextColor: z.string().min(1),
   fonts: z.array(websiteFontTokenSchema),
   colors: z.array(websiteColorTokenSchema),
-  textStyles: z.array(websiteTextStyleSchema),
-  buttonStyles: z.array(websiteButtonStyleSchema),
+  textStyles: z.array(z.object({ id: z.string() }).passthrough()),
+  buttonStyles: z.array(z.object({ id: z.string() }).passthrough()),
 })
 
 const starterPresetSchema = z.object({
@@ -84,7 +83,7 @@ export async function listFontLibrary(input: {
   names?: string | string[]
 }): Promise<{ items: FontLibraryItem[]; total: number; page: number; pageSize: number }> {
   const { names, page, pageSize, offset } = namedListWindow(input, 48)
-  let query = db<FontLibraryRow>('design_website_font_library').where('is_active', true)
+  let query = db<FontLibraryRow>('design_website_library_font').where('is_active', true)
   applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
@@ -108,26 +107,26 @@ export async function createFontLibraryItem(input: {
   googleFontUrl: string
   family: string
 }): Promise<FontLibraryItem> {
-  const existing = await db<FontLibraryRow>('design_website_font_library')
+  const existing = await db<FontLibraryRow>('design_website_library_font')
     .where({ google_font_url: input.googleFontUrl })
     .first()
   if (existing) {
     if (!existing.is_active) {
-      await db('design_website_font_library').where({ id: existing.id }).update({
+      await db('design_website_library_font').where({ id: existing.id }).update({
         is_active: true,
         name: input.name,
         family: input.family,
       })
     }
-    const row = await db<FontLibraryRow>('design_website_font_library').where({ id: existing.id }).first()
+    const row = await db<FontLibraryRow>('design_website_library_font').where({ id: existing.id }).first()
     if (!row) throw new HttpError(500, 'Could not save the font', 'FONT_LIBRARY_SAVE_FAILED')
     return toFontLibraryItem(row)
   }
 
-  const maxRow = await db('design_website_font_library').max<{ max: number | string | null }>('sort_order as max').first()
+  const maxRow = await db('design_website_library_font').max<{ max: number | string | null }>('sort_order as max').first()
   const sortOrder = Number(maxRow?.max ?? 0) + 1
   const id = nanoid()
-  await db('design_website_font_library').insert({
+  await db('design_website_library_font').insert({
     id,
     name: input.name,
     google_font_url: input.googleFontUrl,
@@ -152,11 +151,11 @@ export async function updateFontLibraryItem(
     family: string
   },
 ): Promise<FontLibraryItem> {
-  const row = await db<FontLibraryRow>('design_website_font_library').where({ id }).first()
+  const row = await db<FontLibraryRow>('design_website_library_font').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Font not found', 'FONT_LIBRARY_NOT_FOUND')
   }
-  const urlTaken = await db<FontLibraryRow>('design_website_font_library')
+  const urlTaken = await db<FontLibraryRow>('design_website_library_font')
     .where({ google_font_url: input.googleFontUrl })
     .whereNot({ id })
     .where('is_active', true)
@@ -164,22 +163,22 @@ export async function updateFontLibraryItem(
   if (urlTaken) {
     throw new HttpError(409, 'A font with this Google Font URL already exists', 'FONT_LIBRARY_URL_TAKEN')
   }
-  await db('design_website_font_library').where({ id }).update({
+  await db('design_website_library_font').where({ id }).update({
     name: input.name,
     google_font_url: input.googleFontUrl,
     family: input.family,
   })
-  const updated = await db<FontLibraryRow>('design_website_font_library').where({ id }).first()
+  const updated = await db<FontLibraryRow>('design_website_library_font').where({ id }).first()
   if (!updated) throw new HttpError(500, 'Could not save the font', 'FONT_LIBRARY_SAVE_FAILED')
   return toFontLibraryItem(updated)
 }
 
 export async function deleteFontLibraryItem(id: string): Promise<void> {
-  const row = await db<FontLibraryRow>('design_website_font_library').where({ id }).first()
+  const row = await db<FontLibraryRow>('design_website_library_font').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Font not found', 'FONT_LIBRARY_NOT_FOUND')
   }
-  await db('design_website_font_library').where({ id }).update({ is_active: false })
+  await db('design_website_library_font').where({ id }).update({ is_active: false })
 }
 
 export type ColorLibraryItem = {
@@ -218,7 +217,7 @@ export async function listColorLibrary(input: {
   names?: string | string[]
 }): Promise<{ items: ColorLibraryItem[]; total: number; page: number; pageSize: number }> {
   const { names, page, pageSize, offset } = namedListWindow(input, 48)
-  let query = db<ColorLibraryRow>('design_website_color_library').where('is_active', true)
+  let query = db<ColorLibraryRow>('design_website_library_color').where('is_active', true)
   applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
@@ -242,26 +241,26 @@ export async function createColorLibraryItem(input: {
   palette: WebsiteColorLibraryPalette
 }): Promise<ColorLibraryItem> {
   const palette = parseColorLibraryPalette(input.palette)
-  const existing = await db<ColorLibraryRow>('design_website_color_library')
+  const existing = await db<ColorLibraryRow>('design_website_library_color')
     .whereRaw('LOWER(name) = ?', [input.name.trim().toLowerCase()])
     .first()
   if (existing) {
     if (!existing.is_active) {
-      await db('design_website_color_library').where({ id: existing.id }).update({
+      await db('design_website_library_color').where({ id: existing.id }).update({
         is_active: true,
         name: input.name,
         palette: JSON.stringify(palette),
       })
     }
-    const row = await db<ColorLibraryRow>('design_website_color_library').where({ id: existing.id }).first()
+    const row = await db<ColorLibraryRow>('design_website_library_color').where({ id: existing.id }).first()
     if (!row) throw new HttpError(500, 'Could not save the color palette', 'COLOR_LIBRARY_SAVE_FAILED')
     return toColorLibraryItem(row)
   }
 
-  const maxRow = await db('design_website_color_library').max<{ max: number | string | null }>('sort_order as max').first()
+  const maxRow = await db('design_website_library_color').max<{ max: number | string | null }>('sort_order as max').first()
   const sortOrder = Number(maxRow?.max ?? 0) + 1
   const id = nanoid()
-  await db('design_website_color_library').insert({
+  await db('design_website_library_color').insert({
     id,
     name: input.name,
     palette: JSON.stringify(palette),
@@ -283,12 +282,12 @@ export async function updateColorLibraryItem(
     palette: WebsiteColorLibraryPalette
   },
 ): Promise<ColorLibraryItem> {
-  const row = await db<ColorLibraryRow>('design_website_color_library').where({ id }).first()
+  const row = await db<ColorLibraryRow>('design_website_library_color').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Color palette not found', 'COLOR_LIBRARY_NOT_FOUND')
   }
   const palette = parseColorLibraryPalette(input.palette)
-  const nameTaken = await db<ColorLibraryRow>('design_website_color_library')
+  const nameTaken = await db<ColorLibraryRow>('design_website_library_color')
     .whereRaw('LOWER(name) = ?', [input.name.trim().toLowerCase()])
     .whereNot({ id })
     .where('is_active', true)
@@ -296,21 +295,21 @@ export async function updateColorLibraryItem(
   if (nameTaken) {
     throw new HttpError(409, 'A palette with this name already exists', 'COLOR_LIBRARY_NAME_TAKEN')
   }
-  await db('design_website_color_library').where({ id }).update({
+  await db('design_website_library_color').where({ id }).update({
     name: input.name.trim(),
     palette: JSON.stringify(palette),
   })
-  const updated = await db<ColorLibraryRow>('design_website_color_library').where({ id }).first()
+  const updated = await db<ColorLibraryRow>('design_website_library_color').where({ id }).first()
   if (!updated) throw new HttpError(500, 'Could not save the color palette', 'COLOR_LIBRARY_SAVE_FAILED')
   return toColorLibraryItem(updated)
 }
 
 export async function deleteColorLibraryItem(id: string): Promise<void> {
-  const row = await db<ColorLibraryRow>('design_website_color_library').where({ id }).first()
+  const row = await db<ColorLibraryRow>('design_website_library_color').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Color not found', 'COLOR_LIBRARY_NOT_FOUND')
   }
-  await db('design_website_color_library').where({ id }).update({ is_active: false })
+  await db('design_website_library_color').where({ id }).update({ is_active: false })
 }
 
 export type WebsiteElementCustomization = {
@@ -601,7 +600,7 @@ export async function listButtonLibrary(input: {
   names?: string | string[]
 }): Promise<{ items: ButtonLibraryItem[]; total: number; page: number; pageSize: number }> {
   const { names, page, pageSize, offset } = namedListWindow(input, 48)
-  let query = db<ButtonLibraryRow>('design_website_button_library').where('is_active', true)
+  let query = db<ButtonLibraryRow>('design_website_library_button').where('is_active', true)
   applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
@@ -621,7 +620,7 @@ export async function listButtonLibrary(input: {
 }
 
 export async function getButtonLibraryItem(id: string): Promise<ButtonLibraryItem> {
-  const row = await db<ButtonLibraryRow>('design_website_button_library').where({ id }).first()
+  const row = await db<ButtonLibraryRow>('design_website_library_button').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Button style not found', 'BUTTON_LIBRARY_NOT_FOUND')
   }
@@ -632,26 +631,26 @@ export async function createButtonLibraryItem(input: {
   name: string
   definition: ButtonLibraryDefinition
 }): Promise<ButtonLibraryItem> {
-  const existing = await db<ButtonLibraryRow>('design_website_button_library')
+  const existing = await db<ButtonLibraryRow>('design_website_library_button')
     .whereRaw('LOWER(name) = ?', [input.name.trim().toLowerCase()])
     .first()
   if (existing) {
     if (!existing.is_active) {
-      await db('design_website_button_library').where({ id: existing.id }).update({
+      await db('design_website_library_button').where({ id: existing.id }).update({
         is_active: true,
         name: input.name,
         definition: JSON.stringify(input.definition),
       })
     }
-    const row = await db<ButtonLibraryRow>('design_website_button_library').where({ id: existing.id }).first()
+    const row = await db<ButtonLibraryRow>('design_website_library_button').where({ id: existing.id }).first()
     if (!row) throw new HttpError(500, 'Could not save the button style', 'BUTTON_LIBRARY_SAVE_FAILED')
     return toButtonLibraryItem(row)
   }
 
-  const maxRow = await db('design_website_button_library').max<{ max: number | string | null }>('sort_order as max').first()
+  const maxRow = await db('design_website_library_button').max<{ max: number | string | null }>('sort_order as max').first()
   const sortOrder = Number(maxRow?.max ?? 0) + 1
   const id = nanoid()
-  await db('design_website_button_library').insert({
+  await db('design_website_library_button').insert({
     id,
     name: input.name,
     definition: JSON.stringify(input.definition),
@@ -673,11 +672,11 @@ export async function updateButtonLibraryItem(
     definition: ButtonLibraryDefinition
   },
 ): Promise<ButtonLibraryItem> {
-  const row = await db<ButtonLibraryRow>('design_website_button_library').where({ id }).first()
+  const row = await db<ButtonLibraryRow>('design_website_library_button').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Button style not found', 'BUTTON_LIBRARY_NOT_FOUND')
   }
-  const nameTaken = await db<ButtonLibraryRow>('design_website_button_library')
+  const nameTaken = await db<ButtonLibraryRow>('design_website_library_button')
     .whereRaw('LOWER(name) = ?', [input.name.trim().toLowerCase()])
     .whereNot({ id })
     .where('is_active', true)
@@ -685,11 +684,11 @@ export async function updateButtonLibraryItem(
   if (nameTaken) {
     throw new HttpError(409, 'A button style with this name already exists', 'BUTTON_LIBRARY_NAME_TAKEN')
   }
-  await db('design_website_button_library').where({ id }).update({
+  await db('design_website_library_button').where({ id }).update({
     name: input.name.trim(),
     definition: JSON.stringify(input.definition),
   })
-  const updated = await db<ButtonLibraryRow>('design_website_button_library').where({ id }).first()
+  const updated = await db<ButtonLibraryRow>('design_website_library_button').where({ id }).first()
   if (!updated) throw new HttpError(500, 'Could not save the button style', 'BUTTON_LIBRARY_SAVE_FAILED')
   return toButtonLibraryItem(updated)
 }
@@ -728,11 +727,11 @@ export async function patchButtonLibraryItem(
 }
 
 export async function deleteButtonLibraryItem(id: string): Promise<void> {
-  const row = await db<ButtonLibraryRow>('design_website_button_library').where({ id }).first()
+  const row = await db<ButtonLibraryRow>('design_website_library_button').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Button style not found', 'BUTTON_LIBRARY_NOT_FOUND')
   }
-  await db('design_website_button_library').where({ id }).update({ is_active: false })
+  await db('design_website_library_button').where({ id }).update({ is_active: false })
 }
 
 type StoredStarter = {
@@ -814,15 +813,11 @@ export async function ensureStarterWebsite(input: {
         id: themeId,
         company_id: input.companyId,
         name: starter.theme.name,
-        page_background: starter.theme.pageBackground,
-        body_text_color: starter.theme.bodyTextColor,
+        ...starterThemeColumns(starter.theme),
         is_active: true,
         is_default: true,
         is_locked: true,
         fonts: JSON.stringify(starter.theme.fonts),
-        colors: JSON.stringify(starter.theme.colors),
-        text_styles: JSON.stringify(starter.theme.textStyles),
-        button_styles: JSON.stringify(starter.theme.buttonStyles),
         created_by: input.userId,
         created_at: now(),
         updated_at: now(),
@@ -1017,15 +1012,11 @@ async function backfillLockedDefaults(input: {
       id: nanoid(),
       company_id: input.companyId,
       name: starter.theme.name,
-      page_background: starter.theme.pageBackground,
-      body_text_color: starter.theme.bodyTextColor,
+      ...starterThemeColumns(starter.theme),
       is_active: true,
       is_default: false,
       is_locked: true,
       fonts: JSON.stringify(starter.theme.fonts),
-      colors: JSON.stringify(starter.theme.colors),
-      text_styles: JSON.stringify(starter.theme.textStyles),
-      button_styles: JSON.stringify(starter.theme.buttonStyles),
       created_by: input.userId,
       created_at: now(),
       updated_at: now(),

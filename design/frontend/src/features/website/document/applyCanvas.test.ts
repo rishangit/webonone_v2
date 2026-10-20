@@ -369,6 +369,156 @@ describe('applyCanvasOperations grid', () => {
     assert.equal(resolveLayoutRect(moved.layout, 'sm').col, 7)
   })
 
+  it('builds a header row of two equal blocks with the logo and name on the left and the menu on the right', () => {
+    const result = applyCanvasOperations(emptyWebsiteDocument(), {
+      name: 'Design Website Header',
+      operations: [
+        { op: 'add_block', name: 'Header' },
+        { op: 'add_block', group: true, name: 'Company', align: 'start' },
+        { op: 'add_addon', type: 'image', name: 'Company logo' },
+        { op: 'add_addon', type: 'text', name: 'Company name', text: 'Company name', role: 'heading' },
+        { op: 'add_block', group: true, name: 'Page menu', align: 'end' },
+        { op: 'add_addon', type: 'menu', name: 'Page menu', items: ['Home', 'About', 'Contact'] },
+      ],
+    })
+    const section = result.document.blocks[0]
+    const company = section?.children?.[0]
+    const menu = section?.children?.[1]
+    assert.ok(section && company && menu)
+    assert.deepEqual(
+      company.addons.map((addon) => addon.type),
+      ['image', 'text'],
+    )
+    assert.equal(menu.addons[0]?.type, 'menu')
+    const parent = resolveLayoutRect(section.layout, '2xl')
+    const left = resolveLayoutRect(company.layout, '2xl')
+    const right = resolveLayoutRect(menu.layout, '2xl')
+    assert.equal(parent.colSpan, 12)
+    assert.equal(left.col, 1)
+    assert.equal(left.colSpan, 6)
+    assert.equal(right.col, 7)
+    assert.equal(right.colSpan, 6)
+    assert.equal(left.top, 0)
+    assert.equal(right.top, 0)
+  })
+
+  it('creates text, button, image, slider, and menu with the same operations', () => {
+    const result = applyCanvasOperations(emptyWebsiteDocument(), {
+      name: 'Add page elements',
+      operations: [
+        { op: 'add_block', name: 'Intro' },
+        { op: 'add_text', name: 'Welcome', text: 'Welcome', role: 'heading' },
+        { op: 'add_button', name: 'Book', text: 'Book' },
+        { op: 'add_image', name: 'Photo' },
+        { op: 'add_slider', name: 'Stories' },
+        { op: 'add_menu', name: 'Pages', items: ['Home', 'About'] },
+      ],
+    })
+    const section = result.document.blocks[0]
+    assert.equal(result.applied, 6)
+    assert.deepEqual(
+      section?.addons.map((addon) => addon.type),
+      ['text', 'button', 'image', 'slider', 'menu'],
+    )
+  })
+
+  it('updates a menu from its block id', () => {
+    const placed = applyCanvasOperations(emptyWebsiteDocument(), {
+      name: 'Menu',
+      operations: [
+        { op: 'add_block', name: 'Links' },
+        { op: 'add_menu', name: 'Pages', items: ['Home'] },
+      ],
+    })
+    const block = placed.document.blocks[0]
+    assert.ok(block)
+    const result = applyCanvasOperations(placed.document, {
+      name: 'Update menu',
+      operations: [{ op: 'update_menu', blockId: block.id, items: ['Home', 'Contact'] }],
+    })
+    const menu = result.document.blocks[0]?.addons[0]
+    assert.equal(menu?.type, 'menu')
+    if (menu?.type === 'menu') {
+      assert.deepEqual(
+        menu.props.items.map((item) => item.label),
+        ['Home', 'Contact'],
+      )
+    }
+  })
+
+  it('adds a full-width large hero image on a page', () => {
+    const result = applyCanvasOperations(emptyWebsiteDocument(), {
+      name: 'Add hero image section',
+      operations: [
+        { op: 'add_section', name: 'Hero image section' },
+        { op: 'add_image', name: 'Hero image' },
+      ],
+    })
+    const section = result.document.blocks[0]
+    const image = section?.addons[0]
+    assert.equal(result.applied, 2)
+    assert.ok(section && image)
+    assert.equal(image.type, 'image')
+    const block = resolveLayoutRect(section.layout, '2xl')
+    const picture = resolveLayoutRect(image.layout, '2xl')
+    assert.equal(block.col, 1)
+    assert.equal(block.colSpan, 12)
+    assert.equal(picture.col, 1)
+    assert.equal(picture.colSpan, 12)
+    assert.ok(picture.height >= 480)
+  })
+
+  it('places a header logo on the left and the menu on the right, each in its own block', () => {
+    const result = applyCanvasOperations(emptyWebsiteDocument(), {
+      name: 'Design Website Header',
+      operations: [
+        { op: 'add_block', name: 'Header' },
+        { op: 'add_block', group: true, name: 'Company logo' },
+        { op: 'add_addon', name: 'Company logo' },
+        { op: 'add_block', group: true, name: 'Menu' },
+        { op: 'add_addon', name: 'Menu' },
+      ],
+    })
+    const section = result.document.blocks[0]
+    const logo = section?.children?.[0]
+    const menu = section?.children?.[1]
+    assert.ok(section && logo && menu)
+    assert.equal(logo.addons[0]?.type, 'image')
+    assert.equal(menu.addons[0]?.type, 'menu')
+    const parent = resolveLayoutRect(section.layout, '2xl')
+    const left = resolveLayoutRect(logo.layout, '2xl')
+    const right = resolveLayoutRect(menu.layout, '2xl')
+    assert.equal(parent.col, 1)
+    assert.equal(parent.colSpan, 12)
+    assert.equal(left.col, 1)
+    assert.equal(left.top, 0)
+    assert.equal(right.col + right.colSpan - 1, 12)
+    assert.equal(right.top, 0)
+  })
+
+  it('wraps a header logo and menu into separate blocks when the suggestion sends only add-ons', () => {
+    const result = applyCanvasOperations(emptyWebsiteDocument(), {
+      name: 'Design Website Header',
+      operations: [
+        { op: 'add_addon', name: 'Company logo' },
+        { op: 'add_addon', name: 'Menu' },
+      ],
+    })
+    const section = result.document.blocks[0]
+    const logo = section?.children?.[0]
+    const menu = section?.children?.[1]
+    assert.equal(result.applied, 2)
+    assert.ok(section && logo && menu)
+    assert.equal(section.addons.length, 0)
+    assert.equal(logo.addons[0]?.type, 'image')
+    assert.equal(menu.addons[0]?.type, 'menu')
+    const left = resolveLayoutRect(logo.layout, '2xl')
+    const right = resolveLayoutRect(menu.layout, '2xl')
+    assert.equal(left.col, 1)
+    assert.equal(right.col + right.colSpan - 1, 12)
+    assert.equal(left.top, right.top)
+  })
+
   it('aligns two columns on a full-width row when the operation name is omitted', () => {
     const placed = applyCanvasOperations(emptyWebsiteDocument(), {
       name: 'Footer',

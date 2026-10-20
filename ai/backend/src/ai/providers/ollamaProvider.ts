@@ -72,6 +72,7 @@ export class OllamaProvider implements AiProvider {
       const body: Record<string, unknown> = {
         model: this.options.model,
         stream: false,
+        think: false,
         messages: [
           { role: 'system', content: input.systemPrompt },
           ...input.messages.map(toOllamaMessage),

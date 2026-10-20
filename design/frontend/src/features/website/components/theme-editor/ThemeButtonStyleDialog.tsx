@@ -16,9 +16,9 @@ import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { resolveButtonStyle } from '../../document/theme'
 import {
   websiteButtonStyleSchema,
-  websiteColorTokenSchema,
   websiteFontTokenSchema,
   websiteTextStyleSchema,
+  websiteThemeColorPaletteSchema,
 } from '../../schemas/websiteThemeSchemas'
 import { websiteButtonLibraryActions } from '../../store'
 import type { WebsiteButtonStyle, WebsiteTextStyle, WebsiteTheme } from '../../types'
@@ -44,9 +44,10 @@ import { ThemeStyleLibraryChoice, ThemeStyleLibraryList } from './ThemeStyleLibr
 const BUTTON_BASIC_FIELD_KEYS = new Set([
   'name',
   'fontId',
-  'backgroundColorId',
-  'textColorId',
-  'borderColorId',
+  'colorPaletteId',
+  'backgroundColorIndex',
+  'textColorIndex',
+  'borderColorIndex',
   'textSize',
   'borderWidth',
   'radius',
@@ -69,7 +70,7 @@ const BUTTON_LIBRARY_DIALOG_SIZE = {
 
 const themeTokenPatchSchema = z.object({
   fonts: z.array(websiteFontTokenSchema).optional(),
-  colors: z.array(websiteColorTokenSchema).optional(),
+  colorPalettes: z.array(websiteThemeColorPaletteSchema).optional(),
   textStyles: z.array(websiteTextStyleSchema).optional(),
 })
 
@@ -91,7 +92,7 @@ function remapLabelFieldErrors(issues: { path: PropertyKey[]; message: string }[
   const mapped: Partial<Record<string, string>> = {}
   for (const issue of issues) {
     const key = String(issue.path[0] ?? '')
-    if (key === 'colorId') mapped.textColorId = issue.message
+    if (key === 'colorIndex') mapped.textColorId = issue.message
     else if (key === 'size') mapped.textSize = issue.message
     else if (key === 'fontId') mapped.fontId = issue.message
     else if (key === 'name' && !mapped.name) mapped.name = issue.message
@@ -226,37 +227,34 @@ export function ThemeButtonStyleDialog({
   function submitCustom() {
     const missing: Partial<Record<string, string>> = {}
     if (!labelStyle.fontId) missing.fontId = t('pickFontRequired')
-    if (!values.backgroundColorId) missing.backgroundColorId = t('pickColorRequired')
-    const textColorId = labelStyle.colorId || values.textColorId
-    if (!textColorId) missing.textColorId = t('pickColorRequired')
-    if (values.borderWidth > 0 && !values.borderColorId) {
+    const textColorIndex = labelStyle.colorIndex || values.textColorIndex
+    if (!values.backgroundColorIndex) missing.backgroundColorId = t('pickColorRequired')
+    if (!textColorIndex) missing.textColorId = t('pickColorRequired')
+    if (values.borderWidth > 0 && !values.borderColorIndex) {
       missing.borderColorId = t('pickColorRequired')
     }
+    const label: WebsiteTextStyle = {
+      ...labelStyle,
+      colorIndex: textColorIndex,
+      name: values.name.trim() || labelStyle.name || 'Button',
+    }
+    const button: WebsiteButtonStyle = { ...values, textColorIndex, textStyleId: label.id }
     const customization = finalizeElementCustomization(
       normalizeWebsiteElementCustomization(values.customization),
       defaultElementHtml(
         'button',
         values.id,
         buttonVisualFromResolved(
-          resolveButtonStyle(
-            { ...theme, textStyles: upsertById(theme.textStyles, { ...labelStyle, colorId: textColorId }) },
-            { ...values, textColorId, textStyleId: labelStyle.id },
-          ),
+          resolveButtonStyle({ ...theme, textStyles: upsertById(theme.textStyles, label) }, button),
         ),
       ),
       values.id,
     )
     const parsed = websiteButtonStyleSchema.safeParse({
-      ...values,
-      textColorId,
-      textStyleId: labelStyle.id,
+      ...button,
       customization: hasElementCustomization(customization) ? customization : undefined,
     })
-    const labelParsed = websiteTextStyleSchema.safeParse({
-      ...labelStyle,
-      colorId: textColorId,
-      name: values.name.trim() || labelStyle.name || 'Button',
-    })
+    const labelParsed = websiteTextStyleSchema.safeParse(label)
     const fieldErrors: Record<string, string> = {}
     for (const [key, message] of Object.entries({
       ...missing,

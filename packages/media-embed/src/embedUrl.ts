@@ -68,6 +68,9 @@ export function buildMediaSelectorUrl(options: BuildMediaSelectorUrlOptions): st
   if (options.cropAspectPresets?.length) {
     url.searchParams.set('cropAspectPresets', options.cropAspectPresets.join(','))
   }
+  if (options.listPage) {
+    url.searchParams.set('listPage', 'true')
+  }
   return url.toString()
 }
 

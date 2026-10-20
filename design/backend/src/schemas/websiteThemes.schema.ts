@@ -170,11 +170,18 @@ export const websiteColorTokenSchema = z.object({
   value: z.string().trim().min(1).max(32),
 })
 
+const themeColorIndexSchema = z.number().int().min(1).max(6)
+
+const themePaletteColorSchema = z.object({
+  name: z.string().trim().min(1).max(128),
+  value: z.string().trim().min(1).max(32),
+})
+
 export const websiteThemeColorPaletteSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(128),
   sourceLibraryPaletteId: z.string().min(1).max(64).nullable().optional(),
-  colorIds: z.array(z.string().min(1).max(64)).max(80),
+  colors: z.array(themePaletteColorSchema).min(1).max(6),
 })
 
 export const websiteTextStyleSchema = z.object({
@@ -191,7 +198,8 @@ export const websiteTextStyleSchema = z.object({
       '2xl': z.number().min(8).max(200).optional(),
     })
     .optional(),
-  colorId: z.string().max(64).default(''),
+  colorIndex: themeColorIndexSchema.default(1),
+  colorPaletteId: z.string().min(1).max(64).nullable().optional(),
   sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
   customization: websiteElementCustomizationSchema.optional(),
 })
@@ -199,33 +207,30 @@ export const websiteTextStyleSchema = z.object({
 export const websiteButtonStyleSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(128),
-  backgroundColorId: z.string().max(64).default(''),
-  textColorId: z.string().max(64).default(''),
+  colorPaletteId: z.string().min(1).max(64).nullable().optional(),
+  backgroundColorIndex: themeColorIndexSchema.default(1),
+  textColorIndex: themeColorIndexSchema.default(1),
   textStyleId: z.string().max(64).default(''),
-  borderColorId: z.string().max(64).default(''),
+  borderColorIndex: themeColorIndexSchema.default(1),
   borderWidth: z.number().min(0).max(16).default(0),
   radius: z.number().min(0).max(999).default(6),
   sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
   customization: websiteElementCustomizationSchema.optional(),
 })
 
-export const websiteThemeColorRolesSchema = z.object({
-  pageBackgroundColorId: z.string().max(64).optional().default(''),
-  surfaceColorId: z.string().max(64).optional().default(''),
-  bodyTextColorId: z.string().max(64).optional().default(''),
-  accentColor1Id: z.string().max(64).optional().default(''),
-  accentColor2Id: z.string().max(64).optional().default(''),
-})
-
 export const createWebsiteThemeSchema = z.object({
   name: z.string().trim().min(1).max(255),
   pageBackground: z.string().max(32).optional().default('#ffffff'),
   bodyTextColor: z.string().max(32).optional().default('#111827'),
-  colorRoles: websiteThemeColorRolesSchema.optional(),
+  colorPaletteId: z.string().max(64).optional().default(''),
+  pageBackgroundIndex: themeColorIndexSchema.optional().default(1),
+  surfaceIndex: themeColorIndexSchema.optional().default(1),
+  bodyTextIndex: themeColorIndexSchema.optional().default(1),
+  accent1Index: themeColorIndexSchema.optional().default(1),
+  accent2Index: themeColorIndexSchema.optional().default(1),
   isActive: z.boolean().optional().default(true),
   isDefault: z.boolean().optional().default(false),
   fonts: z.array(websiteFontTokenSchema).max(40).optional().default([]),
-  colors: z.array(websiteColorTokenSchema).max(80).optional().default([]),
   colorPalettes: z.array(websiteThemeColorPaletteSchema).max(24).optional().default([]),
   textStyles: z.array(websiteTextStyleSchema).max(40).optional().default([]),
   buttonStyles: z.array(websiteButtonStyleSchema).max(40).optional().default([]),
@@ -236,11 +241,15 @@ export const updateWebsiteThemeSchema = z
     name: z.string().trim().min(1).max(255).optional(),
     pageBackground: z.string().max(32).optional(),
     bodyTextColor: z.string().max(32).optional(),
-    colorRoles: websiteThemeColorRolesSchema.optional(),
+    colorPaletteId: z.string().max(64).optional(),
+    pageBackgroundIndex: themeColorIndexSchema.optional(),
+    surfaceIndex: themeColorIndexSchema.optional(),
+    bodyTextIndex: themeColorIndexSchema.optional(),
+    accent1Index: themeColorIndexSchema.optional(),
+    accent2Index: themeColorIndexSchema.optional(),
     isActive: z.boolean().optional(),
     isDefault: z.boolean().optional(),
     fonts: z.array(websiteFontTokenSchema).max(40).optional(),
-    colors: z.array(websiteColorTokenSchema).max(80).optional(),
     colorPalettes: z.array(websiteThemeColorPaletteSchema).max(24).optional(),
     textStyles: z.array(websiteTextStyleSchema).max(40).optional(),
     buttonStyles: z.array(websiteButtonStyleSchema).max(40).optional(),
@@ -250,7 +259,6 @@ export const updateWebsiteThemeSchema = z
 export type WebsiteFontToken = z.infer<typeof websiteFontTokenSchema>
 export type WebsiteColorToken = z.infer<typeof websiteColorTokenSchema>
 export type WebsiteThemeColorPalette = z.infer<typeof websiteThemeColorPaletteSchema>
-export type WebsiteThemeColorRoles = z.infer<typeof websiteThemeColorRolesSchema>
 export type WebsiteTextStyle = z.infer<typeof websiteTextStyleSchema>
 export type WebsiteButtonStyle = z.infer<typeof websiteButtonStyleSchema>
 export type CreateWebsiteThemeBody = z.infer<typeof createWebsiteThemeSchema>

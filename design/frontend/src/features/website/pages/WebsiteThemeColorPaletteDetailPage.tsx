@@ -12,8 +12,7 @@ import {
 import { useThemePersistence } from '../hooks/useThemePersistence'
 import { websiteThemesActions } from '../store'
 import type { WebsiteColorToken, WebsiteTheme } from '../types'
-import { themePaletteRefsToLibraryPalette } from '../utils/websitePalette'
-import { upsertById } from '../utils/upsertById'
+import { applyThemeChrome, themePaletteToLibraryPalette } from '../utils/websitePalette'
 import { writeThemeDraft } from '../utils/themeDraftStorage'
 
 export function WebsiteThemeColorPaletteDetailPage() {
@@ -46,23 +45,19 @@ export function WebsiteThemeColorPaletteDetailPage() {
     [paletteId, theme?.colorPalettes],
   )
 
-  const colorsById = useMemo(
-    () => new Map((theme?.colors ?? []).map((color) => [color.id, color])),
-    [theme?.colors],
-  )
-
   const palette = useMemo(
-    () => (paletteRef ? themePaletteRefsToLibraryPalette(paletteRef, colorsById) : null),
-    [colorsById, paletteRef],
+    () => (paletteRef ? themePaletteToLibraryPalette(paletteRef) : null),
+    [paletteRef],
   )
 
   const paletteColorDrafts = useMemo(() => {
     if (!paletteRef) return []
-    return paletteRef.colorIds
-      .map((id) => colorsById.get(id))
-      .filter((token): token is WebsiteColorToken => Boolean(token))
-      .map((token) => ({ id: token.id, name: token.name, value: token.value }))
-  }, [colorsById, paletteRef])
+    return paletteRef.colors.map((color, index) => ({
+      id: String(index + 1),
+      name: color.name,
+      value: color.value,
+    }))
+  }, [paletteRef])
 
   if (!accessToken) return <Navigate to="/login" replace />
 
@@ -92,11 +87,16 @@ export function WebsiteThemeColorPaletteDetailPage() {
 
   function saveColors(nextColors: WebsiteColorToken[]) {
     if (!theme) return
-    let colors = theme.colors
-    for (const color of nextColors) {
-      colors = upsertById(colors, color)
-    }
-    persistTheme({ ...theme, colors })
+    persistTheme(
+      applyThemeChrome({
+        ...theme,
+        colorPalettes: theme.colorPalettes.map((entry) =>
+          entry.id === paletteId
+            ? { ...entry, colors: nextColors.map((color) => ({ name: color.name, value: color.value })) }
+            : entry,
+        ),
+      }),
+    )
   }
 
   return (
@@ -112,7 +112,7 @@ export function WebsiteThemeColorPaletteDetailPage() {
         section={editSection}
         paletteName={paletteRef.name}
         colors={paletteColorDrafts}
-        takenColorValues={theme.colors.map((color) => color.value)}
+        takenColorValues={theme.colorPalettes.flatMap((entry) => entry.colors.map((color) => color.value))}
         onOpenChange={(open) => {
           if (!open) setEditSection(null)
         }}

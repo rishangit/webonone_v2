@@ -73,7 +73,14 @@ export function WebsiteThemeTokenEmbedPage({ kind }: { kind: ThemeTokenKind }) {
   }
 
   if (kind === 'colors') {
-    const initial = tokenId ? theme.colors.find((item) => item.id === tokenId) : undefined
+    const paletteColors = theme.colorPalettes.flatMap((palette, paletteIndex) =>
+      palette.colors.map((color, index) => ({
+        id: `${paletteIndex + 1}-${index + 1}`,
+        name: color.name,
+        value: color.value,
+      })),
+    )
+    const initial = tokenId ? paletteColors.find((color) => color.id === tokenId) : undefined
     if (tokenId && !initial) return <MissingToken />
     return (
       <ThemeColorDialog
@@ -81,7 +88,7 @@ export function WebsiteThemeTokenEmbedPage({ kind }: { kind: ThemeTokenKind }) {
         chrome="embed-page"
         themeId={theme.id}
         initial={initial}
-        takenColorValues={theme.colors.map((color) => color.value)}
+        takenColorValues={paletteColors.map((color) => color.value)}
         appliedLibraryPaletteIds={(theme.colorPalettes ?? [])
           .map((palette) => palette.sourceLibraryPaletteId)
           .filter((id): id is string => Boolean(id))}
