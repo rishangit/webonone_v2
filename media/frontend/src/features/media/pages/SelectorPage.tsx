@@ -87,6 +87,20 @@ export function SelectorPage() {
     uploadStatus,
   ])
 
+  useEffect(() => {
+    if (!embed.listPage || !embed.parentOrigin || !contentNode) return
+    const parentOrigin = embed.parentOrigin
+    const postHeight = () => {
+      const height = Math.ceil(contentNode.getBoundingClientRect().height)
+      if (height <= 0) return
+      window.parent.postMessage({ type: MEDIA_MESSAGE_TYPES.CONTENT_SIZE, height }, parentOrigin)
+    }
+    postHeight()
+    const observer = new ResizeObserver(postHeight)
+    observer.observe(contentNode)
+    return () => observer.disconnect()
+  }, [contentNode, embed.listPage, embed.parentOrigin])
+
   if (embed.isEmbed && !accessToken) {
     return (
       <EmbedLayout title="" parentOrigin={embed.parentOrigin} chromeless inset>
@@ -158,20 +172,6 @@ export function SelectorPage() {
   }
 
   const selectedIds = new Set(selectedItems.map((item) => item.id))
-
-  useEffect(() => {
-    if (!embed.listPage || !embed.parentOrigin || !contentNode) return
-    const parentOrigin = embed.parentOrigin
-    const postHeight = () => {
-      const height = Math.ceil(contentNode.getBoundingClientRect().height)
-      if (height <= 0) return
-      window.parent.postMessage({ type: MEDIA_MESSAGE_TYPES.CONTENT_SIZE, height }, parentOrigin)
-    }
-    postHeight()
-    const observer = new ResizeObserver(postHeight)
-    observer.observe(contentNode)
-    return () => observer.disconnect()
-  }, [contentNode, embed.listPage, embed.parentOrigin])
 
   const content = (
     <div
