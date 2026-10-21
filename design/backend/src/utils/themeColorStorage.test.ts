@@ -66,6 +66,23 @@ describe('migrateThemeColorRecord', () => {
     assert.equal(read.bodyTextColor, '#17211D')
   })
 
+  it('keeps an empty theme color slot empty', () => {
+    const read = readThemeColorFields({
+      color_palette_id: 'brand',
+      page_background_index: null,
+      surface_index: 1,
+      body_text_index: null,
+      accent_1_index: 1,
+      accent_2_index: null,
+      color_palettes: [{ id: 'brand', name: 'Brand', colors: [{ name: 'Ink', value: '#111111' }] }],
+    })
+    assert.equal(read.pageBackgroundIndex, null)
+    assert.equal(read.bodyTextIndex, null)
+    assert.equal(read.accent2Index, null)
+    assert.equal(read.pageBackground, 'transparent')
+    assert.equal(read.surfaceColor, '#111111')
+  })
+
   it('keeps a text style palette when it is not the basic palette', () => {
     const migrated = migrateThemeColorRecord({
       colors: [

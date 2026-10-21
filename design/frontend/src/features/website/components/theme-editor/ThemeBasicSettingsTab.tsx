@@ -1,4 +1,4 @@
-import { Card, Form, FormField, Input } from '@webonone/ui-kit'
+import { Card, Form, FormField, Input, ColorPaletteSelect, ColorSelect } from '@webonone/ui-kit'
 import { useTranslation } from 'react-i18next'
 import {
   applyThemeChrome,
@@ -6,9 +6,10 @@ import {
   themeColorOptionsForPalette,
   themePaletteSelectOptions,
 } from '../../utils/websitePalette'
-import { ThemeColorPaletteSelect } from './ThemeColorPaletteSelect'
-import { ThemeTokenSelect, type ThemeTokenOption } from './ThemeTokenSelect'
+import { toColorPaletteSelectOptions, colorSlotId, colorSlotIndex } from '../../utils/colorSelect'
 import type { ThemeBasicSettingsTabProps } from './types'
+import { isWebsiteLibraryCatalog } from '../../utils/websiteCatalogScope'
+import { WebsitePublishStatusField } from '../WebsitePublishStatus'
 
 const ROLE_FIELDS: Array<{
   key: 'pageBackgroundIndex' | 'surfaceIndex' | 'bodyTextIndex' | 'accent1Index' | 'accent2Index'
@@ -29,12 +30,17 @@ const ROLE_FIELDS: Array<{
 
 export function ThemeBasicSettingsTab({ theme, onChange, fieldErrors = {} }: ThemeBasicSettingsTabProps) {
   const { t } = useTranslation('website')
+  const libraryCatalog = isWebsiteLibraryCatalog()
   const paletteOptions = themePaletteSelectOptions(theme)
   const colorPaletteId = theme.colorPaletteId?.trim() || paletteOptions[0]?.id || ''
-  const colorOptions: ThemeTokenOption[] = themeColorOptionsForPalette(theme, colorPaletteId)
+  const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId)
+  const { t: tc } = useTranslation('common')
 
   function onPaletteChange(nextPaletteId: string) {
-    if (!nextPaletteId) return
+    if (!nextPaletteId) {
+      onChange(applyThemeChrome({ ...theme, colorPaletteId: '' }))
+      return
+    }
     onChange(
       applyThemeChrome({
         ...theme,
@@ -58,17 +64,20 @@ export function ThemeBasicSettingsTab({ theme, onChange, fieldErrors = {} }: The
             onChange={(event) => onChange(applyThemeChrome({ ...theme, name: event.target.value }))}
           />
         </FormField>
+        {libraryCatalog ? (
+          <WebsitePublishStatusField
+            id="theme-publish"
+            value={theme.publishStatus ?? 'published'}
+            onChange={(publishStatus) => onChange(applyThemeChrome({ ...theme, publishStatus }))}
+          />
+        ) : null}
         {paletteOptions.length > 0 ? (
-          <FormField
-            label={t('buttonColorPalette')}
-            htmlFor="theme-basic-palette"
-            required
-            error={fieldErrors.colorPaletteId}
-          >
-            <ThemeColorPaletteSelect
+          <FormField label={t('buttonColorPalette')} htmlFor="theme-basic-palette" error={fieldErrors.colorPaletteId}>
+            <ColorPaletteSelect
               id="theme-basic-palette"
-              value={colorPaletteId}
-              options={paletteOptions}
+              value={theme.colorPaletteId?.trim() || ''}
+              options={toColorPaletteSelectOptions(paletteOptions)}
+              noneLabel={tc('none')}
               placeholder={t('pickColorPaletteRequired')}
               onChange={onPaletteChange}
             />
@@ -81,20 +90,23 @@ export function ThemeBasicSettingsTab({ theme, onChange, fieldErrors = {} }: The
             key={field.key}
             label={t(field.labelKey)}
             htmlFor={`theme-basic-${field.key}`}
-            required={colorOptions.length > 0}
             error={fieldErrors[field.key]}
           >
-            <ThemeTokenSelect
+            <ColorSelect
               id={`theme-basic-${field.key}`}
-              value={String(theme[field.key] || '')}
+              value={colorSlotId(theme[field.key])}
               options={colorOptions}
-              allowNone={false}
+              noneLabel={tc('none')}
               placeholder={t('pickColorRequired')}
               onChange={(colorIndex) =>
-                onChange(applyThemeChrome({ ...theme, colorPaletteId, [field.key]: Number(colorIndex) || 1 }))
+                onChange(
+                  applyThemeChrome({
+                    ...theme,
+                    colorPaletteId,
+                    [field.key]: colorSlotIndex(colorIndex),
+                  }),
+                )
               }
-              disabled={colorOptions.length === 0}
-              aria-required={colorOptions.length > 0}
               aria-invalid={Boolean(fieldErrors[field.key])}
             />
             <p className="mt-1 text-xs text-muted-foreground">{t(field.hintKey)}</p>

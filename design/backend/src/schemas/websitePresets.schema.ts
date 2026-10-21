@@ -1,8 +1,10 @@
 import { z } from 'zod'
+import { websitePublishStatusSchema } from '../utils/websitePublishStatus.js'
 import { emptyWebsiteDocument, websiteDocumentSchema } from './websiteDocument.schema.js'
 
 export const createWebsitePresetSchema = z.object({
   name: z.string().trim().min(1).max(255),
+  publishStatus: websitePublishStatusSchema.optional(),
   colorPaletteId: z.string().trim().max(64).nullable().optional(),
   document: websiteDocumentSchema.optional().default(emptyWebsiteDocument),
 })
@@ -10,6 +12,7 @@ export const createWebsitePresetSchema = z.object({
 export const updateWebsitePresetSchema = z
   .object({
     name: z.string().trim().min(1).max(255).optional(),
+    publishStatus: websitePublishStatusSchema.optional(),
     colorPaletteId: z.string().trim().max(64).nullable().optional(),
     document: websiteDocumentSchema.optional(),
   })

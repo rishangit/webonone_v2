@@ -2,13 +2,13 @@ import { useTranslation } from 'react-i18next'
 import { FormField, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@webonone/ui-kit'
 import { nanoid } from 'nanoid'
 import { CustomWebsiteElementHost } from '../../components/CustomWebsiteElementHost'
+import { PageLinkFields } from '../../components/PageLinkFields'
+import { pageLinkHref } from '../../document/pageLink'
 import { buttonLabelTypography, buttonStyleAtIndex, resolveButtonStyle } from '../../document/theme'
 import { paletteForColors, themePaletteColorValues } from '../../utils/websitePalette'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon } from '../../types'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
-import { publicPageHref } from '../../utils/companyPublicHost'
-
 function ButtonAddonRenderer({
   addon,
   theme,
@@ -33,8 +33,7 @@ function ButtonAddonRenderer({
       : theme
   const paintButton = buttonStyle && paintId ? { ...buttonStyle, colorPaletteId: paintId } : buttonStyle
   const snap = paintButton ? resolveButtonStyle(paintTheme ?? null, paintButton) : addon.props.snapshot
-  const page = pages.find((item) => item.id === addon.props.linkPageId)
-  const href = publish && page && companyId ? publicPageHref(companyId, page.path) : undefined
+  const link = pageLinkHref(pages, addon.props.linkPageId, companyId, !interactive)
   const style = {
     ...buttonLabelTypography(),
     background: snap.background,
@@ -48,33 +47,18 @@ function ButtonAddonRenderer({
   const customization = buttonStyle?.customization
   const label = addon.props.label
 
-  const fallback =
-    publish && href ? (
-      <a
-        href={href}
-        className="inline-flex h-full w-full items-center justify-center px-3 no-underline"
-        style={style}
-        onClick={(event) => {
-          if (onNavigatePage && page) {
-            event.preventDefault()
-            onNavigatePage(page.path)
-          }
-        }}
-      >
-        {label}
-      </a>
-    ) : (
-      <span
-        className="inline-flex h-full w-full items-center justify-center px-3"
-        style={{
-          ...style,
-          textDecoration: addon.props.linkPageId ? 'underline' : undefined,
-          cursor: interactive ? 'default' : 'pointer',
-        }}
-      >
-        {label}
-      </span>
-    )
+  const fallback = (
+    <span
+      className="inline-flex h-full w-full items-center justify-center px-3"
+      style={{
+        ...style,
+        textDecoration: link ? 'underline' : undefined,
+        cursor: interactive ? 'default' : 'pointer',
+      }}
+    >
+      {label}
+    </span>
+  )
 
   return (
     <CustomWebsiteElementHost
@@ -85,7 +69,13 @@ function ButtonAddonRenderer({
       baseStyle={style}
       paletteColors={theme ? themePaletteColorValues(theme, paintId) : undefined}
       className="inline-flex h-full w-full"
-      scriptContext={{ publish, href }}
+      scriptContext={{ publish, href: link?.href }}
+      linkHref={link?.href}
+      onLinkClick={(event) => {
+        if (!onNavigatePage || !link) return
+        event.preventDefault()
+        onNavigatePage(link.path)
+      }}
       fallback={fallback}
     />
   )
@@ -147,29 +137,12 @@ function ButtonAddonPropsFields({ addon, theme, pages, onChange }: AddonPropsFie
           </SelectContent>
         </Select>
       </FormField>
-      <FormField label={t('linkPage')} htmlFor="button-link">
-        <Select
-          value={addon.props.linkPageId || '__none'}
-          onValueChange={(value) =>
-            onChange({
-              ...addon,
-              props: { ...addon.props, linkPageId: value === '__none' ? null : value },
-            })
-          }
-        >
-          <SelectTrigger id="button-link">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none">{t('noLink')}</SelectItem>
-            {pages.map((page) => (
-              <SelectItem key={page.id} value={page.id}>
-                {page.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormField>
+      <PageLinkFields
+        idPrefix="button"
+        linkPageId={addon.props.linkPageId}
+        pages={pages}
+        onChange={(linkPageId) => onChange({ ...addon, props: { ...addon.props, linkPageId } })}
+      />
     </>
   )
 }

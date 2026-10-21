@@ -35,6 +35,8 @@ export type ImageAddonProps = {
   fit: 'cover' | 'contain'
   heightMode: 'auto' | 'fixed'
   fixedHeight?: number
+  /** Page this image opens. Null hides the link. Empty means the link box is on and no page is chosen. */
+  linkPageId?: string | null
 }
 
 export type TextAddonSnapshot = {
@@ -50,6 +52,8 @@ export type TextAddonProps = {
   textStyleIndex?: number | null
   content: string
   fontSizeByBreakpoint?: Partial<Record<WebsiteBreakpoint, number>>
+  /** Page this text opens. Null hides the link. Empty means the link box is on and no page is chosen. */
+  linkPageId?: string | null
   snapshot: TextAddonSnapshot
 }
 
@@ -164,6 +168,10 @@ export type ElementMargin = 1 | 2 | 3 | 4
 export type ElementChrome = {
   backgroundColor?: string
   borderColor?: string
+  /** Theme palette slot (1-based). Omitted means no background color. */
+  backgroundColorIndex?: number
+  /** Theme palette slot (1-based). Omitted means no border color. */
+  borderColorIndex?: number
   borderRadius?: ElementBorderRadius
   boxShadow?: ElementBoxShadow
   padding?: ElementPadding
@@ -211,6 +219,8 @@ export type WebsiteBlock = {
   groupName?: string
   /** Where this block sits in its parent row. Omitted blocks stay packed from the left. */
   place?: 'start' | 'center' | 'end'
+  /** Page this block opens. Null hides the link. Empty means the link box is on and no page is chosen. */
+  linkPageId?: string | null
   dataBinding?: BlockDataBinding
   layout: LayoutByBreakpoint
   addons: WebsiteAddon[]
@@ -232,6 +242,7 @@ export type WebsiteDocumentV1 = {
 }
 
 export type WebsitePageStatus = 'active' | 'inactive'
+export type WebsitePublishStatus = 'draft' | 'published'
 
 export type WebsitePage = {
   id: string
@@ -239,6 +250,7 @@ export type WebsitePage = {
   name: string
   path: string
   status: WebsitePageStatus
+  publishStatus?: WebsitePublishStatus
   layoutId: string | null
   layoutName: string | null
   sortOrder: number
@@ -266,6 +278,7 @@ export type WebsiteLayout = {
   footerId: string | null
   themeId: string | null
   isDefault: boolean
+  publishStatus?: WebsitePublishStatus
   sourceLibraryId: string | null
   pages: WebsiteLayoutPage[]
   createdBy: string | null
@@ -278,6 +291,7 @@ export type WebsiteChrome = {
   companyId: string
   name: string
   isDefault: boolean
+  publishStatus?: WebsitePublishStatus
   document: WebsiteDocumentV1
   colorPaletteId: string | null
   sourceLibraryId: string | null
@@ -290,6 +304,7 @@ export type WebsitePreset = {
   id: string
   companyId: string
   name: string
+  publishStatus?: WebsitePublishStatus
   document: WebsiteDocumentV1
   colorPaletteId: string | null
   sourceLibraryId: string | null
@@ -312,6 +327,7 @@ export type WebsiteFontLibraryItem = {
   googleFontUrl: string
   family: string
   sortOrder: number
+  publishStatus?: WebsitePublishStatus
 }
 
 export type WebsiteColorLibraryColor = {
@@ -328,6 +344,7 @@ export type WebsiteColorLibraryItem = {
   name: string
   palette: WebsiteColorLibraryPalette
   sortOrder: number
+  publishStatus?: WebsitePublishStatus
 }
 
 export type WebsiteColorToken = {
@@ -360,7 +377,7 @@ export type WebsiteTextStyle = {
   fontId: string
   size: number
   sizeByBreakpoint?: Partial<Record<WebsiteBreakpoint, number>>
-  colorIndex: number
+  colorIndex: number | null
   colorPaletteId?: string | null
   sourceLibraryId?: string | null
   customization?: WebsiteElementCustomization
@@ -370,10 +387,10 @@ export type WebsiteButtonStyle = {
   id: string
   name: string
   colorPaletteId?: string | null
-  backgroundColorIndex: number
-  textColorIndex: number
+  backgroundColorIndex: number | null
+  textColorIndex: number | null
   textStyleId: string
-  borderColorIndex: number
+  borderColorIndex: number | null
   borderWidth: number
   radius: number
   sourceLibraryId?: string | null
@@ -396,6 +413,7 @@ export type WebsiteTextLibraryItem = {
   name: string
   definition: WebsiteTextLibraryDefinition
   sortOrder: number
+  publishStatus?: WebsitePublishStatus
 }
 
 export type WebsiteButtonLibraryDefinition = {
@@ -422,6 +440,7 @@ export type WebsiteButtonLibraryItem = {
   name: string
   definition: WebsiteButtonLibraryDefinition
   sortOrder: number
+  publishStatus?: WebsitePublishStatus
 }
 
 export type WebsiteTheme = {
@@ -434,13 +453,14 @@ export type WebsiteTheme = {
   accentColor1?: string
   accentColor2?: string
   colorPaletteId: string
-  pageBackgroundIndex: number
-  surfaceIndex: number
-  bodyTextIndex: number
-  accent1Index: number
-  accent2Index: number
+  pageBackgroundIndex: number | null
+  surfaceIndex: number | null
+  bodyTextIndex: number | null
+  accent1Index: number | null
+  accent2Index: number | null
   isActive: boolean
   isDefault: boolean
+  publishStatus?: WebsitePublishStatus
   sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
   colorPalettes: WebsiteThemeColorPalette[]

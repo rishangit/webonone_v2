@@ -81,6 +81,7 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
             accent2Index: parsed.data.accent2Index,
             isActive: next.isActive,
             isDefault: next.isDefault,
+            publishStatus: next.publishStatus,
             fonts: parsed.data.fonts,
             colorPalettes: parsed.data.colorPalettes,
             textStyles: parsed.data.textStyles,

@@ -109,6 +109,8 @@ export function AddonSettingsDialog({
       ...draft,
       backgroundColor: chrome.backgroundColor,
       borderColor: chrome.borderColor,
+      backgroundColorIndex: chrome.backgroundColorIndex,
+      borderColorIndex: chrome.borderColorIndex,
       borderRadius: chrome.borderRadius,
       boxShadow: chrome.boxShadow,
       padding: chrome.padding,

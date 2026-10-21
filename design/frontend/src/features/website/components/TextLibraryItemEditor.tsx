@@ -17,6 +17,7 @@ import {
   withPaletteColors,
 } from '../utils/websiteElementCustomization'
 import { TextStyleBasicSettingsFields } from './TextStyleBasicSettingsFields'
+import { usableLibraryItems } from './WebsitePublishStatus'
 import { WebsiteElementCustomizationPreview } from './WebsiteElementCustomizationPreview'
 import {
   WebsiteElementEditorTabs,
@@ -94,14 +95,14 @@ export function TextLibraryItemEditor({
         size: d.size,
       }}
       fontOptions={[
-        ...fonts.items.map((fontItem) => ({
+        ...usableLibraryItems(fonts.items, [fontId]).map((fontItem) => ({
           id: fontItem.id,
           label: fontItem.name,
           fontFamily: fontItem.family,
         })),
         ...(!fontId && d.fontName ? [{ id: 'definition-font', label: d.fontName, fontFamily: d.family }] : []),
       ]}
-      paletteOptions={colorLibrary.items.map((libraryItem) => ({
+      paletteOptions={usableLibraryItems(colorLibrary.items, [colorPaletteId]).map((libraryItem) => ({
         id: libraryItem.id,
         name: libraryItem.name,
         palette: libraryItem.palette,

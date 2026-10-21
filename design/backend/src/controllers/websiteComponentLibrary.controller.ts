@@ -64,12 +64,14 @@ function listQuery(req: AuthenticatedRequest) {
     typeof req.query.status === 'string' && (req.query.status === 'active' || req.query.status === 'inactive')
       ? (req.query.status as WebsitePageStatus)
       : undefined
+  const requestedPublished = req.query.publishedOnly === '1' || req.query.publishedOnly === 'true'
   return {
     page: req.query.page ? Number(req.query.page) : undefined,
     pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined,
     q: typeof req.query.q === 'string' ? req.query.q : undefined,
     names: readNamesQuery(req.query.names),
     status,
+    publishedOnly: req.user?.role !== 'super_admin' || requestedPublished,
   }
 }
 

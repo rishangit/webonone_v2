@@ -65,17 +65,20 @@ export function WebsiteChromeCreateEmbedPage({ kind }: { kind: 'headers' | 'foot
       entityId={id}
       initialName={editing?.name}
       initialColorPaletteId={editing?.colorPaletteId ?? null}
+      initialPublishStatus={editing?.publishStatus ?? 'draft'}
       theme={defaultWebsiteTheme(themes)}
       isSaving={detailStatus === 'saving'}
       error={awaiting ? detailError : null}
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSubmit={(name, isDefault, colorPaletteId) => {
+      onSubmit={(name, isDefault, colorPaletteId, publishStatus) => {
         setAwaiting(true)
         dispatch(
           actions.saveDetailRequested(
-            id ? { id, body: { name, colorPaletteId } } : { body: { name, isDefault, colorPaletteId } },
+            id
+              ? { id, body: { name, colorPaletteId, publishStatus } }
+              : { body: { name, isDefault, colorPaletteId, publishStatus } },
           ),
         )
       }}
@@ -122,9 +125,9 @@ export function WebsiteThemeCreateEmbedPage() {
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSubmit={(name) => {
+      onSubmit={(name, publishStatus) => {
         setAwaiting(true)
-        dispatch(websiteThemesActions.saveDetailRequested({ body: { name, isActive: true } }))
+        dispatch(websiteThemesActions.saveDetailRequested({ body: { name, isActive: true, publishStatus } }))
       }}
     />
   )

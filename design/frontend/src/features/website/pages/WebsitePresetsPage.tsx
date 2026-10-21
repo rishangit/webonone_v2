@@ -31,6 +31,7 @@ import type { WebsitePreset } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
 import { WebsiteAddItemControl } from '../components/WebsiteAddItemControl'
 import { useWebsiteLibraryRevert, WebsiteLibrarySourceTag } from '../components/WebsiteLibraryRevert'
+import { WebsitePublishStatusTag } from '../components/WebsitePublishStatus'
 
 export function WebsitePresetsPage() {
   const { t } = useTranslation('website')
@@ -42,7 +43,12 @@ export function WebsitePresetsPage() {
   const user = useAppSelector((s) => s.auth.user)
   const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
   const companyId = user?.companyId ?? null
-  const [dialog, setDialog] = useState<{ initialName?: string; id?: string; colorPaletteId?: string | null } | null>(null)
+  const [dialog, setDialog] = useState<{
+    initialName?: string
+    id?: string
+    colorPaletteId?: string | null
+    publishStatus?: 'draft' | 'published'
+  } | null>(null)
   const [awaitingCreate, setAwaitingCreate] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
   const revert = useWebsiteLibraryRevert()
@@ -79,16 +85,16 @@ export function WebsitePresetsPage() {
     )
   }
 
-  function handleSubmit(name: string, colorPaletteId: string | null) {
+  function handleSubmit(name: string, colorPaletteId: string | null, publishStatus?: 'draft' | 'published') {
     if (dialog?.id) {
-      dispatch(websitePresetsActions.saveDetailRequested({ id: dialog.id, body: { name, colorPaletteId } }))
+      dispatch(websitePresetsActions.saveDetailRequested({ id: dialog.id, body: { name, colorPaletteId, publishStatus } }))
       setDialog(null)
       toast({ title: t('saved') })
       list.load(1, list.pageSize, true)
       return
     }
     setAwaitingCreate(true)
-    dispatch(websitePresetsActions.saveDetailRequested({ body: { name, colorPaletteId } }))
+    dispatch(websitePresetsActions.saveDetailRequested({ body: { name, colorPaletteId, publishStatus } }))
   }
 
   return (
@@ -140,6 +146,7 @@ export function WebsitePresetsPage() {
                     >
                       <p className="font-medium">{item.name}</p>
                       <WebsiteLibrarySourceTag sourceLibraryId={item.sourceLibraryId} />
+                      <WebsitePublishStatusTag status={item.publishStatus} />
                     </a>
                   </ItemListContent>
                   {canManage ? (
@@ -172,7 +179,12 @@ export function WebsitePresetsPage() {
                       ) : null}
                       <DropdownMenuItem
                         onClick={() =>
-                          setDialog({ id: item.id, initialName: item.name, colorPaletteId: item.colorPaletteId })
+                          setDialog({
+                            id: item.id,
+                            initialName: item.name,
+                            colorPaletteId: item.colorPaletteId,
+                            publishStatus: item.publishStatus,
+                          })
                         }
                       >
                         {t('editDetails')}
@@ -199,6 +211,7 @@ export function WebsitePresetsPage() {
         entityId={dialog?.id}
         initialName={dialog?.initialName}
         initialColorPaletteId={dialog?.colorPaletteId}
+        initialPublishStatus={dialog?.publishStatus ?? 'draft'}
         theme={theme}
         isSaving={detailStatus === 'saving'}
         error={awaitingCreate ? detailError : null}

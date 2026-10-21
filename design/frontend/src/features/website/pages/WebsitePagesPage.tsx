@@ -287,6 +287,8 @@ export function WebsitePagesPage() {
 
                 status: page.status,
 
+                publishStatus: page.publishStatus,
+
                 layoutId: page.layoutId,
 
                 colorPaletteId: page.colorPaletteId,

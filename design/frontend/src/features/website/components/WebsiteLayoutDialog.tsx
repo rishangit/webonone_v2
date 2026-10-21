@@ -28,6 +28,8 @@ import {
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { layoutMetaSchema, type LayoutMetaValues } from '../schemas/websiteMeta'
 import type { WebsiteChrome, WebsiteLayout, WebsiteTheme } from '../types'
+import { isWebsiteLibraryCatalog } from '../utils/websiteCatalogScope'
+import { usableLibraryItems, WebsitePublishStatusField } from './WebsitePublishStatus'
 
 export const WEBSITE_LAYOUT_DIALOG_SIZE = {
   sizeWidth: 'medium' as const,
@@ -78,7 +80,11 @@ export function WebsiteLayoutDialog({
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isEdit = Boolean(initial)
-  const defaultThemeId = themes.find((item) => item.isDefault)?.id ?? themes[0]?.id ?? null
+  const libraryCatalog = isWebsiteLibraryCatalog()
+  const headerChoices = usableLibraryItems(headers, [initial?.headerId])
+  const footerChoices = usableLibraryItems(footers, [initial?.footerId])
+  const themeChoices = usableLibraryItems(themes, [initial?.themeId])
+  const defaultThemeId = themeChoices.find((item) => item.isDefault)?.id ?? themeChoices[0]?.id ?? null
   const [values, setValues] = useState<LayoutMetaValues>(
     initial ?? { name: '', headerId: null, footerId: null, themeId: defaultThemeId ?? undefined, isDefault: false, pageIds: [] },
   )
@@ -111,10 +117,18 @@ export function WebsiteLayoutDialog({
     setValues(
       initial
         ? { ...initial, pageIds, themeId: initial.themeId ?? null }
-        : { name: '', headerId: null, footerId: null, themeId: defaultThemeId ?? undefined, isDefault: false, pageIds: [] },
+        : {
+            name: '',
+            headerId: null,
+            footerId: null,
+            themeId: defaultThemeId ?? undefined,
+            isDefault: false,
+            publishStatus: libraryCatalog ? 'draft' : undefined,
+            pageIds: [],
+          },
     )
     setFieldErrors({})
-  }, [assignedPages, chrome, defaultThemeId, initial, open])
+  }, [assignedPages, chrome, defaultThemeId, initial, libraryCatalog, open])
 
   useEffect(() => {
     if (isEdit || values.themeId !== undefined || !defaultThemeId) return
@@ -173,6 +187,14 @@ export function WebsiteLayoutDialog({
           disabled={isSaving}
         />
       </FormField>
+      {libraryCatalog ? (
+        <WebsitePublishStatusField
+          id="website-layout-publish"
+          value={values.publishStatus ?? 'draft'}
+          disabled={isSaving}
+          onChange={(publishStatus) => setValues((prev) => ({ ...prev, publishStatus }))}
+        />
+      ) : null}
       <FormField label={t('header')} htmlFor="website-layout-header">
         <Select
           value={noneValue(values.headerId)}
@@ -183,7 +205,7 @@ export function WebsiteLayoutDialog({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="__none">{t('common:none')}</SelectItem>
-            {headers.map((item) => (
+            {headerChoices.map((item) => (
               <SelectItem key={item.id} value={item.id}>
                 {item.name}
               </SelectItem>
@@ -201,7 +223,7 @@ export function WebsiteLayoutDialog({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="__none">{t('common:none')}</SelectItem>
-            {footers.map((item) => (
+            {footerChoices.map((item) => (
               <SelectItem key={item.id} value={item.id}>
                 {item.name}
               </SelectItem>
@@ -219,7 +241,7 @@ export function WebsiteLayoutDialog({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="__none">{t('common:none')}</SelectItem>
-            {themes.map((item) => (
+            {themeChoices.map((item) => (
               <SelectItem key={item.id} value={item.id}>
                 {item.name}
               </SelectItem>

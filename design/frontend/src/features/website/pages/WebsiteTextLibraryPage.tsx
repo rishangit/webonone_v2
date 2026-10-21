@@ -22,6 +22,7 @@ import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import { CopyToAiMenuItem } from '../components/CopyToAiMenuItem'
 import { TextLibraryAddDialog } from '../components/TextLibraryAddDialog'
+import { WebsitePublishStatusTag } from '../components/WebsitePublishStatus'
 import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
@@ -153,7 +154,10 @@ export function WebsiteTextLibraryPage() {
                         className="w-full rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         onClick={() => goToWebsite(`/website/texts/${item.id}`)}
                       >
-                        <p className="font-medium">{item.name}</p>
+                        <p className="flex items-center gap-2 font-medium">
+                          {item.name}
+                          <WebsitePublishStatusTag status={item.publishStatus} />
+                        </p>
                         <p
                           className="truncate text-sm text-muted-foreground"
                           style={themeFontFamilyStyle(d.family)}

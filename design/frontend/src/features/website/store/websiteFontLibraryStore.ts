@@ -17,7 +17,7 @@ export const websiteFontLibraryStore = createPaginatedFeatureStore<WebsiteFontLi
     }),
 })
 
-type CreateFontLibraryBody = { name: string; googleFontUrl: string; family: string }
+type CreateFontLibraryBody = { name: string; googleFontUrl: string; family: string; publishStatus?: 'draft' | 'published' }
 
 type CreateState = {
   status: 'idle' | 'saving' | 'succeeded' | 'error'
@@ -26,7 +26,7 @@ type CreateState = {
 
 const initialCreateState: CreateState = { status: 'idle', error: null }
 
-type UpdateFontLibraryBody = { id: string; name: string; googleFontUrl: string; family: string }
+type UpdateFontLibraryBody = { id: string; name: string; googleFontUrl: string; family: string; publishStatus?: 'draft' | 'published' }
 
 export const websiteFontLibraryUpdateSlice = createSlice({
   name: 'websiteFontLibraryUpdate',

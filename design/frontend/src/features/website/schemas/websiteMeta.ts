@@ -8,6 +8,7 @@ export const pageMetaSchema = z.object({
     .max(128)
     .regex(/^$|^[a-z0-9]+(?:[/-][a-z0-9]+)*$/, 'Use lowercase letters, numbers, and slashes'),
   status: z.enum(['active', 'inactive']).default('active'),
+  publishStatus: z.enum(['draft', 'published']).optional(),
   layoutId: z.string().trim().max(21).nullable().optional(),
   colorPaletteId: z.string().trim().max(64).nullable().optional(),
 })
@@ -23,6 +24,7 @@ export const layoutMetaSchema = z.object({
   footerId: z.string().trim().max(21).nullable().optional(),
   themeId: z.string().trim().max(21).nullable().optional(),
   isDefault: z.boolean().optional().default(false),
+  publishStatus: z.enum(['draft', 'published']).optional(),
   pageIds: z.array(z.string().trim().min(1).max(21)).optional(),
 })
 

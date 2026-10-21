@@ -17,7 +17,7 @@ export const websiteColorLibraryStore = createPaginatedFeatureStore<WebsiteColor
     }),
 })
 
-type CreateColorLibraryBody = { name: string; palette: WebsiteColorLibraryItem['palette'] }
+type CreateColorLibraryBody = { name: string; palette: WebsiteColorLibraryItem['palette']; publishStatus?: 'draft' | 'published' }
 
 type CreateState = {
   status: 'idle' | 'saving' | 'succeeded' | 'error'
@@ -26,7 +26,7 @@ type CreateState = {
 
 const initialCreateState: CreateState = { status: 'idle', error: null }
 
-type UpdateColorLibraryBody = { id: string; name: string; palette: WebsiteColorLibraryItem['palette'] }
+type UpdateColorLibraryBody = { id: string; name: string; palette: WebsiteColorLibraryItem['palette']; publishStatus?: 'draft' | 'published' }
 
 export const websiteColorLibraryUpdateSlice = createSlice({
   name: 'websiteColorLibraryUpdate',

@@ -151,14 +151,14 @@ export function NestedBlockTree({
       style={
         root
           ? {
-              ...chromeInlineStyle(chrome),
+              ...chromeInlineStyle(chrome, { theme, paletteId }),
               // Keep shell under children so presets stay clickable.
               zIndex: 0,
               pointerEvents: interactive ? 'auto' : undefined,
             }
           : {
               ...chromeBoxStyle(rect, chrome),
-              ...chromeInlineStyle(chrome),
+              ...chromeInlineStyle(chrome, { theme, paletteId }),
               zIndex:
                 selected || childSelected
                   ? 10000 + block.zIndex
@@ -436,7 +436,7 @@ function NestedAddonView({
       data-template-addon-id={addon.id}
       style={{
         ...chromeBoxStyle(rect, chrome),
-        ...chromeInlineStyle(chrome),
+        ...chromeInlineStyle(chrome, { theme, paletteId }),
         zIndex: selected ? 10000 + addon.zIndex : highlighted ? 9000 + addon.zIndex : addon.zIndex + 2,
         cursor: interactive ? 'move' : undefined,
         touchAction: interactive ? 'none' : undefined,

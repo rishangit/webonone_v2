@@ -23,6 +23,7 @@ import {
 } from '../../utils/themeLibraryMaterialize'
 import { mapThemeFieldErrors } from '../../utils/mapThemeFieldErrors'
 import { WEBSITE_PAGE_DIALOG_SIZE } from '../WebsiteEntityDialogs'
+import { usableLibraryItems } from '../WebsitePublishStatus'
 import {
   defaultElementHtml,
   emptyWebsiteElementCustomization,
@@ -271,7 +272,7 @@ export function ThemeTextStyleDialog({
               fieldError={fieldErrors.library}
               listStatus={textLibrary.listStatus}
               listError={textLibrary.listError}
-              items={textLibrary.items}
+              items={usableLibraryItems(textLibrary.items, [selectedId])}
               selectedId={selectedId}
               onSelect={setSelectedId}
               emptyLabel={t('textLibraryEmptySuperAdmin')}

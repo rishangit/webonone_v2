@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
 import {
   defaultElementHtml,
   effectiveElementHtml,
@@ -45,6 +45,9 @@ type CustomWebsiteElementHostProps = {
   fallback: React.ReactNode
   scriptContext?: Record<string, unknown>
   paletteColors?: string[]
+  /** When set, the element HTML is wrapped in an anchor to this address. */
+  linkHref?: string
+  onLinkClick?: (event: MouseEvent<HTMLAnchorElement>) => void
 }
 
 export function CustomWebsiteElementHost({
@@ -57,6 +60,8 @@ export function CustomWebsiteElementHost({
   fallback,
   scriptContext = {},
   paletteColors,
+  linkHref,
+  onLinkClick,
 }: CustomWebsiteElementHostProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const normalized = useMemo(() => normalizeWebsiteElementCustomization(customization), [customization])
@@ -94,8 +99,21 @@ export function CustomWebsiteElementHost({
     (paletteColors ?? []).map((value, index) => [`--el-color-${index + 1}`, value]),
   ) as CSSProperties
 
-  if (!useCustomHtml) {
+  function wrap(node: ReactNode) {
+    if (!linkHref) return node
     return (
+      <a
+        href={linkHref}
+        className="block h-full w-full no-underline text-inherit"
+        onClick={(event) => onLinkClick?.(event)}
+      >
+        {node}
+      </a>
+    )
+  }
+
+  if (!useCustomHtml) {
+    return wrap(
       <div
         ref={rootRef}
         className={['website-element-root', scopeClass, className].filter(Boolean).join(' ')}
@@ -106,13 +124,13 @@ export function CustomWebsiteElementHost({
         {scopedVisualStyle}
         {customCss}
         {fallback}
-      </div>
+      </div>,
     )
   }
 
   const htmlIncludesRoot = /website-element-root/.test(html)
 
-  return (
+  return wrap(
     <div className={className}>
       {visualCss}
       {scopedVisualStyle}
@@ -124,6 +142,6 @@ export function CustomWebsiteElementHost({
         data-website-element={htmlIncludesRoot ? undefined : kind}
         dangerouslySetInnerHTML={{ __html: html }}
       />
-    </div>
+    </div>,
   )
 }

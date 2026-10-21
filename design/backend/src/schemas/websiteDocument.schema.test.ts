@@ -165,6 +165,8 @@ describe('websiteDocumentSchema', () => {
           zIndex: 0,
           backgroundColor: '#FFFFFF',
           borderColor: '#111827',
+          backgroundColorIndex: 2,
+          borderColorIndex: 1,
           borderRadius: 'lg',
           boxShadow: 'md',
           padding: 2,
@@ -192,6 +194,8 @@ describe('websiteDocumentSchema', () => {
     const block = parsed.blocks[0]
     assert.equal(block?.backgroundColor, '#FFFFFF')
     assert.equal(block?.borderColor, '#111827')
+    assert.equal(block?.backgroundColorIndex, 2)
+    assert.equal(block?.borderColorIndex, 1)
     assert.equal(block?.borderRadius, 'lg')
     assert.equal(block?.boxShadow, 'md')
     assert.equal(block?.padding, 2)

@@ -22,6 +22,7 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import { ButtonLibraryAddDialog } from '../components/ButtonLibraryAddDialog'
+import { WebsitePublishStatusTag } from '../components/WebsitePublishStatus'
 import { CopyToAiMenuItem } from '../components/CopyToAiMenuItem'
 import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
@@ -169,7 +170,10 @@ export function WebsiteButtonLibraryPage() {
                           {item.name || t('buttonPreviewLabel')}
                         </span>
                         <div className="min-w-0">
-                          <p className="font-medium">{item.name}</p>
+                          <p className="flex items-center gap-2 font-medium">
+                            {item.name}
+                            <WebsitePublishStatusTag status={item.publishStatus} />
+                          </p>
                           <p className="truncate text-sm text-muted-foreground">{d.textFontName}</p>
                         </div>
                       </button>

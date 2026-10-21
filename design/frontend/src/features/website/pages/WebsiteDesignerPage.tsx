@@ -26,6 +26,7 @@ import { ContentContainerSettingsDialog } from '../components/ContentContainerSe
 import { ContentBlockSettingsDialog } from '../components/ContentBlockSettingsDialog'
 import { AddonSettingsDialog } from '../components/AddonSettingsDialog'
 import { WebsitePresetDialog } from '../components/WebsiteEntityDialogs'
+import { usableLibraryItems } from '../components/WebsitePublishStatus'
 import {
   useWebsiteLibraryRevert,
   WebsiteLibraryDownloadUpdateButton,
@@ -1055,7 +1056,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             }
             onAddAddon={handleAddAddon}
             onAddPreset={handleAddPreset}
-            presets={presetsState.items}
+            presets={usableLibraryItems(presetsState.items)}
             onLayer={handleLayer}
             onDeleteSelection={handleDeleteSelection}
             onDuplicateSelection={handleDuplicateSelection}
@@ -1157,6 +1158,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         block={settingsBlock}
         inheritedBinding={blockInheritedBinding}
         theme={theme ?? null}
+        pages={pagesState.items}
         inheritedPaletteId={
           blockSettings
             ? paletteInheritedByBlock(
@@ -1184,6 +1186,8 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                   ...item,
                   backgroundColor: patch.backgroundColor,
                   borderColor: patch.borderColor,
+                  backgroundColorIndex: patch.backgroundColorIndex,
+                  borderColorIndex: patch.borderColorIndex,
                   borderRadius: patch.borderRadius,
                   boxShadow: patch.boxShadow,
                   padding: patch.padding,
@@ -1191,6 +1195,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                   colorPaletteId: patch.colorPaletteId || undefined,
                   name: patch.name,
                   groupName: patch.groupName,
+                  linkPageId: patch.linkPageId,
                   dataBinding: patch.dataBinding,
                   customization: patch.customization,
                 }),
@@ -1203,6 +1208,8 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               ...item,
               backgroundColor: patch.backgroundColor,
               borderColor: patch.borderColor,
+              backgroundColorIndex: patch.backgroundColorIndex,
+              borderColorIndex: patch.borderColorIndex,
               borderRadius: patch.borderRadius,
               boxShadow: patch.boxShadow,
               padding: patch.padding,
@@ -1210,6 +1217,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               colorPaletteId: patch.colorPaletteId || undefined,
               name: patch.name,
               groupName: patch.groupName,
+              linkPageId: patch.linkPageId,
               dataBinding: patch.dataBinding,
               customization: patch.customization,
             })),

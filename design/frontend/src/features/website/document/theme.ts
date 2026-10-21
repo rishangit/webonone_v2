@@ -11,8 +11,13 @@ import type {
 } from '../types'
 import { stylePaletteId, themeSlotValue } from '../utils/websitePalette'
 
-function styleColor(theme: WebsiteTheme | null, paletteId: string | null | undefined, index: number, fallback: string): string {
-  if (!theme) return fallback
+function styleColor(
+  theme: WebsiteTheme | null,
+  paletteId: string | null | undefined,
+  index: number | null | undefined,
+  fallback: string,
+): string {
+  if (!theme || index == null) return fallback
   return themeSlotValue(theme, stylePaletteId(theme, paletteId), index, fallback)
 }
 
@@ -45,7 +50,10 @@ export function textStyleSnapshot(
     fontFamily: font?.family ?? 'inherit',
     googleFontUrl: font?.googleFontUrl || undefined,
     size: resolveFontSize(style, breakpoint),
-    color: styleColor(theme, style?.colorPaletteId, style?.colorIndex ?? 1, theme?.bodyTextColor ?? '#111827'),
+    color:
+      style?.colorIndex == null
+        ? 'transparent'
+        : styleColor(theme, style.colorPaletteId, style.colorIndex, theme?.bodyTextColor ?? '#111827'),
   }
 }
 
@@ -98,17 +106,26 @@ export function buttonLabelTypography(): CSSProperties {
 export function resolveButtonStyle(theme: WebsiteTheme | null, style: WebsiteButtonStyle | undefined) {
   const labelStyle = theme?.textStyles.find((item) => item.id === style?.textStyleId)
   const labelSnap = textStyleSnapshot(theme, labelStyle)
-  const labelTextColor = styleColor(
-    theme,
-    labelStyle?.colorPaletteId ?? style?.colorPaletteId,
-    labelStyle?.colorIndex ?? style?.textColorIndex ?? 1,
-    '#ffffff',
-  )
+  const labelTextColor =
+    (labelStyle?.colorIndex ?? style?.textColorIndex) == null
+      ? 'transparent'
+      : styleColor(
+          theme,
+          labelStyle?.colorPaletteId ?? style?.colorPaletteId,
+          labelStyle?.colorIndex ?? style?.textColorIndex ?? null,
+          '#ffffff',
+        )
   return {
     ...buttonLabelTypography(),
-    background: styleColor(theme, style?.colorPaletteId, style?.backgroundColorIndex ?? 1, '#111827'),
+    background:
+      style?.backgroundColorIndex == null
+        ? 'transparent'
+        : styleColor(theme, style.colorPaletteId, style.backgroundColorIndex, '#111827'),
     textColor: labelTextColor,
-    borderColor: styleColor(theme, style?.colorPaletteId, style?.borderColorIndex ?? 1, 'transparent'),
+    borderColor:
+      style?.borderColorIndex == null
+        ? 'transparent'
+        : styleColor(theme, style.colorPaletteId, style.borderColorIndex, 'transparent'),
     borderWidth: style?.borderWidth ?? 0,
     radius: style?.radius ?? 6,
     fontFamily: labelSnap.fontFamily,

@@ -74,9 +74,9 @@ export function applyButtonBasicToDraft(
     name: string
     fontId: string
     colorPaletteId: string | null
-    backgroundColorIndex: number
-    textColorIndex: number
-    borderColorIndex: number
+    backgroundColorIndex: number | null
+    textColorIndex: number | null
+    borderColorIndex: number | null
     textSize: number
     borderWidth: number
     radius: number

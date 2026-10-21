@@ -1,3 +1,4 @@
+import { ColorSelectDemo } from '@/components/ColorSelectDemo'
 import { ShowcaseLiveDemoAuthBanner } from '@/components/ShowcaseLiveDemoAuthBanner'
 import { RemainingTimeDemo } from '@/components/RemainingTimeDemo'
 import { SelectMediaControlsDemo } from '@/components/SelectMediaDemo'
@@ -9,6 +10,7 @@ export function ComplexControlsPage() {
     <div className="space-y-10">
       <ShowcaseLiveDemoAuthBanner />
       <RemainingTimeDemo />
+      <ColorSelectDemo />
       <SelectUserControlsDemo />
       <SelectMediaControlsDemo />
       <SelectTagControlsDemo />

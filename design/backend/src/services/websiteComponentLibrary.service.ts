@@ -22,6 +22,12 @@ import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 import { rewriteWebsiteDocumentMedia } from '../utils/rewriteWebsiteDocumentMedia.js'
 import { classifyTokenColumn, companyItemSource, remapDocumentTokenIds, type TokenRemap } from '../utils/companyThemeTokens.js'
 import { storeCompanyThemeTokens } from './websiteCompanyTokens.js'
+import {
+  assertPublishedLibraryIds,
+  assertPublishedStatus,
+  readPublishStatus,
+  type WebsitePublishStatus,
+} from '../utils/websitePublishStatus.js'
 
 type Sql = Knex | Knex.Transaction
 
@@ -77,6 +83,27 @@ function parseJsonArray<T>(raw: unknown): T[] {
 }
 
 const EMPTY_REMAP: TokenRemap = { text: {}, button: {} }
+const NOT_PUBLISHED = 'Only a published library item can be used'
+
+function publishedOnly<T extends object>(query: Knex.QueryBuilder<T>, enabled: boolean | undefined, column: string) {
+  return enabled ? query.andWhere(column, 'published') : query
+}
+
+async function assertThemeTokenSources(body: {
+  fonts?: WebsiteFontToken[]
+  colorPalettes?: Array<{ sourceLibraryPaletteId?: string | null }>
+  textStyles?: WebsiteTextStyle[]
+  buttonStyles?: WebsiteButtonStyle[]
+}) {
+  await assertPublishedLibraryIds('design_website_library_font', (body.fonts ?? []).map((item) => item.sourceLibraryId), NOT_PUBLISHED)
+  await assertPublishedLibraryIds(
+    'design_website_library_color',
+    (body.colorPalettes ?? []).map((item) => item.sourceLibraryPaletteId),
+    NOT_PUBLISHED,
+  )
+  await assertPublishedLibraryIds('design_website_library_text', (body.textStyles ?? []).map((item) => item.sourceLibraryId), NOT_PUBLISHED)
+  await assertPublishedLibraryIds('design_website_library_button', (body.buttonStyles ?? []).map((item) => item.sourceLibraryId), NOT_PUBLISHED)
+}
 
 function stamp() {
   return { created_at: db.fn.now(3), updated_at: db.fn.now(3) }
@@ -110,6 +137,7 @@ export type LibraryPageDto = {
   name: string
   path: string
   status: WebsitePageStatus
+  publishStatus: WebsitePublishStatus
   layoutId: string | null
   layoutName: string | null
   sortOrder: number
@@ -125,6 +153,7 @@ type PageRow = {
   name: string
   path: string
   status: WebsitePageStatus
+  publish_status: string
   layout_id: string | null
   layout_name?: string | null
   sort_order: number
@@ -142,6 +171,7 @@ function toPageDto(row: PageRow): LibraryPageDto {
     name: row.name,
     path: row.path,
     status: row.status,
+    publishStatus: readPublishStatus(row.publish_status),
     layoutId: row.layout_id,
     layoutName: row.layout_name ?? null,
     sortOrder: row.sort_order ?? 0,
@@ -163,9 +193,10 @@ export async function listLibraryPages(input: {
   q?: string
   names?: string | string[]
   status?: WebsitePageStatus
+  publishedOnly?: boolean
 }) {
   const window = namedListWindow(input, 20)
-  let query = pageQuery()
+  let query = publishedOnly(pageQuery(), input.publishedOnly, 'p.publish_status')
   if (input.status) query = query.andWhere('p.status', input.status)
   applyNamesFilter(query, 'p.name', window.names)
   if (input.q?.trim()) {
@@ -193,6 +224,7 @@ export async function getLibraryPage(id: string): Promise<LibraryPageDto> {
 async function resolveLibraryLayoutId(layoutId: string | null | undefined): Promise<string | null> {
   if (layoutId) {
     await assertLibraryRow(LIB.layouts, layoutId, 'Layout not found', 'WEBSITE_LAYOUT_NOT_FOUND')
+    await assertPublishedLibraryIds(LIB.layouts, [layoutId], NOT_PUBLISHED)
     return layoutId
   }
   if (layoutId === null) return null
@@ -213,6 +245,7 @@ export async function createLibraryPage(input: { userId: string; body: CreateWeb
     name: input.body.name,
     path: input.body.path,
     status: input.body.status,
+    publish_status: input.body.publishStatus ?? 'draft',
     layout_id: layoutId,
     sort_order: Number(sortRow?.max ?? -1) + 1,
     document: JSON.stringify(input.body.document),
@@ -234,6 +267,7 @@ export async function updateLibraryPage(input: { id: string; body: UpdateWebsite
   if (input.body.name != null) updates.name = input.body.name
   if (input.body.path != null) updates.path = input.body.path
   if (input.body.status != null) updates.status = input.body.status
+  if (input.body.publishStatus != null) updates.publish_status = input.body.publishStatus
   if (input.body.document != null) updates.document = JSON.stringify(input.body.document)
   if (input.body.colorPaletteId !== undefined) updates.color_palette_id = input.body.colorPaletteId || null
   if (input.body.sortOrder != null) updates.sort_order = input.body.sortOrder
@@ -254,6 +288,7 @@ export type LibraryChromeDto = {
   companyId: string
   name: string
   isDefault: boolean
+  publishStatus: WebsitePublishStatus
   document: WebsiteDocumentV1
   colorPaletteId: string | null
   createdBy: string | null
@@ -265,6 +300,7 @@ type ChromeRow = {
   id: string
   name: string
   is_default: number | boolean
+  publish_status: string
   document: unknown
   color_palette_id: string | null
   created_by: string | null
@@ -278,6 +314,7 @@ function toChromeDto(row: ChromeRow): LibraryChromeDto {
     companyId: '',
     name: row.name,
     isDefault: toBool(row.is_default),
+    publishStatus: readPublishStatus(row.publish_status),
     document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
     colorPaletteId: row.color_palette_id || null,
     createdBy: row.created_by,
@@ -292,9 +329,10 @@ export async function listLibraryChrome(input: {
   pageSize?: number
   q?: string
   names?: string | string[]
+  publishedOnly?: boolean
 }) {
   const window = namedListWindow(input, 20)
-  const query = likeName(db<ChromeRow>(chromeTable(input.kind)), 'name', input.q)
+  const query = publishedOnly(likeName(db<ChromeRow>(chromeTable(input.kind)), 'name', input.q), input.publishedOnly, 'publish_status')
   applyNamesFilter(query, 'name', window.names)
   const total = await countOf(query)
   const rows = await query
@@ -325,6 +363,7 @@ export async function createLibraryChrome(input: {
     id,
     name: input.body.name,
     is_default: input.body.isDefault,
+    publish_status: input.body.publishStatus ?? 'draft',
     document: JSON.stringify(input.body.document),
     color_palette_id: input.body.colorPaletteId || null,
     created_by: input.userId,
@@ -346,6 +385,7 @@ export async function updateLibraryChrome(input: {
   const updates: Record<string, unknown> = { updated_at: db.fn.now(3) }
   if (input.body.name != null) updates.name = input.body.name
   if (input.body.isDefault != null) updates.is_default = input.body.isDefault
+  if (input.body.publishStatus != null) updates.publish_status = input.body.publishStatus
   if (input.body.document != null) updates.document = JSON.stringify(input.body.document)
   if (input.body.colorPaletteId !== undefined) updates.color_palette_id = input.body.colorPaletteId || null
   await db(chromeTable(input.kind)).where({ id: input.id }).update(updates)
@@ -363,6 +403,7 @@ export type LibraryPresetDto = {
   id: string
   companyId: string
   name: string
+  publishStatus: WebsitePublishStatus
   document: WebsiteDocumentV1
   colorPaletteId: string | null
   createdBy: string | null
@@ -373,6 +414,7 @@ export type LibraryPresetDto = {
 type PresetRow = {
   id: string
   name: string
+  publish_status: string
   document: unknown
   color_palette_id: string | null
   created_by: string | null
@@ -385,6 +427,7 @@ function toPresetDto(row: PresetRow): LibraryPresetDto {
     id: row.id,
     companyId: '',
     name: row.name,
+    publishStatus: readPublishStatus(row.publish_status),
     document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
     colorPaletteId: row.color_palette_id || null,
     createdBy: row.created_by,
@@ -398,9 +441,10 @@ export async function listLibraryPresets(input: {
   pageSize?: number
   q?: string
   names?: string | string[]
+  publishedOnly?: boolean
 }) {
   const window = namedListWindow(input, 20)
-  const query = likeName(db<PresetRow>(LIB.presets), 'name', input.q)
+  const query = publishedOnly(likeName(db<PresetRow>(LIB.presets), 'name', input.q), input.publishedOnly, 'publish_status')
   applyNamesFilter(query, 'name', window.names)
   const total = await countOf(query)
   const rows = await query.clone().orderBy('updated_at', 'desc').limit(window.pageSize).offset(window.offset)
@@ -418,6 +462,7 @@ export async function createLibraryPreset(input: { userId: string; body: CreateW
   await db(LIB.presets).insert({
     id,
     name: input.body.name,
+    publish_status: input.body.publishStatus ?? 'draft',
     document: JSON.stringify(input.body.document),
     color_palette_id: input.body.colorPaletteId || null,
     created_by: input.userId,
@@ -431,6 +476,7 @@ export async function updateLibraryPreset(input: { id: string; body: UpdateWebsi
   if (!existing) throw new HttpError(404, 'Not found', 'WEBSITE_PRESET_NOT_FOUND')
   const updates: Record<string, unknown> = { updated_at: db.fn.now(3) }
   if (input.body.name != null) updates.name = input.body.name
+  if (input.body.publishStatus != null) updates.publish_status = input.body.publishStatus
   if (input.body.document != null) updates.document = JSON.stringify(input.body.document)
   if (input.body.colorPaletteId !== undefined) updates.color_palette_id = input.body.colorPaletteId || null
   await db(LIB.presets).where({ id: input.id }).update(updates)
@@ -450,13 +496,14 @@ export type LibraryThemeDto = {
   bodyTextColor: string
   isActive: boolean
   isDefault: boolean
+  publishStatus: WebsitePublishStatus
   fonts: WebsiteFontToken[]
   colorPaletteId: string
-  pageBackgroundIndex: number
-  surfaceIndex: number
-  bodyTextIndex: number
-  accent1Index: number
-  accent2Index: number
+  pageBackgroundIndex: number | null
+  surfaceIndex: number | null
+  bodyTextIndex: number | null
+  accent1Index: number | null
+  accent2Index: number | null
   surfaceColor: string
   accentColor1: string
   accentColor2: string
@@ -472,13 +519,14 @@ type ThemeRow = {
   id: string
   name: string
   color_palette_id: string | null
-  page_background_index: number
-  surface_index: number
-  body_text_index: number
-  accent_1_index: number
-  accent_2_index: number
+  page_background_index: number | null
+  surface_index: number | null
+  body_text_index: number | null
+  accent_1_index: number | null
+  accent_2_index: number | null
   is_active: number | boolean
   is_default: number | boolean
+  publish_status: string
   fonts: unknown
   color_palettes: unknown
   text_styles: unknown
@@ -495,6 +543,7 @@ function toThemeDto(row: ThemeRow): LibraryThemeDto {
     name: row.name,
     isActive: toBool(row.is_active),
     isDefault: toBool(row.is_default),
+    publishStatus: readPublishStatus(row.publish_status),
     fonts: parseJsonArray<WebsiteFontToken>(row.fonts),
     ...readThemeColorFields(row),
     textStyles: parseJsonArray<WebsiteTextStyle>(row.text_styles),
@@ -510,9 +559,10 @@ export async function listLibraryThemes(input: {
   pageSize?: number
   q?: string
   names?: string | string[]
+  publishedOnly?: boolean
 }) {
   const window = namedListWindow(input, 20)
-  const query = likeName(db<ThemeRow>(LIB.themes), 'name', input.q)
+  const query = publishedOnly(likeName(db<ThemeRow>(LIB.themes), 'name', input.q), input.publishedOnly, 'publish_status')
   applyNamesFilter(query, 'name', window.names)
   const total = await countOf(query)
   const rows = await query
@@ -531,6 +581,7 @@ export async function getLibraryTheme(id: string) {
 }
 
 export async function createLibraryTheme(input: { userId: string; body: CreateWebsiteThemeBody }) {
+  await assertThemeTokenSources(input.body)
   if (input.body.isDefault) await clearLibraryDefault(LIB.themes)
   const id = nanoid()
   await db(LIB.themes).insert({
@@ -539,6 +590,7 @@ export async function createLibraryTheme(input: { userId: string; body: CreateWe
     ...writeThemeColorFields(input.body),
     is_active: input.body.isActive,
     is_default: input.body.isDefault,
+    publish_status: input.body.publishStatus ?? 'draft',
     fonts: JSON.stringify(input.body.fonts),
     text_styles: JSON.stringify(input.body.textStyles),
     button_styles: JSON.stringify(input.body.buttonStyles),
@@ -551,11 +603,13 @@ export async function createLibraryTheme(input: { userId: string; body: CreateWe
 export async function updateLibraryTheme(input: { id: string; body: UpdateWebsiteThemeBody }) {
   const existing = await db(LIB.themes).where({ id: input.id }).first()
   if (!existing) throw new HttpError(404, 'Theme not found', 'WEBSITE_THEME_NOT_FOUND')
+  await assertThemeTokenSources(input.body)
   if (input.body.isDefault) await clearLibraryDefault(LIB.themes)
   const updates: Record<string, unknown> = { updated_at: db.fn.now(3) }
   if (input.body.name != null) updates.name = input.body.name
   if (input.body.isActive != null) updates.is_active = input.body.isActive
   if (input.body.isDefault != null) updates.is_default = input.body.isDefault
+  if (input.body.publishStatus != null) updates.publish_status = input.body.publishStatus
   if (input.body.fonts != null) updates.fonts = JSON.stringify(input.body.fonts)
   Object.assign(updates, patchThemeColorFields(existing, input.body))
   if (input.body.textStyles != null) updates.text_styles = JSON.stringify(input.body.textStyles)
@@ -585,6 +639,7 @@ export type LibraryLayoutDto = {
   footerId: string | null
   themeId: string | null
   isDefault: boolean
+  publishStatus: WebsitePublishStatus
   pages: LibraryLayoutPageDto[]
   createdBy: string | null
   createdAt: string
@@ -598,6 +653,7 @@ type LayoutRow = {
   footer_id: string | null
   theme_id: string | null
   is_default: number | boolean
+  publish_status: string
   created_by: string | null
   created_at: Date
   updated_at: Date
@@ -631,6 +687,7 @@ function toLayoutDto(row: LayoutRow, pages: LibraryLayoutPageDto[]): LibraryLayo
     footerId: row.footer_id,
     themeId: row.theme_id,
     isDefault: toBool(row.is_default),
+    publishStatus: readPublishStatus(row.publish_status),
     pages,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -643,9 +700,10 @@ export async function listLibraryLayouts(input: {
   pageSize?: number
   q?: string
   names?: string | string[]
+  publishedOnly?: boolean
 }) {
   const window = namedListWindow(input, 20)
-  const query = likeName(db<LayoutRow>(LIB.layouts), 'name', input.q)
+  const query = publishedOnly(likeName(db<LayoutRow>(LIB.layouts), 'name', input.q), input.publishedOnly, 'publish_status')
   applyNamesFilter(query, 'name', window.names)
   const total = await countOf(query)
   const rows = (await query
@@ -685,6 +743,9 @@ export async function createLibraryLayout(input: { userId: string; body: CreateW
   await assertLibraryRow(LIB.headers, input.body.headerId, 'Header not found', 'WEBSITE_HEADER_NOT_FOUND')
   await assertLibraryRow(LIB.footers, input.body.footerId, 'Footer not found', 'WEBSITE_FOOTER_NOT_FOUND')
   await assertLibraryRow(LIB.themes, input.body.themeId, 'Theme not found', 'WEBSITE_THEME_NOT_FOUND')
+  await assertPublishedLibraryIds(LIB.headers, [input.body.headerId], NOT_PUBLISHED)
+  await assertPublishedLibraryIds(LIB.footers, [input.body.footerId], NOT_PUBLISHED)
+  await assertPublishedLibraryIds(LIB.themes, [input.body.themeId], NOT_PUBLISHED)
   const existingDefault = await db(LIB.layouts).where({ is_default: true }).first()
   const isDefault = Boolean(input.body.isDefault) || !existingDefault
   if (isDefault) await clearLibraryDefault(LIB.layouts)
@@ -696,6 +757,7 @@ export async function createLibraryLayout(input: { userId: string; body: CreateW
     footer_id: input.body.footerId ?? null,
     theme_id: input.body.themeId ?? null,
     is_default: isDefault,
+    publish_status: input.body.publishStatus ?? 'draft',
     created_by: input.userId,
     ...stamp(),
   })
@@ -708,12 +770,15 @@ export async function updateLibraryLayout(input: { id: string; body: UpdateWebsi
   if (!existing) throw new HttpError(404, 'Layout not found', 'WEBSITE_LAYOUT_NOT_FOUND')
   if (input.body.headerId !== undefined) {
     await assertLibraryRow(LIB.headers, input.body.headerId, 'Header not found', 'WEBSITE_HEADER_NOT_FOUND')
+    await assertPublishedLibraryIds(LIB.headers, [input.body.headerId], NOT_PUBLISHED)
   }
   if (input.body.footerId !== undefined) {
     await assertLibraryRow(LIB.footers, input.body.footerId, 'Footer not found', 'WEBSITE_FOOTER_NOT_FOUND')
+    await assertPublishedLibraryIds(LIB.footers, [input.body.footerId], NOT_PUBLISHED)
   }
   if (input.body.themeId !== undefined) {
     await assertLibraryRow(LIB.themes, input.body.themeId, 'Theme not found', 'WEBSITE_THEME_NOT_FOUND')
+    await assertPublishedLibraryIds(LIB.themes, [input.body.themeId], NOT_PUBLISHED)
   }
   if (input.body.isDefault) await clearLibraryDefault(LIB.layouts)
   const updates: Record<string, unknown> = { updated_at: db.fn.now(3) }
@@ -722,6 +787,7 @@ export async function updateLibraryLayout(input: { id: string; body: UpdateWebsi
   if (input.body.footerId !== undefined) updates.footer_id = input.body.footerId
   if (input.body.themeId !== undefined) updates.theme_id = input.body.themeId
   if (input.body.isDefault != null) updates.is_default = input.body.isDefault
+  if (input.body.publishStatus != null) updates.publish_status = input.body.publishStatus
   await db(LIB.layouts).where({ id: input.id }).update(updates)
   if (input.body.pageIds) await applyLibraryPageOrder(input.id, input.body.pageIds)
   return getLibraryLayout(input.id)
@@ -756,6 +822,7 @@ async function availablePagePath(conn: Sql, companyId: string, path: string): Pr
 async function copyThemeRow(conn: Sql, input: { companyId: string; userId: string; libraryId: string }) {
   const source = await conn<ThemeRow>(LIB.themes).where({ id: input.libraryId }).first()
   if (!source) throw new HttpError(404, 'Theme not found', 'WEBSITE_THEME_NOT_FOUND')
+  assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
   const id = nanoid()
   const colors = readThemeColorFields(source)
   const stored = await storeCompanyThemeTokens(conn, {
@@ -799,6 +866,7 @@ async function copyChromeRow(
   if (!source) {
     throw new HttpError(404, 'Not found', input.kind === 'headers' ? 'WEBSITE_HEADER_NOT_FOUND' : 'WEBSITE_FOOTER_NOT_FOUND')
   }
+  assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
   const id = nanoid()
   const document = detachCompanyDocumentRefs(parseDocument(source.document))
   await conn(companyChromeTable(input.kind)).insert({
@@ -818,6 +886,7 @@ async function copyChromeRow(
 async function copyLayoutRow(conn: Sql, input: { companyId: string; userId: string; libraryId: string }) {
   const source = await conn<LayoutRow>(LIB.layouts).where({ id: input.libraryId }).first()
   if (!source) throw new HttpError(404, 'Layout not found', 'WEBSITE_LAYOUT_NOT_FOUND')
+  assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
   const headerId = source.header_id
     ? await copyChromeRow(conn, { kind: 'headers', companyId: input.companyId, userId: input.userId, libraryId: source.header_id })
     : null
@@ -929,6 +998,7 @@ export async function copyLibraryPreset(input: { companyId: string; userId: stri
   const id = await db.transaction(async (trx) => {
     const source = await trx<PresetRow>(LIB.presets).where({ id: input.libraryId }).first()
     if (!source) throw new HttpError(404, 'Not found', 'WEBSITE_PRESET_NOT_FOUND')
+    assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
     const presetId = nanoid()
     await trx(COMPANY.presets).insert({
       id: presetId,
@@ -958,6 +1028,7 @@ export async function copyLibraryPage(input: { companyId: string; userId: string
   const id = await db.transaction(async (trx) => {
     const source = await trx<PageRow>(LIB.pages).where({ id: input.libraryId }).first()
     if (!source) throw new HttpError(404, 'Page not found', 'WEBSITE_PAGE_NOT_FOUND')
+    assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
     const layout = source.layout_id
       ? await copyLayoutRow(trx, { companyId: input.companyId, userId: input.userId, libraryId: source.layout_id })
       : null
@@ -1098,6 +1169,7 @@ export async function revertLibraryPage(input: { companyId: string; id: string }
     const libraryId = await requireLibraryCopy(trx, COMPANY.pages, input.companyId, input.id, 'WEBSITE_PAGE_NOT_FOUND')
     const source = await trx<PageRow>(LIB.pages).where({ id: libraryId }).first()
     if (!source) throw libraryMissing('WEBSITE_PAGE_NOT_FOUND')
+    assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
     await trx(COMPANY.pages).where({ id: input.id }).update({
       document: documentJson(source.document),
       updated_at: db.fn.now(3),
@@ -1114,6 +1186,7 @@ export async function revertLibraryChrome(input: { kind: WebsiteChromeKind; comp
     const libraryId = await requireLibraryCopy(trx, companyChromeTable(input.kind), input.companyId, input.id, notFound)
     const source = await trx<ChromeRow>(chromeTable(input.kind)).where({ id: libraryId }).first()
     if (!source) throw libraryMissing(notFound)
+    assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
     await trx(companyChromeTable(input.kind)).where({ id: input.id }).update({
       document: documentJson(source.document),
       updated_at: db.fn.now(3),
@@ -1129,6 +1202,7 @@ export async function revertLibraryPreset(input: { companyId: string; id: string
     const libraryId = await requireLibraryCopy(trx, COMPANY.presets, input.companyId, input.id, 'WEBSITE_PRESET_NOT_FOUND')
     const source = await trx<PresetRow>(LIB.presets).where({ id: libraryId }).first()
     if (!source) throw libraryMissing('WEBSITE_PRESET_NOT_FOUND')
+    assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
     await trx(COMPANY.presets).where({ id: input.id }).update({
       document: documentJson(source.document),
       updated_at: db.fn.now(3),
@@ -1144,6 +1218,7 @@ export async function revertLibraryTheme(input: { companyId: string; id: string 
     const libraryId = await requireLibraryCopy(trx, COMPANY.themes, input.companyId, input.id, 'WEBSITE_THEME_NOT_FOUND')
     const source = await trx<ThemeRow>(LIB.themes).where({ id: libraryId }).first()
     if (!source) throw libraryMissing('WEBSITE_THEME_NOT_FOUND')
+    assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
     await replaceCompanyThemeTokens(trx, {
       companyId: input.companyId,
       userId: null,
@@ -1161,6 +1236,7 @@ export async function revertLibraryLayout(input: { companyId: string; userId: st
     const libraryId = await requireLibraryCopy(trx, COMPANY.layouts, input.companyId, input.id, 'WEBSITE_LAYOUT_NOT_FOUND')
     const source = await trx<LayoutRow>(LIB.layouts).where({ id: libraryId }).first()
     if (!source) throw libraryMissing('WEBSITE_LAYOUT_NOT_FOUND')
+    assertPublishedStatus(source.publish_status, NOT_PUBLISHED)
     const current = await trx<{ id: string; header_id: string | null; footer_id: string | null; theme_id: string | null }>(
       COMPANY.layouts,
     )

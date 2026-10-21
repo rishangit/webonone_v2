@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import type { WebsiteTheme } from '../types'
 import {
   chromeBoxStyle,
   chromeClassName,
+  chromeColorSlotId,
   chromeInlineStyle,
   pickElementChrome,
 } from './chrome.ts'
@@ -35,6 +37,33 @@ describe('element chrome helpers', () => {
       backgroundColor: undefined,
       border: undefined,
     })
+  })
+
+  it('resolves background and border from the theme palette slot', () => {
+    const theme = {
+      colorPaletteId: 'pal',
+      colorPalettes: [
+        {
+          id: 'pal',
+          name: 'Brand',
+          colors: [
+            { name: 'Ink', value: '#111111' },
+            { name: 'Paper', value: '#EEEEEE' },
+          ],
+        },
+      ],
+    } as unknown as WebsiteTheme
+    assert.equal(chromeColorSlotId(theme, 'pal', undefined, '#eeeeee'), '2')
+    assert.deepEqual(
+      chromeInlineStyle(
+        { backgroundColor: '#000000', backgroundColorIndex: 2, borderColorIndex: 1 },
+        { theme, paletteId: 'pal' },
+      ),
+      {
+        backgroundColor: '#EEEEEE',
+        border: '1px solid #111111',
+      },
+    )
   })
 
   it('picks only chrome fields', () => {

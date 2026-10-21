@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@webonone/ui-kit'
 import { themeFontFamilyStyle } from '../../utils/themeFontPreview'
 import { THEME_TOKEN_NONE } from './types'
@@ -35,6 +36,8 @@ export function ThemeTokenSelect({
   disabled,
   ...triggerProps
 }: ThemeTokenSelectProps) {
+  const { t } = useTranslation('common')
+  const clearedLabel = noneLabel || t('none')
   return (
     <Select
       value={allowNone ? value || THEME_TOKEN_NONE : value || undefined}
@@ -45,7 +48,7 @@ export function ThemeTokenSelect({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {allowNone ? <SelectItem value={THEME_TOKEN_NONE}>{noneLabel}</SelectItem> : null}
+        {allowNone ? <SelectItem value={THEME_TOKEN_NONE}>{clearedLabel}</SelectItem> : null}
         {options.map((option) => (
           <SelectItem key={option.id} value={option.id}>
             {option.fontFamily ? (

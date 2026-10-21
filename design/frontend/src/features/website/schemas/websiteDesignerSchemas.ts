@@ -13,9 +13,13 @@ export function createContainerSettingsSchema(minHeight: number) {
 
 export const containerSettingsSchema = createContainerSettingsSchema(MIN_PAGE_CONTAINER_HEIGHT)
 
+const themeColorSlotSchema = z.number().int().min(1).max(6).optional()
+
 export const elementChromeSchema = z.object({
   backgroundColor: z.string().max(32).optional(),
   borderColor: z.string().max(32).optional(),
+  backgroundColorIndex: themeColorSlotSchema,
+  borderColorIndex: themeColorSlotSchema,
   borderRadius: z.enum(['sm', 'md', 'lg', 'xl', 'full']).optional(),
   boxShadow: z.enum(['sm', 'md', 'lg']).optional(),
   padding: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
@@ -32,6 +36,7 @@ export const blockCustomizationSchema = z.object({
 export const blockSettingsSchema = elementChromeSchema.extend({
   name: z.string().trim().max(64).optional(),
   groupName: z.string().trim().max(64).optional(),
+  linkPageId: z.string().max(21).nullable().optional(),
   customization: blockCustomizationSchema.optional(),
   dataBinding: z
     .object({

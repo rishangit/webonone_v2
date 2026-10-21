@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { FormField } from '@webonone/ui-kit'
+import { ColorPaletteSelect, FormField } from '@webonone/ui-kit'
 import type { WebsiteTheme } from '../types'
+import { toColorPaletteSelectOptions } from '../utils/colorSelect'
 import { themePaletteSelectOptions } from '../utils/websitePalette'
-import { ThemeColorPaletteSelect } from './theme-editor/ThemeColorPaletteSelect'
 
 export function ColorPaletteField({
   id,
@@ -31,11 +31,10 @@ export function ColorPaletteField({
 
   return (
     <FormField label={t('colorPalette')} htmlFor={id}>
-      <ThemeColorPaletteSelect
+      <ColorPaletteSelect
         id={id}
         value={value ?? ''}
-        options={themePaletteSelectOptions(theme)}
-        allowNone
+        options={toColorPaletteSelectOptions(themePaletteSelectOptions(theme))}
         noneLabel={noneLabel}
         placeholder={noneLabel}
         disabled={disabled}

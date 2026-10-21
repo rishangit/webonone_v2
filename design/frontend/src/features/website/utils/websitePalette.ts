@@ -132,9 +132,10 @@ export function paletteOverrideForSave(themePaletteId: string, selectedPaletteId
 export function themeSlotValue(
   theme: WebsiteTheme,
   paletteId: string | null | undefined,
-  index: number,
+  index: number | null | undefined,
   fallback: string,
 ): string {
+  if (index == null) return fallback
   const palette = themePaletteById(theme, paletteId)
   return palette?.colors[index - 1]?.value ?? fallback
 }
@@ -144,11 +145,11 @@ export function applyThemeChrome(theme: WebsiteTheme): WebsiteTheme {
   const effectivePaletteId = colorPaletteId || theme.colorPalettes[0]?.id || ''
   const palette = themePaletteById({ ...theme, colorPaletteId: effectivePaletteId }, effectivePaletteId)
   const length = palette?.colors.length ?? 1
-  const pageBackgroundIndex = clampColorIndex(theme.pageBackgroundIndex, length)
-  const surfaceIndex = clampColorIndex(theme.surfaceIndex, length)
-  const bodyTextIndex = clampColorIndex(theme.bodyTextIndex, length)
-  const accent1Index = clampColorIndex(theme.accent1Index, length)
-  const accent2Index = clampColorIndex(theme.accent2Index, length)
+  const pageBackgroundIndex = theme.pageBackgroundIndex == null ? null : clampColorIndex(theme.pageBackgroundIndex, length)
+  const surfaceIndex = theme.surfaceIndex == null ? null : clampColorIndex(theme.surfaceIndex, length)
+  const bodyTextIndex = theme.bodyTextIndex == null ? null : clampColorIndex(theme.bodyTextIndex, length)
+  const accent1Index = theme.accent1Index == null ? null : clampColorIndex(theme.accent1Index, length)
+  const accent2Index = theme.accent2Index == null ? null : clampColorIndex(theme.accent2Index, length)
   const next = {
     ...theme,
     colorPaletteId,
@@ -161,11 +162,18 @@ export function applyThemeChrome(theme: WebsiteTheme): WebsiteTheme {
   }
   return {
     ...next,
-    pageBackground: themeSlotValue(next, effectivePaletteId, pageBackgroundIndex, '#ffffff'),
-    bodyTextColor: themeSlotValue(next, effectivePaletteId, bodyTextIndex, '#111827'),
-    surfaceColor: themeSlotValue(next, effectivePaletteId, surfaceIndex, '#ffffff'),
-    accentColor1: themeSlotValue(next, effectivePaletteId, accent1Index, '#111827'),
-    accentColor2: themeSlotValue(next, effectivePaletteId, accent2Index, '#111827'),
+    pageBackground:
+      pageBackgroundIndex == null
+        ? 'transparent'
+        : themeSlotValue(next, effectivePaletteId, pageBackgroundIndex, '#ffffff'),
+    bodyTextColor:
+      bodyTextIndex == null ? 'transparent' : themeSlotValue(next, effectivePaletteId, bodyTextIndex, '#111827'),
+    surfaceColor:
+      surfaceIndex == null ? 'transparent' : themeSlotValue(next, effectivePaletteId, surfaceIndex, '#ffffff'),
+    accentColor1:
+      accent1Index == null ? 'transparent' : themeSlotValue(next, effectivePaletteId, accent1Index, '#111827'),
+    accentColor2:
+      accent2Index == null ? 'transparent' : themeSlotValue(next, effectivePaletteId, accent2Index, '#111827'),
   }
 }
 
@@ -232,7 +240,10 @@ export function themePaletteColorValues(theme: WebsiteTheme, paletteId: string |
   return (palette?.colors ?? []).slice(0, THEME_COLOR_SLOT_MAX).map((color) => color.value)
 }
 
-export function remapColorIndex(theme: WebsiteTheme, toPaletteId: string, index: number): number {
+export function remapColorIndex(theme: WebsiteTheme, toPaletteId: string, index: number): number
+export function remapColorIndex(theme: WebsiteTheme, toPaletteId: string, index: number | null): number | null
+export function remapColorIndex(theme: WebsiteTheme, toPaletteId: string, index: number | null): number | null {
+  if (index == null) return null
   const palette = theme.colorPalettes.find((item) => item.id === toPaletteId)
   return clampColorIndex(index, palette?.colors.length ?? 1)
 }

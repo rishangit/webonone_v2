@@ -27,11 +27,11 @@ export type WebsiteThemeDto = {
   sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
   colorPaletteId: string
-  pageBackgroundIndex: number
-  surfaceIndex: number
-  bodyTextIndex: number
-  accent1Index: number
-  accent2Index: number
+  pageBackgroundIndex: number | null
+  surfaceIndex: number | null
+  bodyTextIndex: number | null
+  accent1Index: number | null
+  accent2Index: number | null
   surfaceColor: string
   accentColor1: string
   accentColor2: string
@@ -218,11 +218,11 @@ export async function updateWebsiteTheme(input: {
     if (input.body.name != null) updates.name = input.body.name
     if (input.body.isActive != null) updates.is_active = input.body.isActive
     if (input.body.isDefault != null) updates.is_default = input.body.isDefault
-    if (colorUpdates.page_background_index != null) updates.page_background_index = colorUpdates.page_background_index
-    if (colorUpdates.surface_index != null) updates.surface_index = colorUpdates.surface_index
-    if (colorUpdates.body_text_index != null) updates.body_text_index = colorUpdates.body_text_index
-    if (colorUpdates.accent_1_index != null) updates.accent_1_index = colorUpdates.accent_1_index
-    if (colorUpdates.accent_2_index != null) updates.accent_2_index = colorUpdates.accent_2_index
+    if (colorUpdates.page_background_index !== undefined) updates.page_background_index = colorUpdates.page_background_index
+    if (colorUpdates.surface_index !== undefined) updates.surface_index = colorUpdates.surface_index
+    if (colorUpdates.body_text_index !== undefined) updates.body_text_index = colorUpdates.body_text_index
+    if (colorUpdates.accent_1_index !== undefined) updates.accent_1_index = colorUpdates.accent_1_index
+    if (colorUpdates.accent_2_index !== undefined) updates.accent_2_index = colorUpdates.accent_2_index
     if (tokensChanged) {
       const stored = await storeCompanyThemeTokens(trx, {
         companyId: input.companyId,

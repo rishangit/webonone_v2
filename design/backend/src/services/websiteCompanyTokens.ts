@@ -18,6 +18,7 @@ import {
   type TokenRemap,
 } from '../utils/companyThemeTokens.js'
 import { nanoid } from 'nanoid'
+import { assertPublishedLibraryIds } from '../utils/websitePublishStatus.js'
 
 type Sql = Knex | Knex.Transaction
 
@@ -77,6 +78,34 @@ export async function storeCompanyThemeTokens(conn: Sql, input: CompanyThemeToke
       button: input.buttonStyles.flatMap((item) => (item.sourceLibraryId ? [item.sourceLibraryId] : [])),
     }),
   ])
+  const ownedFont = new Set(owned.font.map((row) => row.id))
+  const ownedColor = new Set(owned.color.map((row) => row.id))
+  const ownedText = new Set(owned.text.map((row) => row.id))
+  const ownedButton = new Set(owned.button.map((row) => row.id))
+  await assertPublishedLibraryIds(
+    LIBRARY_TOKEN_TABLE.font,
+    input.fonts.filter((item) => !ownedFont.has(item.id)).map((item) => item.sourceLibraryId),
+    'Only a published library item can be used',
+    conn,
+  )
+  await assertPublishedLibraryIds(
+    LIBRARY_TOKEN_TABLE.color,
+    input.colorPalettes.filter((item) => !ownedColor.has(item.id)).map((item) => item.sourceLibraryPaletteId),
+    'Only a published library item can be used',
+    conn,
+  )
+  await assertPublishedLibraryIds(
+    LIBRARY_TOKEN_TABLE.text,
+    input.textStyles.filter((item) => !ownedText.has(item.id)).map((item) => item.sourceLibraryId),
+    'Only a published library item can be used',
+    conn,
+  )
+  await assertPublishedLibraryIds(
+    LIBRARY_TOKEN_TABLE.button,
+    input.buttonStyles.filter((item) => !ownedButton.has(item.id)).map((item) => item.sourceLibraryId),
+    'Only a published library item can be used',
+    conn,
+  )
   const planned = planCompanyThemeTokens({
     align: input.align,
     fonts: input.fonts,

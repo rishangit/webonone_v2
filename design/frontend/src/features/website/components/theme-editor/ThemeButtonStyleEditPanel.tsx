@@ -3,6 +3,7 @@ import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
 import type { WebsiteButtonStyle, WebsiteTextStyle, WebsiteTheme } from '../../types'
 import { applyButtonBasicToDraft, resolveOwnedButtonLabelStyle } from '../../utils/ownedButtonLabelStyle'
 import { upsertById } from '../../utils/upsertById'
+import { colorSlotId, colorSlotIndex } from '../../utils/colorSelect'
 import {
   paletteOverrideForSave,
   remapColorIndex,
@@ -101,16 +102,18 @@ export function ThemeButtonStyleEditPanel({
       : options
   const fontOptionsWithFallback = withTokenFallback(fontOptions, previewLabelStyle.fontId)
   let colorOptionsWithFallback: ButtonStyleBasicSettingsOption[] = colorOptions
-  for (const colorId of [values.backgroundColorIndex, textColorIndex, values.borderColorIndex].map(String)) {
+  for (const colorId of [values.backgroundColorIndex, textColorIndex, values.borderColorIndex].map((index) =>
+    colorSlotId(index),
+  )) {
     colorOptionsWithFallback = withTokenFallback(colorOptionsWithFallback, colorId)
   }
   const basicValues: ButtonStyleBasicSettingsValues = {
     name: values.name,
     fontId: previewLabelStyle.fontId,
     colorPaletteId,
-    backgroundColorId: String(values.backgroundColorIndex || ''),
-    textColorId: String(textColorIndex || ''),
-    borderColorId: String(values.borderColorIndex || ''),
+    backgroundColorId: colorSlotId(values.backgroundColorIndex),
+    textColorId: colorSlotId(textColorIndex),
+    borderColorId: colorSlotId(values.borderColorIndex),
     textSize: previewLabelStyle.size,
     borderWidth: values.borderWidth,
     radius: values.radius,
@@ -127,9 +130,11 @@ export function ThemeButtonStyleEditPanel({
         const remapped = paletteChanged
           ? {
               ...next,
-              backgroundColorId: String(remapColorIndex(theme, nextEffective, Number(next.backgroundColorId) || 1)),
-              textColorId: String(remapColorIndex(theme, nextEffective, Number(next.textColorId) || 1)),
-              borderColorId: String(remapColorIndex(theme, nextEffective, Number(next.borderColorId) || 1)),
+              backgroundColorId: colorSlotId(
+                remapColorIndex(theme, nextEffective, colorSlotIndex(next.backgroundColorId)),
+              ),
+              textColorId: colorSlotId(remapColorIndex(theme, nextEffective, colorSlotIndex(next.textColorId))),
+              borderColorId: colorSlotId(remapColorIndex(theme, nextEffective, colorSlotIndex(next.borderColorId))),
             }
           : next
         const override = paletteOverrideForSave(themePaletteId, remapped.colorPaletteId)
@@ -137,9 +142,9 @@ export function ThemeButtonStyleEditPanel({
           name: remapped.name,
           fontId: remapped.fontId,
           colorPaletteId: override,
-          backgroundColorIndex: Number(remapped.backgroundColorId) || 1,
-          textColorIndex: Number(remapped.textColorId) || 1,
-          borderColorIndex: Number(remapped.borderColorId) || 1,
+          backgroundColorIndex: colorSlotIndex(remapped.backgroundColorId),
+          textColorIndex: colorSlotIndex(remapped.textColorId),
+          borderColorIndex: colorSlotIndex(remapped.borderColorId),
           textSize: remapped.textSize,
           borderWidth: remapped.borderWidth,
           radius: remapped.radius,

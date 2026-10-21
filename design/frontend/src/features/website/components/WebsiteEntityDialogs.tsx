@@ -28,7 +28,9 @@ import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { pageMetaSchema, slugifyPath, type PageMetaValues } from '../schemas/websiteMeta'
 import type { WebsiteLayout, WebsiteTheme } from '../types'
 import { themeForLayout } from '../document/palette'
+import { isWebsiteLibraryCatalog } from '../utils/websiteCatalogScope'
 import { ColorPaletteField } from './ColorPaletteField'
+import { usableLibraryItems, WebsitePublishStatusField } from './WebsitePublishStatus'
 
 export const WEBSITE_PAGE_DIALOG_SIZE = {
   sizeWidth: 'medium' as const,
@@ -67,9 +69,18 @@ export function WebsitePageDialog({
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const isEdit = Boolean(initial)
-  const defaultLayoutId = layouts.find((item) => item.isDefault)?.id ?? layouts[0]?.id ?? null
+  const libraryCatalog = isWebsiteLibraryCatalog()
+  const layoutChoices = usableLibraryItems(layouts, [initial?.layoutId])
+  const defaultLayoutId = layoutChoices.find((item) => item.isDefault)?.id ?? layoutChoices[0]?.id ?? null
   const [values, setValues] = useState<PageMetaValues>(
-    initial ?? { name: '', path: '', status: 'active', layoutId: defaultLayoutId, colorPaletteId: null },
+    initial ?? {
+      name: '',
+      path: '',
+      status: 'active',
+      publishStatus: libraryCatalog ? 'draft' : undefined,
+      layoutId: defaultLayoutId,
+      colorPaletteId: null,
+    },
   )
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
   const [pathTouched, setPathTouched] = useState(Boolean(initial))
@@ -97,10 +108,19 @@ export function WebsitePageDialog({
 
   useEffect(() => {
     if (!open && chrome === 'dialog') return
-    setValues(initial ?? { name: '', path: '', status: 'active', layoutId: defaultLayoutId, colorPaletteId: null })
+    setValues(
+      initial ?? {
+        name: '',
+        path: '',
+        status: 'active',
+        publishStatus: libraryCatalog ? 'draft' : undefined,
+        layoutId: defaultLayoutId,
+        colorPaletteId: null,
+      },
+    )
     setFieldErrors({})
     setPathTouched(Boolean(initial))
-  }, [open, chrome, initial, defaultLayoutId])
+  }, [open, chrome, initial, defaultLayoutId, libraryCatalog])
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
@@ -173,7 +193,15 @@ export function WebsitePageDialog({
           </SelectContent>
         </Select>
       </FormField>
-      {layouts.length > 0 ? (
+      {libraryCatalog ? (
+        <WebsitePublishStatusField
+          id="website-page-publish"
+          value={values.publishStatus ?? 'draft'}
+          disabled={isSaving}
+          onChange={(publishStatus) => setValues((prev) => ({ ...prev, publishStatus }))}
+        />
+      ) : null}
+      {layoutChoices.length > 0 ? (
         <FormField label={t('layout')} htmlFor="website-page-layout" required>
           <Select
             value={values.layoutId || defaultLayoutId || '__none'}
@@ -185,7 +213,7 @@ export function WebsitePageDialog({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {layouts.map((layout) => (
+              {layoutChoices.map((layout) => (
                 <SelectItem key={layout.id} value={layout.id}>
                   {layout.name}
                 </SelectItem>
@@ -241,6 +269,7 @@ export function WebsiteChromeDialog({
   entityId,
   initialName,
   initialColorPaletteId = null,
+  initialPublishStatus = 'draft',
   theme = null,
   onOpenChange,
   onSubmit,
@@ -254,9 +283,10 @@ export function WebsiteChromeDialog({
   entityId?: string
   initialName?: string
   initialColorPaletteId?: string | null
+  initialPublishStatus?: 'draft' | 'published'
   theme?: WebsiteTheme | null
   onOpenChange: (open: boolean) => void
-  onSubmit: (name: string, isDefault: boolean, colorPaletteId: string | null) => void
+  onSubmit: (name: string, isDefault: boolean, colorPaletteId: string | null, publishStatus?: 'draft' | 'published') => void
   onHostedSaved?: () => void
   chrome?: 'dialog' | 'embed-page'
 }) {
@@ -267,6 +297,8 @@ export function WebsiteChromeDialog({
   const [name, setName] = useState(initialName ?? '')
   const [isDefault, setIsDefault] = useState(false)
   const [colorPaletteId, setColorPaletteId] = useState<string | null>(initialColorPaletteId)
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'published'>(initialPublishStatus)
+  const libraryCatalog = isWebsiteLibraryCatalog()
   const isEdit = Boolean(entityId)
   const dialogRequestId =
     chrome === 'embed-page'
@@ -301,7 +333,8 @@ export function WebsiteChromeDialog({
     setName(initialName ?? '')
     setIsDefault(false)
     setColorPaletteId(initialColorPaletteId ?? null)
-  }, [open, chrome, initialColorPaletteId, initialName])
+    setPublishStatus(initialPublishStatus)
+  }, [open, chrome, initialColorPaletteId, initialName, initialPublishStatus])
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
@@ -311,7 +344,7 @@ export function WebsiteChromeDialog({
   function submit() {
     const trimmed = name.trim()
     if (!trimmed) return
-    onSubmit(trimmed, isDefault, colorPaletteId)
+    onSubmit(trimmed, isDefault, colorPaletteId, libraryCatalog ? publishStatus : undefined)
   }
 
   usePlatformPeerDialogSubmit({
@@ -343,6 +376,14 @@ export function WebsiteChromeDialog({
           {t('setDefault')}
         </label>
       )}
+      {libraryCatalog ? (
+        <WebsitePublishStatusField
+          id={`website-${kind}-publish`}
+          value={publishStatus}
+          disabled={isSaving}
+          onChange={setPublishStatus}
+        />
+      ) : null}
     </Form>
   )
 
@@ -382,6 +423,7 @@ export function WebsitePresetDialog({
   entityId,
   initialName,
   initialColorPaletteId = null,
+  initialPublishStatus = 'draft',
   theme = null,
   onOpenChange,
   onSubmit,
@@ -395,9 +437,10 @@ export function WebsitePresetDialog({
   entityId?: string
   initialName?: string
   initialColorPaletteId?: string | null
+  initialPublishStatus?: 'draft' | 'published'
   theme?: WebsiteTheme | null
   onOpenChange: (open: boolean) => void
-  onSubmit: (name: string, colorPaletteId: string | null) => void
+  onSubmit: (name: string, colorPaletteId: string | null, publishStatus?: 'draft' | 'published') => void
   onHostedSaved?: () => void
   chrome?: 'dialog' | 'embed-page'
   saveAs?: boolean
@@ -408,6 +451,8 @@ export function WebsitePresetDialog({
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const [name, setName] = useState(initialName ?? '')
   const [colorPaletteId, setColorPaletteId] = useState<string | null>(initialColorPaletteId)
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'published'>(initialPublishStatus)
+  const libraryCatalog = isWebsiteLibraryCatalog()
   const isEdit = Boolean(entityId)
   const isSaveAs = Boolean(saveAs)
   const dialogRequestId =
@@ -442,7 +487,8 @@ export function WebsitePresetDialog({
     if (!open && chrome === 'dialog') return
     setName(initialName ?? '')
     setColorPaletteId(initialColorPaletteId ?? null)
-  }, [open, chrome, initialColorPaletteId, initialName])
+    setPublishStatus(initialPublishStatus)
+  }, [open, chrome, initialColorPaletteId, initialName, initialPublishStatus])
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
@@ -452,7 +498,7 @@ export function WebsitePresetDialog({
   function submit() {
     const trimmed = name.trim()
     if (!trimmed) return
-    onSubmit(trimmed, colorPaletteId)
+    onSubmit(trimmed, colorPaletteId, libraryCatalog && !isSaveAs ? publishStatus : undefined)
   }
 
   usePlatformPeerDialogSubmit({
@@ -478,6 +524,14 @@ export function WebsitePresetDialog({
         disabled={isSaving}
         onChange={setColorPaletteId}
       />
+      {libraryCatalog && !isSaveAs ? (
+        <WebsitePublishStatusField
+          id="website-preset-publish"
+          value={publishStatus}
+          disabled={isSaving}
+          onChange={setPublishStatus}
+        />
+      ) : null}
     </Form>
   )
 
@@ -523,7 +577,7 @@ export function WebsiteThemeDialog({
   isSaving: boolean
   error: string | null
   onOpenChange: (open: boolean) => void
-  onSubmit: (name: string) => void
+  onSubmit: (name: string, publishStatus?: 'draft' | 'published') => void
   onHostedSaved?: (themeId?: string) => void
   chrome?: 'dialog' | 'embed-page'
 }) {
@@ -532,6 +586,8 @@ export function WebsiteThemeDialog({
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const [name, setName] = useState('')
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'published'>('draft')
+  const libraryCatalog = isWebsiteLibraryCatalog()
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
@@ -559,6 +615,7 @@ export function WebsiteThemeDialog({
   useEffect(() => {
     if (!open && chrome === 'dialog') return
     setName('')
+    setPublishStatus('draft')
   }, [chrome, open])
 
   useEffect(() => {
@@ -569,7 +626,7 @@ export function WebsiteThemeDialog({
   function submit() {
     const trimmed = name.trim()
     if (!trimmed) return
-    onSubmit(trimmed)
+    onSubmit(trimmed, libraryCatalog ? publishStatus : undefined)
   }
 
   usePlatformPeerDialogSubmit({
@@ -588,6 +645,14 @@ export function WebsiteThemeDialog({
       <FormField label={t('name')} htmlFor="website-theme-name" required>
         <Input id="website-theme-name" value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} />
       </FormField>
+      {libraryCatalog ? (
+        <WebsitePublishStatusField
+          id="website-theme-publish"
+          value={publishStatus}
+          disabled={isSaving}
+          onChange={setPublishStatus}
+        />
+      ) : null}
     </Form>
   )
 

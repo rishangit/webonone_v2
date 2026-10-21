@@ -19,6 +19,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { websiteColorLibraryActions } from '../../store'
 import type { WebsiteColorLibraryItem } from '../../types'
 import { ColorPaletteSwatchStrip } from '../ColorPaletteSwatchStrip'
+import { usableLibraryItems } from '../WebsitePublishStatus'
 
 export function ThemeColorLibraryPicker({
   appliedLibraryPaletteIds = [],
@@ -36,6 +37,7 @@ export function ThemeColorLibraryPicker({
   const { t } = useTranslation('website')
   const dispatch = useAppDispatch()
   const colorLibrary = useAppSelector((state) => state.websiteColorLibrary)
+  const paletteItems = usableLibraryItems(colorLibrary.items, [selectedId])
   const isSuperAdmin = useAppSelector((state) => state.auth.user?.role === 'super_admin')
 
   useEffect(() => {
@@ -73,11 +75,11 @@ export function ThemeColorLibraryPicker({
         <div className="flex justify-center py-8">
           <Spinner size="lg" />
         </div>
-      ) : colorLibrary.items.length === 0 ? (
+      ) : paletteItems.length === 0 ? (
         <ItemListEmpty>{isSuperAdmin ? t('colorLibraryEmptySuperAdmin') : t('colorLibraryEmpty')}</ItemListEmpty>
       ) : (
         <ItemList>
-          {colorLibrary.items.map((item) => {
+          {paletteItems.map((item) => {
             const alreadyAdded = isLibraryPaletteTaken(item)
             const selected = selectedId === item.id
             const marked = selected || alreadyAdded

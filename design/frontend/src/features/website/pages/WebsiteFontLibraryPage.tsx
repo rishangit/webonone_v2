@@ -20,6 +20,7 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { FontLibraryAddDialog } from '../components/FontLibraryAddDialog'
+import { WebsitePublishStatusTag } from '../components/WebsitePublishStatus'
 import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
@@ -163,7 +164,10 @@ export function WebsiteFontLibraryPage() {
                           Aa
                         </span>
                         <div className="min-w-0">
-                          <p className="font-medium">{font.name}</p>
+                          <p className="flex items-center gap-2 font-medium">
+                            {font.name}
+                            <WebsitePublishStatusTag status={font.publishStatus} />
+                          </p>
                           <p className="truncate text-base leading-snug text-muted-foreground" style={previewStyle}>
                             {t('textPreviewSample')}
                           </p>

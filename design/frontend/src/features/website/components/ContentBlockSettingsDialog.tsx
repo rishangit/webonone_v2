@@ -23,7 +23,7 @@ import { pickElementChrome } from '../document/chrome'
 import { websiteDatasetsActions } from '../store'
 import { childGroupNames } from '../document/dataBinding'
 import { blockSettingsSchema } from '../schemas/websiteDesignerSchemas'
-import type { BlockDataBinding, ElementChrome, WebsiteBlock, WebsiteDataset, WebsiteElementCustomization, WebsiteTheme } from '../types'
+import type { BlockDataBinding, ElementChrome, WebsiteBlock, WebsiteDataset, WebsiteElementCustomization, WebsitePage, WebsiteTheme } from '../types'
 import {
   defaultElementHtml,
   emptyWebsiteElementCustomization,
@@ -34,6 +34,7 @@ import { WebsiteElementCodeSection } from './WebsiteElementEditorTabs'
 import { BindingValueTypeBadge } from './BindingValueTypeBadge'
 import { BoundDatasetSelect } from './BoundDatasetSelect'
 import { ElementChromeSettingsFields } from './ElementChromeSettingsFields'
+import { PageLinkFields } from './PageLinkFields'
 import { ParentPropertySelect } from './ParentPropertySelect'
 
 export const BLOCK_SETTINGS_DIALOG_SIZE = {
@@ -44,6 +45,7 @@ export const BLOCK_SETTINGS_DIALOG_SIZE = {
 export type BlockSettingsPatch = ElementChrome & {
   name: string | undefined
   groupName: string | undefined
+  linkPageId: string | null
   dataBinding: BlockDataBinding | undefined
   customization: WebsiteElementCustomization | undefined
 }
@@ -65,6 +67,7 @@ interface ContentBlockSettingsDialogProps {
   inheritedBinding?: InheritedBlockBinding | null
   theme?: WebsiteTheme | null
   inheritedPaletteId?: string | null
+  pages?: Pick<WebsitePage, 'id' | 'name'>[]
   onOpenChange: (open: boolean) => void
   onSave: (blockId: string, patch: BlockSettingsPatch) => void
 }
@@ -75,6 +78,7 @@ export function ContentBlockSettingsDialog({
   inheritedBinding = null,
   theme = null,
   inheritedPaletteId = null,
+  pages = [],
   onOpenChange,
   onSave,
 }: ContentBlockSettingsDialogProps) {
@@ -86,6 +90,7 @@ export function ContentBlockSettingsDialog({
   const [chrome, setChrome] = useState<ElementChrome>({})
   const [name, setName] = useState(block?.name ?? '')
   const [groupName, setGroupName] = useState(block?.groupName ?? '')
+  const [linkPageId, setLinkPageId] = useState<string | null>(block?.linkPageId ?? null)
   const [datasetId, setDatasetId] = useState(block?.dataBinding?.datasetId ?? '')
   const [itemGroup, setItemGroup] = useState(block?.dataBinding?.itemGroup ?? '')
   const [itemGap, setItemGap] = useState(String(block?.dataBinding?.itemGap ?? 0))
@@ -121,6 +126,7 @@ export function ContentBlockSettingsDialog({
     setChrome(block ? pickElementChrome(block) : {})
     setName(block?.name ?? '')
     setGroupName(block?.groupName ?? '')
+    setLinkPageId(block?.linkPageId ?? null)
     setDatasetId(block?.dataBinding?.datasetId ?? '')
     setItemGroup(block?.dataBinding?.itemGroup ?? '')
     setItemGap(String(block?.dataBinding?.itemGap ?? 0))
@@ -160,8 +166,11 @@ export function ContentBlockSettingsDialog({
       ...chrome,
       backgroundColor: chrome.backgroundColor || undefined,
       borderColor: chrome.borderColor || undefined,
+      backgroundColorIndex: chrome.backgroundColorIndex,
+      borderColorIndex: chrome.borderColorIndex,
       name: name.trim() || undefined,
       groupName: groupName.trim() || undefined,
+      linkPageId,
       dataBinding,
       customization: storedCustomization,
     })
@@ -175,6 +184,8 @@ export function ContentBlockSettingsDialog({
     onSave(block.id, {
       backgroundColor: parsed.data.backgroundColor || undefined,
       borderColor: parsed.data.borderColor || undefined,
+      backgroundColorIndex: parsed.data.backgroundColorIndex,
+      borderColorIndex: parsed.data.borderColorIndex,
       borderRadius: parsed.data.borderRadius,
       boxShadow: parsed.data.boxShadow,
       padding: parsed.data.padding,
@@ -182,6 +193,7 @@ export function ContentBlockSettingsDialog({
       colorPaletteId: parsed.data.colorPaletteId || undefined,
       name: parsed.data.name || undefined,
       groupName: parsed.data.groupName || undefined,
+      linkPageId: parsed.data.linkPageId ?? null,
       dataBinding: nextBinding
         ? {
             datasetId: inheritsFromParent ? null : nextBinding.datasetId,
@@ -242,6 +254,12 @@ export function ContentBlockSettingsDialog({
                 placeholder={t('groupNamePlaceholder')}
               />
             </FormField>
+            <PageLinkFields
+              idPrefix="block"
+              linkPageId={linkPageId}
+              pages={pages}
+              onChange={setLinkPageId}
+            />
           </TabsContent>
           <TabsContent value="settings" className="space-y-4">
             <ElementChromeSettingsFields

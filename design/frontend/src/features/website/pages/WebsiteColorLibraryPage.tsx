@@ -147,6 +147,7 @@ export function WebsiteColorLibraryPage() {
                     name={paletteItem.name}
                     palette={paletteItem.palette}
                     colorCountLabel={t('colorPaletteColorCount', { count: paletteItem.palette.colors.length })}
+                    publishStatus={paletteItem.publishStatus}
                     onOpen={() => goToWebsite(`/website/colors/${paletteItem.id}`)}
                     menu={
                       <ItemListMenu ariaLabel={t('actionsFor', { name: paletteItem.name })}>

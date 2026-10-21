@@ -36,6 +36,11 @@ import {
 } from '../services/websiteLibrary.service.js'
 import { readNamesQuery } from '../utils/namesQuery.js'
 
+function publishedOnly(req: AuthenticatedRequest): boolean {
+  const requested = req.query.publishedOnly === '1' || req.query.publishedOnly === 'true'
+  return req.user?.role !== 'super_admin' || requested
+}
+
 const ensureStarterBodySchema = z.object({
   companyName: z.string().trim().min(1).max(255).optional(),
   userId: z.string().trim().min(1).max(21).nullable().optional(),
@@ -47,7 +52,7 @@ export async function listFontLibraryHandler(req: AuthenticatedRequest, res: Res
     const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
     const q = typeof req.query.q === 'string' ? req.query.q : undefined
     const names = readNamesQuery(req.query.names)
-    res.json(await listFontLibrary({ page, pageSize, q, names }))
+    res.json(await listFontLibrary({ page, pageSize, q, names, publishedOnly: publishedOnly(req) }))
   } catch (err) {
     next(err)
   }
@@ -88,7 +93,7 @@ export async function listColorLibraryHandler(req: AuthenticatedRequest, res: Re
     const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
     const q = typeof req.query.q === 'string' ? req.query.q : undefined
     const names = readNamesQuery(req.query.names)
-    res.json(await listColorLibrary({ page, pageSize, q, names }))
+    res.json(await listColorLibrary({ page, pageSize, q, names, publishedOnly: publishedOnly(req) }))
   } catch (err) {
     next(err)
   }
@@ -129,7 +134,7 @@ export async function listTextLibraryHandler(req: AuthenticatedRequest, res: Res
     const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
     const q = typeof req.query.q === 'string' ? req.query.q : undefined
     const names = readNamesQuery(req.query.names)
-    res.json(await listTextLibrary({ page, pageSize, q, names }))
+    res.json(await listTextLibrary({ page, pageSize, q, names, publishedOnly: publishedOnly(req) }))
   } catch (err) {
     next(err)
   }
@@ -182,7 +187,7 @@ export async function listButtonLibraryHandler(req: AuthenticatedRequest, res: R
     const pageSize = req.query.pageSize ? Number(req.query.pageSize) : undefined
     const q = typeof req.query.q === 'string' ? req.query.q : undefined
     const names = readNamesQuery(req.query.names)
-    res.json(await listButtonLibrary({ page, pageSize, q, names }))
+    res.json(await listButtonLibrary({ page, pageSize, q, names, publishedOnly: publishedOnly(req) }))
   } catch (err) {
     next(err)
   }

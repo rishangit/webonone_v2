@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { FormField, Input, ReadOnlyField, Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { fallbackTextSize, resolveTextStyle } from '../../document/theme'
 import { WEBSITE_BREAKPOINTS, type WebsiteBreakpoint, type WebsiteTextStyle, type WebsiteTheme } from '../../types'
+import { colorSlotId, colorSlotIndex } from '../../utils/colorSelect'
 import {
   paletteOverrideForSave,
   remapColorIndex,
@@ -98,7 +99,7 @@ export function ThemeTextStyleEditPanel({
     })),
     values.fontId,
   )
-  const colorOptionsWithFallback = withTokenFallback(colorOptions, String(values.colorIndex || ''))
+  const colorOptionsWithFallback = withTokenFallback(colorOptions, colorSlotId(values.colorIndex))
 
   const generalFields = (
     <TextStyleBasicSettingsFields
@@ -108,7 +109,7 @@ export function ThemeTextStyleEditPanel({
         name: values.name,
         fontId: values.fontId,
         colorPaletteId,
-        colorId: String(values.colorIndex || ''),
+        colorId: colorSlotId(values.colorIndex),
         size: values.size,
       }}
       onChange={(next) => {
@@ -121,8 +122,8 @@ export function ThemeTextStyleEditPanel({
           fontId: next.fontId,
           colorPaletteId: paletteOverrideForSave(themePaletteId, next.colorPaletteId),
           colorIndex: paletteChanged
-            ? remapColorIndex(theme, nextEffective, Number(next.colorId) || 1)
-            : Number(next.colorId) || 1,
+            ? remapColorIndex(theme, nextEffective, colorSlotIndex(next.colorId))
+            : colorSlotIndex(next.colorId),
         })
       }}
       fieldErrors={fieldErrors}

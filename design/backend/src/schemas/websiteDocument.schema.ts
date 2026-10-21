@@ -54,6 +54,7 @@ export const imageAddonPropsSchema = z.object({
   fit: z.enum(['cover', 'contain']).default('cover'),
   heightMode: z.enum(['auto', 'fixed']).default('auto'),
   fixedHeight: z.number().min(8).max(4000).optional(),
+  linkPageId: z.string().max(21).nullable().optional(),
 })
 
 export const textAddonSnapshotSchema = z.object({
@@ -67,6 +68,7 @@ export const textAddonPropsSchema = z.object({
   textStyleId: z.string().max(64).default(''),
   textStyleIndex: z.number().int().min(0).max(39).nullable().optional(),
   content: z.string().max(20000).default(''),
+  linkPageId: z.string().max(21).nullable().optional(),
   fontSizeByBreakpoint: z
     .object({
       sm: z.number().min(8).max(200).optional(),
@@ -158,9 +160,13 @@ export const elementBoxShadowSchema = z.enum(['sm', 'md', 'lg'])
 export const elementPaddingSchema = z.union([z.literal(1), z.literal(2), z.literal(3)])
 export const elementMarginSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)])
 
+const themeColorSlotSchema = z.number().int().min(1).max(6).optional()
+
 export const elementChromeFields = {
   backgroundColor: z.string().max(32).optional(),
   borderColor: z.string().max(32).optional(),
+  backgroundColorIndex: themeColorSlotSchema,
+  borderColorIndex: themeColorSlotSchema,
   borderRadius: elementBorderRadiusSchema.optional(),
   boxShadow: elementBoxShadowSchema.optional(),
   padding: elementPaddingSchema.optional(),
@@ -171,6 +177,8 @@ export const elementChromeFields = {
 export type ElementChrome = {
   backgroundColor?: string
   borderColor?: string
+  backgroundColorIndex?: number
+  borderColorIndex?: number
   borderRadius?: z.infer<typeof elementBorderRadiusSchema>
   boxShadow?: z.infer<typeof elementBoxShadowSchema>
   padding?: z.infer<typeof elementPaddingSchema>
@@ -260,6 +268,7 @@ export type WebsiteBlock = {
   name?: string
   groupName?: string
   place?: 'start' | 'center' | 'end'
+  linkPageId?: string | null
   dataBinding?: {
     datasetId: string | null
     itemGroup?: string | null
@@ -280,6 +289,7 @@ export const websiteBlockSchema: z.ZodType<WebsiteBlock> = z.lazy(() =>
     name: z.string().trim().max(64).optional(),
     groupName: z.string().trim().max(64).optional(),
     place: z.enum(['start', 'center', 'end']).optional(),
+    linkPageId: z.string().max(21).nullable().optional(),
     dataBinding: blockDataBindingSchema,
     layout: layoutByBreakpointSchema,
     customization: z

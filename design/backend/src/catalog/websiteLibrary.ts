@@ -278,7 +278,7 @@ function buildTextLibrarySeeds(): TextLibrarySeed[] {
   const fonts = new Map(theme.fonts.map((font) => [font.id, font]))
   return theme.textStyles.map((style, index) => {
     const font = fonts.get(style.fontId)!
-    const color = theme.colors[style.colorIndex - 1]!
+    const color = theme.colors[(style.colorIndex ?? 1) - 1]!
     return {
       id: `lib-${style.id}`,
       name: style.name,
@@ -301,12 +301,12 @@ function buildButtonLibrarySeeds(): ButtonLibrarySeed[] {
   const textStyles = new Map(theme.textStyles.map((style) => [style.id, style]))
   const fonts = new Map(theme.fonts.map((font) => [font.id, font]))
   return theme.buttonStyles.map((button, index) => {
-    const background = theme.colors[button.backgroundColorIndex - 1]!
-    const textColor = theme.colors[button.textColorIndex - 1]!
-    const border = theme.colors[button.borderColorIndex - 1]!
+    const background = theme.colors[(button.backgroundColorIndex ?? 1) - 1]!
+    const textColor = theme.colors[(button.textColorIndex ?? 1) - 1]!
+    const border = theme.colors[(button.borderColorIndex ?? 1) - 1]!
     const textStyle = textStyles.get(button.textStyleId)!
     const font = fonts.get(textStyle.fontId)!
-    const labelColor = theme.colors[textStyle.colorIndex - 1]!
+    const labelColor = theme.colors[(textStyle.colorIndex ?? 1) - 1]!
     return {
       id: `lib-${button.id}`,
       name: button.name,

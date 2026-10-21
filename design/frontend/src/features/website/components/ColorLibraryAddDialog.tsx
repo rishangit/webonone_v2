@@ -24,6 +24,7 @@ import {
 import { CColorPaletteImportCallout } from './CColorPaletteImportCallout'
 import { ThemeCssImportDialog } from './theme-editor/ThemeCssImportDialog'
 import { WEBSITE_PAGE_DIALOG_SIZE } from './WebsiteEntityDialogs'
+import { WebsitePublishStatusField } from './WebsitePublishStatus'
 
 function clonePalette(palette: WebsiteColorLibraryPalette): WebsiteColorLibraryPalette {
   return {
@@ -51,6 +52,7 @@ export function ColorLibraryAddDialog({
   const isEdit = Boolean(item)
   const saving = isEdit ? update.status === 'saving' : create.status === 'saving'
   const [name, setName] = useState('')
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'published'>('draft')
   const [palette, setPalette] = useState<WebsiteColorLibraryPalette>(emptyColorLibraryPalette('#175E83'))
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
   const [importOpen, setImportOpen] = useState(false)
@@ -65,11 +67,12 @@ export function ColorLibraryAddDialog({
     if (editSessionRef.current === sessionKey) return
     editSessionRef.current = sessionKey
     setName(item?.name ?? '')
+    setPublishStatus(item?.publishStatus ?? 'draft')
     setPalette(clonePalette(item?.palette ?? emptyColorLibraryPalette('#175E83')))
     setFieldErrors({})
     dispatch(websiteColorLibraryCreateActions.createReset())
     dispatch(websiteColorLibraryUpdateActions.updateReset())
-  }, [dispatch, item?.id, open])
+  }, [dispatch, item?.id, item?.name, item?.palette, item?.publishStatus, open])
 
   useEffect(() => {
     if (!isEdit && create.status === 'succeeded') {
@@ -133,7 +136,7 @@ export function ColorLibraryAddDialog({
 
   function submit() {
     const normalized = normalizeColorLibraryPalette(palette)
-    const parsed = createColorLibrarySchema.safeParse({ name: name.trim(), palette: normalized })
+    const parsed = createColorLibrarySchema.safeParse({ name: name.trim(), palette: normalized, publishStatus })
     if (!parsed.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
       return
@@ -177,6 +180,12 @@ export function ColorLibraryAddDialog({
         <FormField label={t('paletteName')} htmlFor="library-palette-name" required error={fieldErrors.name}>
           <Input id="library-palette-name" value={name} onChange={(event) => setName(event.target.value)} />
         </FormField>
+        <WebsitePublishStatusField
+          id="library-palette-publish"
+          value={publishStatus}
+          disabled={saving}
+          onChange={setPublishStatus}
+        />
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm font-medium text-foreground">{t('paletteColorsInPalette')}</p>

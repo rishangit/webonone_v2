@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { websitePublishStatusSchema } from '../utils/websitePublishStatus.js'
 
 const optionalChromeIdSchema = z
   .union([z.string().trim().length(21), z.literal(''), z.null()])
@@ -11,6 +12,7 @@ export const createWebsiteLayoutSchema = z.object({
   footerId: optionalChromeIdSchema,
   themeId: optionalChromeIdSchema,
   isDefault: z.boolean().optional().default(false),
+  publishStatus: websitePublishStatusSchema.optional(),
   pageIds: z.array(z.string().trim().min(1).max(21)).max(200).optional(),
 })
 
@@ -21,6 +23,7 @@ export const updateWebsiteLayoutSchema = z
     footerId: optionalChromeIdSchema,
     themeId: optionalChromeIdSchema,
     isDefault: z.boolean().optional(),
+    publishStatus: websitePublishStatusSchema.optional(),
     pageIds: z.array(z.string().trim().min(1).max(21)).max(200).optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'At least one field is required' })

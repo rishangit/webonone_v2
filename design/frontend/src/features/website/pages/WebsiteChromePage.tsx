@@ -27,6 +27,7 @@ import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteChromeDialog } from '../components/WebsiteEntityDialogs'
+import { WebsitePublishStatusTag } from '../components/WebsitePublishStatus'
 import { defaultWebsiteTheme } from '../document/palette'
 import type { WebsiteChrome } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
@@ -53,7 +54,12 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   const companyId = user?.companyId ?? null
   const themes = useAppSelector((s) => s.websiteThemes.items)
   const theme = defaultWebsiteTheme(themes)
-  const [dialog, setDialog] = useState<{ id?: string; name?: string; colorPaletteId?: string | null } | null>(null)
+  const [dialog, setDialog] = useState<{
+    id?: string
+    name?: string
+    colorPaletteId?: string | null
+    publishStatus?: 'draft' | 'published'
+  } | null>(null)
   const [awaitingCreate, setAwaitingCreate] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
   const revert = useWebsiteLibraryRevert()
@@ -144,6 +150,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                         <p className="font-medium">{item.name}</p>
                         {item.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
                         <WebsiteLibrarySourceTag sourceLibraryId={item.sourceLibraryId} />
+                        <WebsitePublishStatusTag status={item.publishStatus} />
                       </div>
                     </a>
                   </ItemListContent>
@@ -193,7 +200,12 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                       ) : null}
                       <DropdownMenuItem
                         onClick={() =>
-                          setDialog({ id: item.id, name: item.name, colorPaletteId: item.colorPaletteId })
+                          setDialog({
+                            id: item.id,
+                            name: item.name,
+                            colorPaletteId: item.colorPaletteId,
+                            publishStatus: item.publishStatus,
+                          })
                         }
                       >
                         {t('editDetails')}
@@ -221,22 +233,23 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
         entityId={dialog?.id}
         initialName={dialog?.name}
         initialColorPaletteId={dialog?.colorPaletteId}
+        initialPublishStatus={dialog?.publishStatus ?? 'draft'}
         theme={theme}
         isSaving={detailStatus === 'saving'}
         error={dialog?.id ? null : detailError}
         onOpenChange={(open) => {
           if (!open) setDialog(null)
         }}
-        onSubmit={(name, isDefault, colorPaletteId) => {
+        onSubmit={(name, isDefault, colorPaletteId, publishStatus) => {
           if (dialog?.id) {
-            dispatch(actions.saveDetailRequested({ id: dialog.id, body: { name, colorPaletteId } }))
+            dispatch(actions.saveDetailRequested({ id: dialog.id, body: { name, colorPaletteId, publishStatus } }))
             setDialog(null)
             toast({ title: t('saved') })
             list.load(1, list.pageSize, true)
             return
           }
           setAwaitingCreate(true)
-          dispatch(actions.saveDetailRequested({ body: { name, isDefault, colorPaletteId } }))
+          dispatch(actions.saveDetailRequested({ body: { name, isDefault, colorPaletteId, publishStatus } }))
         }}
         onHostedSaved={() => list.load(1, list.pageSize, true)}
       />

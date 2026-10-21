@@ -78,17 +78,20 @@ export function WebsitePresetCreateEmbedPage() {
       entityId={id}
       initialName={initialName}
       initialColorPaletteId={editing?.colorPaletteId ?? null}
+      initialPublishStatus={editing?.publishStatus ?? 'draft'}
       theme={defaultWebsiteTheme(themes)}
       isSaving={detailStatus === 'saving'}
       error={awaiting ? detailError : null}
       onOpenChange={(next) => {
         if (!next && parentOrigin && requestId) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSubmit={(name, colorPaletteId) => {
+      onSubmit={(name, colorPaletteId, publishStatus) => {
         setAwaiting(true)
         dispatch(
           websitePresetsActions.saveDetailRequested(
-            id ? { id, body: { name, colorPaletteId } } : { body: { name, colorPaletteId } },
+            id
+              ? { id, body: { name, colorPaletteId, publishStatus } }
+              : { body: { name, colorPaletteId, publishStatus } },
           ),
         )
       }}

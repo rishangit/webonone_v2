@@ -1,4 +1,4 @@
-import type { PointerEvent as ReactPointerEvent } from 'react'
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import { useMemo, useState } from 'react'
 import { cn } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../addons/registry'
@@ -10,6 +10,7 @@ import {
   ROW_HEIGHT,
   type ResizeHandle,
 } from '../document/layout'
+import { pageLinkHref } from '../document/pageLink'
 import { inheritPaletteId } from '../document/palette'
 import { expandDocumentForPublish, resolveAddonProps, resolveBlockDataItem } from '../document/dataBinding'
 import {
@@ -355,30 +356,36 @@ function BlockView({
   const rawDataItem = dataItemByBlockId[block.id] ?? null
   const dataItem = resolveBlockDataItem(block, rawDataItem)
   const chrome = pickElementChrome(block)
-  const [blockRoot, setBlockRoot] = useState<HTMLDivElement | null>(null)
+  const chromeStyle = chromeInlineStyle(chrome, { theme, paletteId })
+  const link = pageLinkHref(pages, block.linkPageId, companyId, !interactive)
+  const [blockRoot, setBlockRoot] = useState<HTMLElement | null>(null)
   const shellClass = blockShellScopeClass(block.id, block.customization)
+  const blockClassName = cn(
+    shellClass,
+    interactive && !chromeStyle.backgroundColor && 'bg-primary/5',
+    selected || childSelected || highlighted || parentOutlined ? 'overflow-visible' : 'overflow-hidden',
+    outlined && CONTENT_ELEMENT_OUTLINE,
+    parentOutlined && CONTENT_ELEMENT_PARENT_OUTLINE,
+    chromeClassName(chrome),
+  )
+  const blockStyle: CSSProperties = {
+    ...chromeBoxStyle(rect, chrome),
+    ...chromeStyle,
+    ...(!chromeStyle.backgroundColor && (publish || !interactive) && theme?.surfaceColor
+      ? { backgroundColor: theme.surfaceColor }
+      : {}),
+    zIndex: selected || childSelected || parentOutlined ? 10000 + block.zIndex : highlighted ? 9000 + block.zIndex : block.zIndex,
+    cursor: interactive ? 'move' : link ? 'pointer' : undefined,
+    touchAction: interactive ? 'none' : undefined,
+    userSelect: interactive ? 'none' : undefined,
+  }
+  const BlockSurface = link ? 'a' : 'div'
   return (
-    <div
+    <BlockSurface
       ref={setBlockRoot}
-      className={cn(
-        shellClass,
-        interactive && !block.backgroundColor && 'bg-primary/5',
-        selected || childSelected || highlighted || parentOutlined ? 'overflow-visible' : 'overflow-hidden',
-        outlined && CONTENT_ELEMENT_OUTLINE,
-        parentOutlined && CONTENT_ELEMENT_PARENT_OUTLINE,
-        chromeClassName(chrome),
-      )}
-      style={{
-        ...chromeBoxStyle(rect, chrome),
-        ...chromeInlineStyle(chrome),
-        ...(!chrome.backgroundColor && (publish || !interactive) && theme?.surfaceColor
-          ? { backgroundColor: theme.surfaceColor }
-          : {}),
-        zIndex: selected || childSelected || parentOutlined ? 10000 + block.zIndex : highlighted ? 9000 + block.zIndex : block.zIndex,
-        cursor: interactive ? 'move' : undefined,
-        touchAction: interactive ? 'none' : undefined,
-        userSelect: interactive ? 'none' : undefined,
-      }}
+      {...(link ? { href: link.href } : {})}
+      className={blockClassName}
+      style={blockStyle}
       onPointerDown={(event) => {
         if (!interactive) return
         if (isChromePointerTarget(event.target)) {
@@ -411,6 +418,11 @@ function BlockView({
         onSelect?.(grabbed)
       }}
       onClick={(event) => {
+        if (link && onNavigatePage) {
+          event.preventDefault()
+          onNavigatePage(link.path)
+          return
+        }
         event.stopPropagation()
         if (event.target instanceof Element) {
           const targetBlock = event.target.closest('[data-block-id]')
@@ -550,7 +562,7 @@ function BlockView({
           onResizePointerDown={onResizePointerDown}
         />
       ) : null}
-    </div>
+    </BlockSurface>
   )
 }
 
@@ -653,7 +665,7 @@ function AddonView({
       data-addon-id={addon.id}
       style={{
         ...chromeBoxStyle(rect, chrome),
-        ...chromeInlineStyle(chrome),
+        ...chromeInlineStyle(chrome, { theme, paletteId }),
         zIndex:
           selected || templateChildSelected
             ? 10000 + addon.zIndex

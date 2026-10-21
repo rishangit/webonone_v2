@@ -1,13 +1,15 @@
 import type { CSSProperties } from 'react'
 import { cn } from '@webonone/ui-kit'
-import type { LayoutRect } from '../types'
 import type {
   ElementBorderRadius,
   ElementBoxShadow,
   ElementChrome,
   ElementMargin,
   ElementPadding,
+  LayoutRect,
+  WebsiteTheme,
 } from '../types'
+import { themePaletteColorValues, themeSlotValue } from '../utils/websitePalette'
 import { rectToStyle } from './layout'
 
 const PADDING_CLASS: Record<ElementPadding, string> = {
@@ -49,7 +51,33 @@ export function pickElementChrome(source: ElementChrome): ElementChrome {
   }
   const colorPaletteId = source.colorPaletteId?.trim()
   if (colorPaletteId) chrome.colorPaletteId = colorPaletteId
+  if (source.backgroundColorIndex) chrome.backgroundColorIndex = source.backgroundColorIndex
+  if (source.borderColorIndex) chrome.borderColorIndex = source.borderColorIndex
   return chrome
+}
+
+/** Palette slot for a stored chrome color. A matching hex still selects that theme color. */
+export function chromeColorSlotId(
+  theme: WebsiteTheme | null | undefined,
+  paletteId: string | null | undefined,
+  index: number | undefined,
+  hex: string | undefined,
+): string {
+  if (index && index >= 1) return String(index)
+  if (!theme || !hex?.trim()) return ''
+  const match = themePaletteColorValues(theme, paletteId).findIndex(
+    (value) => value.trim().toLowerCase() === hex.trim().toLowerCase(),
+  )
+  return match >= 0 ? String(match + 1) : ''
+}
+
+export function chromePaletteColor(
+  theme: WebsiteTheme | null | undefined,
+  paletteId: string | null | undefined,
+  index: number | undefined,
+): string | undefined {
+  if (!theme || !index) return undefined
+  return themeSlotValue(theme, paletteId, index, '') || undefined
 }
 
 export function chromeClassName(chrome: ElementChrome): string {
@@ -60,10 +88,18 @@ export function chromeClassName(chrome: ElementChrome): string {
   )
 }
 
-export function chromeInlineStyle(chrome: ElementChrome): CSSProperties {
+export function chromeInlineStyle(
+  chrome: ElementChrome,
+  options?: { theme?: WebsiteTheme | null; paletteId?: string | null },
+): CSSProperties {
+  const paletteId = options?.paletteId ?? chrome.colorPaletteId
+  const backgroundColor =
+    chromePaletteColor(options?.theme, paletteId, chrome.backgroundColorIndex) || chrome.backgroundColor || undefined
+  const borderColor =
+    chromePaletteColor(options?.theme, paletteId, chrome.borderColorIndex) || chrome.borderColor || undefined
   return {
-    backgroundColor: chrome.backgroundColor || undefined,
-    border: chrome.borderColor ? `1px solid ${chrome.borderColor}` : undefined,
+    backgroundColor,
+    border: borderColor ? `1px solid ${borderColor}` : undefined,
   }
 }
 

@@ -31,6 +31,7 @@ import { WebsiteThemeDialog } from '../components/WebsiteEntityDialogs'
 import type { WebsiteTheme } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
 import { useWebsiteLibraryRevert, WebsiteLibrarySourceTag } from '../components/WebsiteLibraryRevert'
+import { WebsitePublishStatusTag } from '../components/WebsitePublishStatus'
 
 export function WebsiteThemesPage() {
   const { t } = useTranslation('website')
@@ -119,7 +120,10 @@ export function WebsiteThemesPage() {
                       onClick={() => goToWebsite(`/website/themes/${theme.id}`)}
                     >
                       <div className="flex items-center gap-2">
-                        <p className="font-medium">{theme.name}</p>
+                        <p className="flex items-center gap-2 font-medium">
+                          {theme.name}
+                          <WebsitePublishStatusTag status={theme.publishStatus} />
+                        </p>
                         {theme.isDefault ? <StatusTag variant="approved">{t('activeTheme')}</StatusTag> : null}
                         <WebsiteLibrarySourceTag sourceLibraryId={theme.sourceLibraryId} />
                         {!theme.isActive ? <StatusTag variant="pending">{t('inactive')}</StatusTag> : null}
@@ -206,9 +210,9 @@ export function WebsiteThemesPage() {
         isSaving={detailStatus === 'saving'}
         error={detailError}
         onOpenChange={setDialogOpen}
-        onSubmit={(name) => {
+        onSubmit={(name, publishStatus) => {
           setAwaitingCreate(true)
-          dispatch(websiteThemesActions.saveDetailRequested({ body: { name, isActive: true } }))
+          dispatch(websiteThemesActions.saveDetailRequested({ body: { name, isActive: true, publishStatus } }))
         }}
         onHostedSaved={(themeId) => {
           if (!themeId) {

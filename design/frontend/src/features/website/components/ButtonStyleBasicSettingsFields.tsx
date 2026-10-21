@@ -1,10 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { Form, FormField, Input, ReadOnlyField } from '@webonone/ui-kit'
+import { ColorPaletteSelect, ColorSelect, Form, FormField, Input, ReadOnlyField } from '@webonone/ui-kit'
+import { toColorPaletteSelectOptions } from '../utils/colorSelect'
+import type { ThemePaletteSelectOption } from '../utils/websitePalette'
 import { ColorPaletteSwatchStrip } from './ColorPaletteSwatchStrip'
-import {
-  ThemeColorPaletteSelect,
-  type ThemeColorPaletteSelectOption,
-} from './theme-editor/ThemeColorPaletteSelect'
 import { ThemeTokenSelect, type ThemeTokenOption } from './theme-editor/ThemeTokenSelect'
 
 export type ButtonStyleBasicSettingsValues = {
@@ -20,7 +18,7 @@ export type ButtonStyleBasicSettingsValues = {
 }
 
 export type ButtonStyleBasicSettingsOption = ThemeTokenOption
-export type ButtonStylePaletteOption = ThemeColorPaletteSelectOption
+export type ButtonStylePaletteOption = ThemePaletteSelectOption
 
 function colorReadout(options: ButtonStyleBasicSettingsOption[], id: string) {
   const color = options.find((entry) => entry.id === id)
@@ -142,61 +140,48 @@ export function ButtonStyleBasicSettingsFields({
         <FormField
           label={t('buttonColorPalette')}
           htmlFor={`${idPrefix}-palette`}
-          required={!paletteNoneLabel}
           error={fieldErrors.colorPaletteId}
         >
-          <ThemeColorPaletteSelect
+          <ColorPaletteSelect
             id={`${idPrefix}-palette`}
             value={values.colorPaletteId}
-            options={paletteOptions}
+            options={toColorPaletteSelectOptions(paletteOptions)}
             placeholder={t('pickColorPaletteRequired')}
-            allowNone={Boolean(paletteNoneLabel)}
-            noneLabel={paletteNoneLabel}
+            noneLabel={paletteNoneLabel || undefined}
             onChange={(colorPaletteId) => patch({ colorPaletteId })}
           />
         </FormField>
       ) : null}
-      <FormField
-        label={t('backgroundColor')}
-        htmlFor={`${idPrefix}-bg`}
-        required
-        error={fieldErrors.backgroundColorId}
-      >
-        <ThemeTokenSelect
+      <FormField label={t('backgroundColor')} htmlFor={`${idPrefix}-bg`} error={fieldErrors.backgroundColorId}>
+        <ColorSelect
           id={`${idPrefix}-bg`}
           value={values.backgroundColorId}
           options={colorOptions}
-          allowNone={allowNone}
           noneLabel={none}
           placeholder={colorPlaceholder}
           onChange={(backgroundColorId) => patch({ backgroundColorId })}
-          aria-required
           aria-invalid={Boolean(fieldErrors.backgroundColorId)}
         />
       </FormField>
-      <FormField label={t('textColor')} htmlFor={`${idPrefix}-text`} required error={fieldErrors.textColorId}>
-        <ThemeTokenSelect
+      <FormField label={t('textColor')} htmlFor={`${idPrefix}-text`} error={fieldErrors.textColorId}>
+        <ColorSelect
           id={`${idPrefix}-text`}
           value={values.textColorId}
           options={colorOptions}
-          allowNone={allowNone}
           noneLabel={none}
           placeholder={colorPlaceholder}
           onChange={(textColorId) => patch({ textColorId })}
-          aria-required
           aria-invalid={Boolean(fieldErrors.textColorId)}
         />
       </FormField>
-      <FormField label={t('borderColor')} htmlFor={`${idPrefix}-border`} required error={fieldErrors.borderColorId}>
-        <ThemeTokenSelect
+      <FormField label={t('borderColor')} htmlFor={`${idPrefix}-border`} error={fieldErrors.borderColorId}>
+        <ColorSelect
           id={`${idPrefix}-border`}
           value={values.borderColorId}
           options={colorOptions}
-          allowNone={allowNone}
           noneLabel={none}
           placeholder={colorPlaceholder}
           onChange={(borderColorId) => patch({ borderColorId })}
-          aria-required
           aria-invalid={Boolean(fieldErrors.borderColorId)}
         />
       </FormField>

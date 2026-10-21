@@ -17,6 +17,7 @@ import type { WebsiteFontLibraryItem } from '../types'
 import { themeFontFamilyStyle } from '../utils/themeFontPreview'
 import { normalizeGoogleFontInput, parseGoogleFontFamily } from '../utils/parseGoogleFontFamily'
 import { WEBSITE_PAGE_DIALOG_SIZE } from './WebsiteEntityDialogs'
+import { WebsitePublishStatusField } from './WebsitePublishStatus'
 
 export function FontLibraryAddDialog({
   open,
@@ -38,6 +39,7 @@ export function FontLibraryAddDialog({
   const [name, setName] = useState('')
   const [googleFontUrl, setGoogleFontUrl] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'published'>('draft')
 
   const customUrl = normalizeGoogleFontInput(googleFontUrl)
   const customFamily = parseGoogleFontFamily(customUrl)
@@ -47,6 +49,7 @@ export function FontLibraryAddDialog({
     if (!open) return
     setName(item?.name ?? '')
     setGoogleFontUrl(item?.googleFontUrl ?? '')
+    setPublishStatus(item?.publishStatus ?? 'draft')
     setFieldErrors({})
     dispatch(websiteFontLibraryCreateActions.createReset())
     dispatch(websiteFontLibraryUpdateActions.updateReset())
@@ -90,6 +93,7 @@ export function FontLibraryAddDialog({
       name: name.trim(),
       googleFontUrl: customUrl,
       family,
+      publishStatus,
     })
     if (!parsed.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
@@ -133,6 +137,7 @@ export function FontLibraryAddDialog({
         <FormField label={t('styleName')} htmlFor="library-font-name" required error={fieldErrors.name}>
           <Input id="library-font-name" value={name} onChange={(event) => setName(event.target.value)} />
         </FormField>
+        <WebsitePublishStatusField id="library-font-publish" value={publishStatus} disabled={saving} onChange={setPublishStatus} />
         <FormField label={t('googleFontUrl')} htmlFor="library-font-url" required error={fieldErrors.googleFontUrl}>
           <Input
             id="library-font-url"

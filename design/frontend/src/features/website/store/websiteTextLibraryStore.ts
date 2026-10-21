@@ -17,7 +17,7 @@ export const websiteTextLibraryStore = createPaginatedFeatureStore<WebsiteTextLi
     }),
 })
 
-type CreateTextLibraryBody = { name: string; definition: WebsiteTextLibraryItem['definition'] }
+type CreateTextLibraryBody = { name: string; definition: WebsiteTextLibraryItem['definition']; publishStatus?: 'draft' | 'published' }
 
 type CreateState = {
   status: 'idle' | 'saving' | 'succeeded' | 'error'
@@ -26,7 +26,7 @@ type CreateState = {
 
 const initialCreateState: CreateState = { status: 'idle', error: null }
 
-type UpdateTextLibraryBody = { id: string; name: string; definition: WebsiteTextLibraryItem['definition'] }
+type UpdateTextLibraryBody = { id: string; name: string; definition: WebsiteTextLibraryItem['definition']; publishStatus?: 'draft' | 'published' }
 
 export const websiteTextLibraryUpdateSlice = createSlice({
   name: 'websiteTextLibraryUpdate',

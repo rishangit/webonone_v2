@@ -15,6 +15,7 @@ import { Button, CustomDialog, mapZodIssuesToFieldErrors, useToast } from '@webo
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { createTextLibrarySchema } from '../schemas/websiteThemeSchemas'
+import { usableLibraryItems, WebsitePublishStatusField } from './WebsitePublishStatus'
 import {
   websiteColorLibraryActions,
   websiteFontLibraryActions,
@@ -83,6 +84,7 @@ export function TextLibraryAddDialog({
   const saving = isEdit ? update.status === 'saving' : create.status === 'saving'
   const colorOptions = useMemo(() => flattenColorLibraryPalettes(colors.items), [colors.items])
   const [name, setName] = useState('')
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'published'>('draft')
   const [fontId, setFontId] = useState('')
   const [colorPaletteId, setColorPaletteId] = useState('')
   const [colorOptionId, setColorOptionId] = useState('')
@@ -129,6 +131,7 @@ export function TextLibraryAddDialog({
 
     const next = item?.definition
     setName(item?.name ?? '')
+    setPublishStatus(item?.publishStatus ?? 'draft')
     setFontId('')
     setColorPaletteId('')
     setColorOptionId('')
@@ -235,6 +238,7 @@ export function TextLibraryAddDialog({
     )
     const parsed = createTextLibrarySchema.safeParse({
       name: name.trim(),
+      publishStatus,
       definition: {
         fontName: font.name,
         googleFontUrl: font.googleFontUrl,
@@ -282,6 +286,13 @@ export function TextLibraryAddDialog({
   const defaultHtml = defaultElementHtml('text', scopeId, elementVisual)
 
   const generalFields = (
+    <>
+    <WebsitePublishStatusField
+      id="library-text-publish"
+      value={publishStatus}
+      disabled={saving}
+      onChange={setPublishStatus}
+    />
     <TextStyleBasicSettingsFields
       mode="edit"
       idPrefix="library-text"
@@ -312,12 +323,12 @@ export function TextLibraryAddDialog({
         size: fieldErrors.size ?? fieldErrors['definition.size'],
       }}
       extraError={fieldErrors.library}
-      fontOptions={fonts.items.map((fontItem) => ({
+      fontOptions={usableLibraryItems(fonts.items, [fontId]).map((fontItem) => ({
         id: fontItem.id,
         label: fontItem.name,
         fontFamily: fontItem.family,
       }))}
-      paletteOptions={colors.items.map((libraryItem) => ({
+      paletteOptions={usableLibraryItems(colors.items, [colorPaletteId]).map((libraryItem) => ({
         id: libraryItem.id,
         name: libraryItem.name,
         palette: libraryItem.palette,
@@ -332,6 +343,7 @@ export function TextLibraryAddDialog({
       fontPlaceholder={t('pickFontRequired')}
       colorPlaceholder={t('pickColorRequired')}
     />
+    </>
   )
 
   const body = (

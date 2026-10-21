@@ -37,6 +37,7 @@ import { websiteFontTokenSchema } from '../../schemas/websiteThemeSchemas'
 import { websiteFontLibraryActions, websiteFontLibraryCreateActions } from '../../store'
 import type { WebsiteFontLibraryItem, WebsiteFontToken } from '../../types'
 import { themeFontFamilyStyle } from '../../utils/themeFontPreview'
+import { usableLibraryItems } from '../WebsitePublishStatus'
 import { normalizeGoogleFontInput, parseGoogleFontFamily } from '../../utils/parseGoogleFontFamily'
 import { WebsiteSourceChoice, WebsiteSourceChoiceGrid } from '../WebsiteSourceChoice'
 import { WEBSITE_PAGE_DIALOG_SIZE } from '../WebsiteEntityDialogs'
@@ -97,7 +98,8 @@ export function ThemeFontDialog({
   function isLibraryFontTaken(font: { googleFontUrl: string; family: string }) {
     return taken.has(font.googleFontUrl) || takenFamilies.has(font.family)
   }
-  const selected = fontLibrary.items.find((font) => font.id === selectedId) ?? null
+  const publishedFonts = usableLibraryItems(fontLibrary.items)
+  const selected = publishedFonts.find((font) => font.id === selectedId) ?? null
   const customUrl = normalizeGoogleFontInput(googleFontUrl)
   const customFamily = parseGoogleFontFamily(customUrl)
 
@@ -337,7 +339,7 @@ export function ThemeFontDialog({
         <ItemListEmpty>{isSuperAdmin ? t('fontLibraryEmptySuperAdmin') : t('fontLibraryEmpty')}</ItemListEmpty>
       ) : (
         <ItemList>
-          {fontLibrary.items.map((font) => (
+          {publishedFonts.map((font) => (
             <FontLibraryRow
               key={font.id}
               font={font}

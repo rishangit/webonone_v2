@@ -1,9 +1,11 @@
 import { z } from 'zod'
+import { websitePublishStatusSchema } from '../utils/websitePublishStatus.js'
 
 export const createFontLibrarySchema = z.object({
   name: z.string().trim().min(1).max(128),
   googleFontUrl: z.string().trim().min(1).max(2048),
   family: z.string().trim().min(1).max(255),
+  publishStatus: websitePublishStatusSchema.optional(),
 })
 
 const colorLibraryPaletteHex = z
@@ -26,6 +28,7 @@ export const websiteColorLibraryPaletteSchema = z.object({
 export const createColorLibrarySchema = z.object({
   name: z.string().trim().min(1).max(128),
   palette: websiteColorLibraryPaletteSchema,
+  publishStatus: websitePublishStatusSchema.optional(),
 })
 
 export const websiteElementCustomizationSchema = z.object({
@@ -56,6 +59,7 @@ export const textLibraryDefinitionSchema = z.object({
 export const createTextLibrarySchema = z.object({
   name: z.string().trim().min(1).max(128),
   definition: textLibraryDefinitionSchema,
+  publishStatus: websitePublishStatusSchema.optional(),
 })
 
 export const buttonLibraryDefinitionSchema = z.object({
@@ -80,6 +84,7 @@ export const buttonLibraryDefinitionSchema = z.object({
 export const createButtonLibrarySchema = z.object({
   name: z.string().trim().min(1).max(128),
   definition: buttonLibraryDefinitionSchema,
+  publishStatus: websitePublishStatusSchema.optional(),
 })
 
 function codeField() {
@@ -113,17 +118,19 @@ const elementLibraryPatchFields = {
   html: codeField(),
   styles: codeField(),
   scripts: codeField(),
+  publishStatus: websitePublishStatusSchema.optional(),
 }
 
 function hasElementLibraryPatch(
-  data: { name?: string; definition?: unknown; html?: string; styles?: string; scripts?: string },
+  data: { name?: string; definition?: unknown; html?: string; styles?: string; scripts?: string; publishStatus?: string },
 ): boolean {
   return (
     data.name != null ||
     data.definition != null ||
     data.html != null ||
     data.styles != null ||
-    data.scripts != null
+    data.scripts != null ||
+    data.publishStatus != null
   )
 }
 
@@ -199,7 +206,7 @@ export const websiteTextStyleSchema = z.object({
       '2xl': z.number().min(8).max(200).optional(),
     })
     .optional(),
-  colorIndex: themeColorIndexSchema.default(1),
+  colorIndex: themeColorIndexSchema.nullable().default(1),
   colorPaletteId: z.string().min(1).max(64).nullable().optional(),
   sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
   customization: websiteElementCustomizationSchema.optional(),
@@ -209,10 +216,10 @@ export const websiteButtonStyleSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(128),
   colorPaletteId: z.string().min(1).max(64).nullable().optional(),
-  backgroundColorIndex: themeColorIndexSchema.default(1),
-  textColorIndex: themeColorIndexSchema.default(1),
+  backgroundColorIndex: themeColorIndexSchema.nullable().default(1),
+  textColorIndex: themeColorIndexSchema.nullable().default(1),
   textStyleId: z.string().max(64).default(''),
-  borderColorIndex: themeColorIndexSchema.default(1),
+  borderColorIndex: themeColorIndexSchema.nullable().default(1),
   borderWidth: z.number().min(0).max(16).default(0),
   radius: z.number().min(0).max(999).default(6),
   sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
@@ -224,13 +231,14 @@ export const createWebsiteThemeSchema = z.object({
   pageBackground: z.string().max(32).optional().default('#ffffff'),
   bodyTextColor: z.string().max(32).optional().default('#111827'),
   colorPaletteId: z.string().max(64).optional().default(''),
-  pageBackgroundIndex: themeColorIndexSchema.optional().default(1),
-  surfaceIndex: themeColorIndexSchema.optional().default(1),
-  bodyTextIndex: themeColorIndexSchema.optional().default(1),
-  accent1Index: themeColorIndexSchema.optional().default(1),
-  accent2Index: themeColorIndexSchema.optional().default(1),
+  pageBackgroundIndex: themeColorIndexSchema.nullable().optional().default(1),
+  surfaceIndex: themeColorIndexSchema.nullable().optional().default(1),
+  bodyTextIndex: themeColorIndexSchema.nullable().optional().default(1),
+  accent1Index: themeColorIndexSchema.nullable().optional().default(1),
+  accent2Index: themeColorIndexSchema.nullable().optional().default(1),
   isActive: z.boolean().optional().default(true),
   isDefault: z.boolean().optional().default(false),
+  publishStatus: websitePublishStatusSchema.optional(),
   fonts: z.array(websiteFontTokenSchema).max(40).optional().default([]),
   colorPalettes: z.array(websiteThemeColorPaletteSchema).max(24).optional().default([]),
   textStyles: z.array(websiteTextStyleSchema).max(40).optional().default([]),
@@ -243,13 +251,14 @@ export const updateWebsiteThemeSchema = z
     pageBackground: z.string().max(32).optional(),
     bodyTextColor: z.string().max(32).optional(),
     colorPaletteId: z.string().max(64).optional(),
-    pageBackgroundIndex: themeColorIndexSchema.optional(),
-    surfaceIndex: themeColorIndexSchema.optional(),
-    bodyTextIndex: themeColorIndexSchema.optional(),
-    accent1Index: themeColorIndexSchema.optional(),
-    accent2Index: themeColorIndexSchema.optional(),
+    pageBackgroundIndex: themeColorIndexSchema.nullable().optional(),
+    surfaceIndex: themeColorIndexSchema.nullable().optional(),
+    bodyTextIndex: themeColorIndexSchema.nullable().optional(),
+    accent1Index: themeColorIndexSchema.nullable().optional(),
+    accent2Index: themeColorIndexSchema.nullable().optional(),
     isActive: z.boolean().optional(),
     isDefault: z.boolean().optional(),
+    publishStatus: websitePublishStatusSchema.optional(),
     fonts: z.array(websiteFontTokenSchema).max(40).optional(),
     colorPalettes: z.array(websiteThemeColorPaletteSchema).max(24).optional(),
     textStyles: z.array(websiteTextStyleSchema).max(40).optional(),

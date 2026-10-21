@@ -29,6 +29,7 @@ import type { WebsiteLayout } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
 import { WebsiteAddItemControl } from '../components/WebsiteAddItemControl'
 import { useWebsiteLibraryRevert, WebsiteLibrarySourceTag } from '../components/WebsiteLibraryRevert'
+import { WebsitePublishStatusTag } from '../components/WebsitePublishStatus'
 
 export function WebsiteLayoutsPage() {
   const { t } = useTranslation('website')
@@ -131,6 +132,7 @@ export function WebsiteLayoutsPage() {
                                 footerId: item.footerId,
                                 themeId: item.themeId,
                                 isDefault: item.isDefault,
+                                publishStatus: item.publishStatus,
                                 pageIds: item.pages.map((page) => page.id),
                               },
                             })
@@ -141,6 +143,7 @@ export function WebsiteLayoutsPage() {
                         <p className="font-medium">{item.name}</p>
                         {item.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
                         <WebsiteLibrarySourceTag sourceLibraryId={item.sourceLibraryId} />
+                        <WebsitePublishStatusTag status={item.publishStatus} />
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {t('layoutPagesCount', { count: item.pages.length })}
@@ -189,6 +192,7 @@ export function WebsiteLayoutsPage() {
                                 footerId: item.footerId,
                                 themeId: item.themeId,
                                 isDefault: item.isDefault,
+                                publishStatus: item.publishStatus,
                                 pageIds: item.pages.map((page) => page.id),
                               },
                             })

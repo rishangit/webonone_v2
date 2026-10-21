@@ -15,6 +15,7 @@ import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteDesignerUrl } from '@/features/shell/utils/navigateDesign'
 import type { WebsitePage } from '../types'
 import { useWebsiteLibraryRevert, WebsiteLibrarySourceTag } from './WebsiteLibraryRevert'
+import { WebsitePublishStatusTag } from './WebsitePublishStatus'
 
 interface WebsitePagesListProps {
   pages: WebsitePage[]
@@ -57,6 +58,7 @@ export function WebsitePagesList({
               {page.name}
             </a>
             <WebsiteLibrarySourceTag sourceLibraryId={page.sourceLibraryId} />
+            <WebsitePublishStatusTag status={page.publishStatus} />
           </span>
         ),
       },
@@ -112,6 +114,7 @@ export function WebsitePagesList({
         <div className="flex items-center gap-2">
           <p className="font-medium">{page.name}</p>
           <WebsiteLibrarySourceTag sourceLibraryId={page.sourceLibraryId} />
+          <WebsitePublishStatusTag status={page.publishStatus} />
           <StatusTag variant={page.status === 'active' ? 'approved' : 'pending'}>
             {page.status === 'active' ? t('active') : t('inactive')}
           </StatusTag>

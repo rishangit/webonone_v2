@@ -20,6 +20,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { createButtonLibrarySchema } from '../schemas/websiteThemeSchemas'
+import { usableLibraryItems, WebsitePublishStatusField } from './WebsitePublishStatus'
 import {
   websiteButtonLibraryCreateActions,
   websiteButtonLibraryUpdateActions,
@@ -88,6 +89,7 @@ export function ButtonLibraryAddDialog({
   const saving = isEdit ? update.status === 'saving' : create.status === 'saving'
   const colorOptions = useMemo(() => flattenColorLibraryPalettes(colorLibrary.items), [colorLibrary.items])
   const [name, setName] = useState('')
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'published'>('draft')
   const [fontId, setFontId] = useState('')
   const [colorPaletteId, setColorPaletteId] = useState('')
   const [backgroundColorId, setBackgroundColorId] = useState('')
@@ -140,6 +142,7 @@ export function ButtonLibraryAddDialog({
     const next = item?.definition
 
     setName(item?.name ?? '')
+    setPublishStatus(item?.publishStatus ?? 'draft')
     setFontId('')
     setColorPaletteId('')
     setBackgroundColorId('')
@@ -271,6 +274,7 @@ export function ButtonLibraryAddDialog({
     )
     const parsed = createButtonLibrarySchema.safeParse({
       name: name.trim(),
+      publishStatus,
       definition: {
         backgroundColorName: `${background.paletteName} (${t('paletteColorSlot', { index: background.slot })})`,
         backgroundColorValue: background.value,
@@ -344,6 +348,13 @@ export function ButtonLibraryAddDialog({
   const defaultHtml = defaultElementHtml('button', scopeId, elementVisual)
 
   const generalFields = (
+    <>
+    <WebsitePublishStatusField
+      id="library-button-publish"
+      value={publishStatus}
+      disabled={saving}
+      onChange={setPublishStatus}
+    />
     <ButtonStyleBasicSettingsFields
       mode="edit"
       idPrefix="library-button"
@@ -384,12 +395,12 @@ export function ButtonLibraryAddDialog({
       }}
       fieldErrors={fieldErrors}
       extraError={fieldErrors.library}
-      fontOptions={fonts.items.map((fontItem) => ({
+      fontOptions={usableLibraryItems(fonts.items, [fontId]).map((fontItem) => ({
         id: fontItem.id,
         label: fontItem.name,
         fontFamily: fontItem.family,
       }))}
-      paletteOptions={colorLibrary.items.map((item) => ({
+      paletteOptions={usableLibraryItems(colorLibrary.items, [colorPaletteId]).map((item) => ({
         id: item.id,
         name: item.name,
         palette: item.palette,
@@ -404,6 +415,7 @@ export function ButtonLibraryAddDialog({
       fontPlaceholder={t('pickFontRequired')}
       colorPlaceholder={t('pickColorRequired')}
     />
+    </>
   )
 
   const body = (

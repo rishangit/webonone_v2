@@ -12,21 +12,21 @@ type PaletteColor = { name: string; value: string }
 
 export type ThemeColorWrite = {
   color_palette_id: string | null
-  page_background_index: number
-  surface_index: number
-  body_text_index: number
-  accent_1_index: number
-  accent_2_index: number
+  page_background_index: number | null
+  surface_index: number | null
+  body_text_index: number | null
+  accent_1_index: number | null
+  accent_2_index: number | null
   color_palettes: string
 }
 
 export type ThemeColorRead = {
   colorPaletteId: string
-  pageBackgroundIndex: number
-  surfaceIndex: number
-  bodyTextIndex: number
-  accent1Index: number
-  accent2Index: number
+  pageBackgroundIndex: number | null
+  surfaceIndex: number | null
+  bodyTextIndex: number | null
+  accent1Index: number | null
+  accent2Index: number | null
   pageBackground: string
   bodyTextColor: string
   surfaceColor: string
@@ -82,9 +82,15 @@ function clampIndex(index: number, length: number): number {
   return Math.min(Math.floor(index), length, THEME_COLOR_SLOT_MAX)
 }
 
-function paletteSlots(palette: WebsiteThemeColorPalette | undefined, index: number, fallback: string): string {
+function paletteSlots(palette: WebsiteThemeColorPalette | undefined, index: number | null, fallback: string): string {
+  if (index == null) return fallback
   const color = palette?.colors[index - 1]
   return color?.value || fallback
+}
+
+function readOptionalIndex(value: number | null | undefined, length: number): number | null {
+  if (value == null) return null
+  return clampIndex(value, length)
 }
 
 export function readThemeColorFields(row: {
@@ -119,11 +125,11 @@ export function readThemeColorFields(row: {
       ? row.color_palette_id
       : colorPalettes[0]?.id) ?? ''
   const palette = colorPalettes.find((item) => item.id === colorPaletteId) ?? colorPalettes[0]
-  const pageBackgroundIndex = clampIndex(Number(row.page_background_index ?? 1), palette?.colors.length ?? 1)
-  const surfaceIndex = clampIndex(Number(row.surface_index ?? 1), palette?.colors.length ?? 1)
-  const bodyTextIndex = clampIndex(Number(row.body_text_index ?? 1), palette?.colors.length ?? 1)
-  const accent1Index = clampIndex(Number(row.accent_1_index ?? 1), palette?.colors.length ?? 1)
-  const accent2Index = clampIndex(Number(row.accent_2_index ?? 1), palette?.colors.length ?? 1)
+  const pageBackgroundIndex = readOptionalIndex(row.page_background_index, palette?.colors.length ?? 1)
+  const surfaceIndex = readOptionalIndex(row.surface_index, palette?.colors.length ?? 1)
+  const bodyTextIndex = readOptionalIndex(row.body_text_index, palette?.colors.length ?? 1)
+  const accent1Index = readOptionalIndex(row.accent_1_index, palette?.colors.length ?? 1)
+  const accent2Index = readOptionalIndex(row.accent_2_index, palette?.colors.length ?? 1)
   return {
     colorPaletteId,
     pageBackgroundIndex,
@@ -131,11 +137,11 @@ export function readThemeColorFields(row: {
     bodyTextIndex,
     accent1Index,
     accent2Index,
-    pageBackground: paletteSlots(palette, pageBackgroundIndex, '#ffffff'),
-    bodyTextColor: paletteSlots(palette, bodyTextIndex, '#111827'),
-    surfaceColor: paletteSlots(palette, surfaceIndex, '#ffffff'),
-    accentColor1: paletteSlots(palette, accent1Index, '#111827'),
-    accentColor2: paletteSlots(palette, accent2Index, '#111827'),
+    pageBackground: paletteSlots(palette, pageBackgroundIndex, 'transparent'),
+    bodyTextColor: paletteSlots(palette, bodyTextIndex, 'transparent'),
+    surfaceColor: paletteSlots(palette, surfaceIndex, 'transparent'),
+    accentColor1: paletteSlots(palette, accent1Index, 'transparent'),
+    accentColor2: paletteSlots(palette, accent2Index, 'transparent'),
     colorPalettes,
   }
 }
@@ -266,7 +272,10 @@ export function migrateThemeColorRecord(row: {
     const style = { ...(item as Record<string, unknown>) }
     const colorId = typeof style.colorId === 'string' ? style.colorId : ''
     const override = stylePalette([colorId])
-    style.colorIndex = typeof style.colorIndex === 'number' ? style.colorIndex : styleIndex(colorId, override)
+    style.colorIndex =
+      style.colorIndex === null || typeof style.colorIndex === 'number'
+        ? style.colorIndex
+        : styleIndex(colorId, override)
     style.colorPaletteId = typeof style.colorPaletteId === 'string' ? style.colorPaletteId : override
     delete style.colorId
     return style
@@ -280,10 +289,17 @@ export function migrateThemeColorRecord(row: {
     const borderId = typeof style.borderColorId === 'string' ? style.borderColorId : ''
     const override = stylePalette([backgroundId, textId, borderId])
     style.backgroundColorIndex =
-      typeof style.backgroundColorIndex === 'number' ? style.backgroundColorIndex : styleIndex(backgroundId, override)
-    style.textColorIndex = typeof style.textColorIndex === 'number' ? style.textColorIndex : styleIndex(textId, override)
+      style.backgroundColorIndex === null || typeof style.backgroundColorIndex === 'number'
+        ? style.backgroundColorIndex
+        : styleIndex(backgroundId, override)
+    style.textColorIndex =
+      style.textColorIndex === null || typeof style.textColorIndex === 'number'
+        ? style.textColorIndex
+        : styleIndex(textId, override)
     style.borderColorIndex =
-      typeof style.borderColorIndex === 'number' ? style.borderColorIndex : styleIndex(borderId, override)
+      style.borderColorIndex === null || typeof style.borderColorIndex === 'number'
+        ? style.borderColorIndex
+        : styleIndex(borderId, override)
     style.colorPaletteId = typeof style.colorPaletteId === 'string' ? style.colorPaletteId : override
     delete style.backgroundColorId
     delete style.textColorId
@@ -386,21 +402,21 @@ export function patchThemeColorFields(existingRow: Parameters<typeof readThemeCo
   let palettes = body.colorPalettes ?? existing.colorPalettes
   if (body.colorPalettes != null) updates.color_palettes = JSON.stringify(palettes)
   if (body.colorPaletteId != null) updates.color_palette_id = body.colorPaletteId || null
-  if (body.pageBackgroundIndex != null) updates.page_background_index = body.pageBackgroundIndex
-  if (body.surfaceIndex != null) updates.surface_index = body.surfaceIndex
-  if (body.bodyTextIndex != null) updates.body_text_index = body.bodyTextIndex
-  if (body.accent1Index != null) updates.accent_1_index = body.accent1Index
-  if (body.accent2Index != null) updates.accent_2_index = body.accent2Index
+  if (body.pageBackgroundIndex !== undefined) updates.page_background_index = body.pageBackgroundIndex
+  if (body.surfaceIndex !== undefined) updates.surface_index = body.surfaceIndex
+  if (body.bodyTextIndex !== undefined) updates.body_text_index = body.bodyTextIndex
+  if (body.accent1Index !== undefined) updates.accent_1_index = body.accent1Index
+  if (body.accent2Index !== undefined) updates.accent_2_index = body.accent2Index
 
   const paletteId = (typeof updates.color_palette_id === 'string' ? updates.color_palette_id : existing.colorPaletteId) || palettes[0]?.id
-  const pageIndex = Number(updates.page_background_index ?? existing.pageBackgroundIndex)
-  const textIndex = Number(updates.body_text_index ?? existing.bodyTextIndex)
+  const pageIndex = updates.page_background_index !== undefined ? updates.page_background_index : existing.pageBackgroundIndex
+  const textIndex = updates.body_text_index !== undefined ? updates.body_text_index : existing.bodyTextIndex
   let changed = false
-  if (body.pageBackground) {
+  if (body.pageBackground && typeof pageIndex === 'number') {
     palettes = paintSlot(palettes, paletteId, pageIndex, body.pageBackground)
     changed = true
   }
-  if (body.bodyTextColor) {
+  if (body.bodyTextColor && typeof textIndex === 'number') {
     palettes = paintSlot(palettes, paletteId, textIndex, body.bodyTextColor)
     changed = true
   }

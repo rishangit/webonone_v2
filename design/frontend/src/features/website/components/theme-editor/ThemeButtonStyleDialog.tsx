@@ -23,6 +23,7 @@ import {
 import { websiteButtonLibraryActions } from '../../store'
 import type { WebsiteButtonStyle, WebsiteTextStyle, WebsiteTheme } from '../../types'
 import { emptyButtonDraft } from '../../utils/ownedButtonLabelStyle'
+import { usableLibraryItems } from '../WebsitePublishStatus'
 import {
   materializeButtonLibraryItem,
   type ThemeTokenPatch,
@@ -227,12 +228,7 @@ export function ThemeButtonStyleDialog({
   function submitCustom() {
     const missing: Partial<Record<string, string>> = {}
     if (!labelStyle.fontId) missing.fontId = t('pickFontRequired')
-    const textColorIndex = labelStyle.colorIndex || values.textColorIndex
-    if (!values.backgroundColorIndex) missing.backgroundColorId = t('pickColorRequired')
-    if (!textColorIndex) missing.textColorId = t('pickColorRequired')
-    if (values.borderWidth > 0 && !values.borderColorIndex) {
-      missing.borderColorId = t('pickColorRequired')
-    }
+    const textColorIndex = labelStyle.colorIndex ?? values.textColorIndex ?? null
     const label: WebsiteTextStyle = {
       ...labelStyle,
       colorIndex: textColorIndex,
@@ -352,7 +348,7 @@ export function ThemeButtonStyleDialog({
               fieldError={fieldErrors.library}
               listStatus={buttonLibrary.listStatus}
               listError={buttonLibrary.listError}
-              items={buttonLibrary.items}
+              items={usableLibraryItems(buttonLibrary.items, [selectedId])}
               selectedId={selectedId}
               onSelect={setSelectedId}
               emptyLabel={t('buttonLibraryEmptySuperAdmin')}

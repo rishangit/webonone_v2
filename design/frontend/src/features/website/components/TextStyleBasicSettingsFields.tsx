@@ -1,11 +1,9 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Form, FormField, Input, ReadOnlyField } from '@webonone/ui-kit'
+import { ColorPaletteSelect, ColorSelect, Form, FormField, Input, ReadOnlyField } from '@webonone/ui-kit'
+import { toColorPaletteSelectOptions } from '../utils/colorSelect'
+import type { ThemePaletteSelectOption } from '../utils/websitePalette'
 import { ColorPaletteSwatchStrip } from './ColorPaletteSwatchStrip'
-import {
-  ThemeColorPaletteSelect,
-  type ThemeColorPaletteSelectOption,
-} from './theme-editor/ThemeColorPaletteSelect'
 import { ThemeTokenSelect, type ThemeTokenOption } from './theme-editor/ThemeTokenSelect'
 
 export type TextStyleBasicSettingsValues = {
@@ -17,7 +15,7 @@ export type TextStyleBasicSettingsValues = {
 }
 
 export type TextStyleBasicSettingsOption = ThemeTokenOption
-export type TextStylePaletteOption = ThemeColorPaletteSelectOption
+export type TextStylePaletteOption = ThemePaletteSelectOption
 
 function colorReadout(options: TextStyleBasicSettingsOption[], id: string) {
   const color = options.find((entry) => entry.id === id)
@@ -138,30 +136,26 @@ export function TextStyleBasicSettingsFields({
         <FormField
           label={t('buttonColorPalette')}
           htmlFor={`${idPrefix}-palette`}
-          required={!paletteNoneLabel}
           error={fieldErrors.colorPaletteId}
         >
-          <ThemeColorPaletteSelect
+          <ColorPaletteSelect
             id={`${idPrefix}-palette`}
             value={values.colorPaletteId}
-            options={paletteOptions}
+            options={toColorPaletteSelectOptions(paletteOptions)}
             placeholder={t('pickColorPaletteRequired')}
-            allowNone={Boolean(paletteNoneLabel)}
-            noneLabel={paletteNoneLabel}
+            noneLabel={paletteNoneLabel || undefined}
             onChange={(colorPaletteId) => patch({ colorPaletteId })}
           />
         </FormField>
       ) : null}
-      <FormField label={t('fontColor')} htmlFor={`${idPrefix}-color`} required error={fieldErrors.colorId}>
-        <ThemeTokenSelect
+      <FormField label={t('fontColor')} htmlFor={`${idPrefix}-color`} error={fieldErrors.colorId}>
+        <ColorSelect
           id={`${idPrefix}-color`}
           value={values.colorId}
           options={colorOptions}
-          allowNone={allowNone}
           noneLabel={none}
           placeholder={colorPlaceholder}
           onChange={(colorId) => patch({ colorId })}
-          aria-required
           aria-invalid={Boolean(fieldErrors.colorId)}
         />
       </FormField>

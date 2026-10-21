@@ -17,6 +17,7 @@ import {
   withPaletteColors,
 } from '../utils/websiteElementCustomization'
 import { ButtonStyleBasicSettingsFields } from './ButtonStyleBasicSettingsFields'
+import { usableLibraryItems } from './WebsitePublishStatus'
 import { WebsiteElementCustomizationPreview } from './WebsiteElementCustomizationPreview'
 import {
   WebsiteElementEditorTabs,
@@ -113,7 +114,7 @@ export function ButtonLibraryItemEditor({
         radius: d.radius,
       }}
       fontOptions={[
-        ...fonts.items.map((fontItem) => ({
+        ...usableLibraryItems(fonts.items, [fontId]).map((fontItem) => ({
           id: fontItem.id,
           label: fontItem.name,
           fontFamily: fontItem.family,
@@ -122,7 +123,7 @@ export function ButtonLibraryItemEditor({
           ? [{ id: 'definition-font', label: d.textFontName, fontFamily: d.textFontFamily }]
           : []),
       ]}
-      paletteOptions={colorLibrary.items.map((libraryItem) => ({
+      paletteOptions={usableLibraryItems(colorLibrary.items, [colorPaletteId]).map((libraryItem) => ({
         id: libraryItem.id,
         name: libraryItem.name,
         palette: libraryItem.palette,

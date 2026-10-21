@@ -11,7 +11,9 @@ import {
   SelectValue,
 } from '@webonone/ui-kit'
 import { nanoid } from 'nanoid'
+import { PageLinkFields } from '../../components/PageLinkFields'
 import { WebsiteImagePicker } from '../../components/WebsiteImagePicker'
+import { pageLinkHref } from '../../document/pageLink'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon, WebsiteBreakpoint } from '../../types'
 import { resolveMediaRefUrl } from '../../utils/mediaConfig'
@@ -45,7 +47,15 @@ function ImageWithoutBlock({ alt, height }: { alt: string; height: number | stri
   )
 }
 
-function ImageAddonRenderer({ addon, breakpoint, publish }: AddonRenderProps) {
+function ImageAddonRenderer({
+  addon,
+  breakpoint,
+  pages = [],
+  companyId,
+  publish,
+  interactive,
+  onNavigatePage,
+}: AddonRenderProps) {
   const { t } = useTranslation('website')
   const [loadFailed, setLoadFailed] = useState(false)
 
@@ -72,25 +82,46 @@ function ImageAddonRenderer({ addon, breakpoint, publish }: AddonRenderProps) {
 
   if (addon.type !== 'image') return null
 
-  if (!src || loadFailed) {
-    return <ImageWithoutBlock alt={t('image')} height={height ?? '100%'} />
-  }
+  const link = pageLinkHref(pages, addon.props.linkPageId, companyId, !interactive)
+  const image =
+    !src || loadFailed ? (
+      <ImageWithoutBlock alt={t('image')} height={height ?? '100%'} />
+    ) : (
+      <img
+        src={src}
+        alt=""
+        className="h-full w-full"
+        style={{
+          objectFit: addon.props.fit,
+          height,
+        }}
+        onError={() => setLoadFailed(true)}
+      />
+    )
 
+  if (!link) return image
   return (
-    <img
-      src={src}
-      alt=""
-      className="h-full w-full"
-      style={{
-        objectFit: addon.props.fit,
-        height,
+    <a
+      href={link.href}
+      className="block h-full w-full"
+      onClick={(event) => {
+        if (!onNavigatePage) return
+        event.preventDefault()
+        onNavigatePage(link.path)
       }}
-      onError={() => setLoadFailed(true)}
-    />
+    >
+      {image}
+    </a>
   )
 }
 
-function ImageAddonPropsFields({ addon, breakpoint, onChange, onNestedDialogOpenChange }: AddonPropsFieldsProps) {
+function ImageAddonPropsFields({
+  addon,
+  breakpoint,
+  pages,
+  onChange,
+  onNestedDialogOpenChange,
+}: AddonPropsFieldsProps) {
   const { t } = useTranslation('website')
   const [pickerOpen, setPickerOpen] = useState(false)
   if (addon.type !== 'image') return null
@@ -164,6 +195,12 @@ function ImageAddonPropsFields({ addon, breakpoint, onChange, onNestedDialogOpen
           />
         </FormField>
       ) : null}
+      <PageLinkFields
+        idPrefix="image"
+        linkPageId={addon.props.linkPageId}
+        pages={pages}
+        onChange={(linkPageId) => onChange({ ...addon, props: { ...addon.props, linkPageId } })}
+      />
       <WebsiteImagePicker
         open={pickerOpen}
         onClose={() => setPicker(false)}

@@ -9,6 +9,7 @@ import type {
   WebsiteLayout,
   WebsitePage,
   WebsitePageStatus,
+  WebsitePublishStatus,
   WebsitePreset,
   WebsiteDataset,
   WebsiteDatasetConfig,
@@ -39,6 +40,7 @@ export type CreatePageBody = {
   name: string
   path?: string
   status?: WebsitePageStatus
+  publishStatus?: WebsitePublishStatus
   layoutId?: string | null
   document?: WebsiteDocumentV1
 }
@@ -48,6 +50,7 @@ export type UpdatePageBody = Partial<CreatePageBody> & { sortOrder?: number }
 export type CreateChromeBody = {
   name: string
   isDefault?: boolean
+  publishStatus?: WebsitePublishStatus
   document?: WebsiteDocumentV1
 }
 
@@ -55,6 +58,7 @@ export type UpdateChromeBody = Partial<CreateChromeBody>
 
 export type CreatePresetBody = {
   name: string
+  publishStatus?: WebsitePublishStatus
   document?: WebsiteDocumentV1
 }
 
@@ -121,6 +125,7 @@ export type CreateLayoutBody = {
   footerId?: string | null
   themeId?: string | null
   isDefault?: boolean
+  publishStatus?: WebsitePublishStatus
   pageIds?: string[]
 }
 
@@ -131,13 +136,14 @@ export type CreateThemeBody = {
   pageBackground?: string
   bodyTextColor?: string
   colorPaletteId?: string
-  pageBackgroundIndex?: number
-  surfaceIndex?: number
-  bodyTextIndex?: number
-  accent1Index?: number
-  accent2Index?: number
+  pageBackgroundIndex?: number | null
+  surfaceIndex?: number | null
+  bodyTextIndex?: number | null
+  accent1Index?: number | null
+  accent2Index?: number | null
   isActive?: boolean
   isDefault?: boolean
+  publishStatus?: WebsitePublishStatus
   fonts?: WebsiteTheme['fonts']
   colorPalettes?: WebsiteTheme['colorPalettes']
   textStyles?: WebsiteTheme['textStyles']
@@ -320,14 +326,14 @@ export const websiteApi = {
   listFontLibrary(query: ListQuery = {}) {
     return apiClient<PaginatedResult<WebsiteFontLibraryItem>>(`/website/font-library${toQueryString(query)}`)
   },
-  async createFontLibrary(body: { name: string; googleFontUrl: string; family: string }) {
+  async createFontLibrary(body: { name: string; googleFontUrl: string; family: string; publishStatus?: WebsitePublishStatus }) {
     const data = await apiClient<{ item: WebsiteFontLibraryItem }>('/website/font-library', {
       method: 'POST',
       body: JSON.stringify(body),
     })
     return data.item
   },
-  async updateFontLibrary(id: string, body: { name: string; googleFontUrl: string; family: string }) {
+  async updateFontLibrary(id: string, body: { name: string; googleFontUrl: string; family: string; publishStatus?: WebsitePublishStatus }) {
     const data = await apiClient<{ item: WebsiteFontLibraryItem }>(
       `/website/font-library/${encodeURIComponent(id)}`,
       { method: 'PATCH', body: JSON.stringify(body) },
@@ -341,14 +347,14 @@ export const websiteApi = {
   listColorLibrary(query: ListQuery = {}) {
     return apiClient<PaginatedResult<WebsiteColorLibraryItem>>(`/website/color-library${toQueryString(query)}`)
   },
-  async createColorLibrary(body: { name: string; palette: WebsiteColorLibraryItem['palette'] }) {
+  async createColorLibrary(body: { name: string; palette: WebsiteColorLibraryItem['palette']; publishStatus?: WebsitePublishStatus }) {
     const data = await apiClient<{ item: WebsiteColorLibraryItem }>('/website/color-library', {
       method: 'POST',
       body: JSON.stringify(body),
     })
     return data.item
   },
-  async updateColorLibrary(id: string, body: { name: string; palette: WebsiteColorLibraryItem['palette'] }) {
+  async updateColorLibrary(id: string, body: { name: string; palette: WebsiteColorLibraryItem['palette']; publishStatus?: WebsitePublishStatus }) {
     const data = await apiClient<{ item: WebsiteColorLibraryItem }>(
       `/website/color-library/${encodeURIComponent(id)}`,
       { method: 'PATCH', body: JSON.stringify(body) },
@@ -368,14 +374,14 @@ export const websiteApi = {
     )
     return data.item
   },
-  async createTextLibrary(body: { name: string; definition: WebsiteTextLibraryItem['definition'] }) {
+  async createTextLibrary(body: { name: string; definition: WebsiteTextLibraryItem['definition']; publishStatus?: WebsitePublishStatus }) {
     const data = await apiClient<{ item: WebsiteTextLibraryItem }>('/website/text-library', {
       method: 'POST',
       body: JSON.stringify(body),
     })
     return data.item
   },
-  async updateTextLibrary(id: string, body: { name: string; definition: WebsiteTextLibraryItem['definition'] }) {
+  async updateTextLibrary(id: string, body: { name: string; definition: WebsiteTextLibraryItem['definition']; publishStatus?: WebsitePublishStatus }) {
     const data = await apiClient<{ item: WebsiteTextLibraryItem }>(
       `/website/text-library/${encodeURIComponent(id)}`,
       { method: 'PATCH', body: JSON.stringify(body) },
@@ -395,14 +401,14 @@ export const websiteApi = {
     )
     return data.item
   },
-  async createButtonLibrary(body: { name: string; definition: WebsiteButtonLibraryItem['definition'] }) {
+  async createButtonLibrary(body: { name: string; definition: WebsiteButtonLibraryItem['definition']; publishStatus?: WebsitePublishStatus }) {
     const data = await apiClient<{ item: WebsiteButtonLibraryItem }>('/website/button-library', {
       method: 'POST',
       body: JSON.stringify(body),
     })
     return data.item
   },
-  async updateButtonLibrary(id: string, body: { name: string; definition: WebsiteButtonLibraryItem['definition'] }) {
+  async updateButtonLibrary(id: string, body: { name: string; definition: WebsiteButtonLibraryItem['definition']; publishStatus?: WebsitePublishStatus }) {
     const data = await apiClient<{ item: WebsiteButtonLibraryItem }>(
       `/website/button-library/${encodeURIComponent(id)}`,
       { method: 'PATCH', body: JSON.stringify(body) },

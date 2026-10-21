@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { websitePublishStatusSchema } from '../utils/websitePublishStatus.js'
 import { emptyWebsiteDocument, websiteDocumentSchema } from './websiteDocument.schema.js'
 
 export const websitePageStatusSchema = z.enum(['active', 'inactive'])
@@ -18,6 +19,7 @@ export const createWebsitePageSchema = z.object({
   name: z.string().trim().min(1).max(255),
   path: websitePagePathSchema.default(''),
   status: websitePageStatusSchema.optional().default('active'),
+  publishStatus: websitePublishStatusSchema.optional(),
   layoutId: optionalLayoutIdSchema,
   colorPaletteId: z.string().trim().max(64).nullable().optional(),
   document: websiteDocumentSchema.optional().default(emptyWebsiteDocument),
@@ -28,6 +30,7 @@ export const updateWebsitePageSchema = z
     name: z.string().trim().min(1).max(255).optional(),
     path: websitePagePathSchema.optional(),
     status: websitePageStatusSchema.optional(),
+    publishStatus: websitePublishStatusSchema.optional(),
     layoutId: optionalLayoutIdSchema,
     colorPaletteId: z.string().trim().max(64).nullable().optional(),
     sortOrder: z.number().int().min(0).max(10000).optional(),

@@ -9,6 +9,7 @@ import {
 import { db } from '../models/db.js'
 import { HttpError } from './httpError.js'
 import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
+import { readPublishStatus, type WebsitePublishStatus } from '../utils/websitePublishStatus.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import {
   websiteDocumentSchema,
@@ -56,6 +57,7 @@ export type FontLibraryItem = {
   googleFontUrl: string
   family: string
   sortOrder: number
+  publishStatus: WebsitePublishStatus
 }
 
 type FontLibraryRow = {
@@ -65,6 +67,7 @@ type FontLibraryRow = {
   family: string
   sort_order: number
   is_active: boolean | number
+  publish_status: string
 }
 
 function toFontLibraryItem(row: FontLibraryRow): FontLibraryItem {
@@ -74,6 +77,7 @@ function toFontLibraryItem(row: FontLibraryRow): FontLibraryItem {
     googleFontUrl: row.google_font_url,
     family: row.family,
     sortOrder: row.sort_order,
+    publishStatus: readPublishStatus(row.publish_status),
   }
 }
 
@@ -87,9 +91,11 @@ export async function listFontLibrary(input: {
   pageSize?: number
   q?: string
   names?: string | string[]
+  publishedOnly?: boolean
 }): Promise<{ items: FontLibraryItem[]; total: number; page: number; pageSize: number }> {
   const { names, page, pageSize, offset } = namedListWindow(input, 48)
   let query = db<FontLibraryRow>('design_website_library_font').where('is_active', true)
+  if (input.publishedOnly) query = query.andWhere('publish_status', 'published')
   applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
@@ -112,6 +118,7 @@ export async function createFontLibraryItem(input: {
   name: string
   googleFontUrl: string
   family: string
+  publishStatus?: WebsitePublishStatus
 }): Promise<FontLibraryItem> {
   const existing = await db<FontLibraryRow>('design_website_library_font')
     .where({ google_font_url: input.googleFontUrl })
@@ -122,6 +129,7 @@ export async function createFontLibraryItem(input: {
         is_active: true,
         name: input.name,
         family: input.family,
+        publish_status: input.publishStatus ?? 'draft',
       })
     }
     const row = await db<FontLibraryRow>('design_website_library_font').where({ id: existing.id }).first()
@@ -139,6 +147,7 @@ export async function createFontLibraryItem(input: {
     family: input.family,
     sort_order: sortOrder,
     is_active: true,
+    publish_status: input.publishStatus ?? 'draft',
   })
   return {
     id,
@@ -146,6 +155,7 @@ export async function createFontLibraryItem(input: {
     googleFontUrl: input.googleFontUrl,
     family: input.family,
     sortOrder,
+    publishStatus: input.publishStatus ?? 'draft',
   }
 }
 
@@ -155,6 +165,7 @@ export async function updateFontLibraryItem(
     name: string
     googleFontUrl: string
     family: string
+    publishStatus?: WebsitePublishStatus
   },
 ): Promise<FontLibraryItem> {
   const row = await db<FontLibraryRow>('design_website_library_font').where({ id }).first()
@@ -173,6 +184,7 @@ export async function updateFontLibraryItem(
     name: input.name,
     google_font_url: input.googleFontUrl,
     family: input.family,
+    ...(input.publishStatus ? { publish_status: input.publishStatus } : {}),
   })
   const updated = await db<FontLibraryRow>('design_website_library_font').where({ id }).first()
   if (!updated) throw new HttpError(500, 'Could not save the font', 'FONT_LIBRARY_SAVE_FAILED')
@@ -192,6 +204,7 @@ export type ColorLibraryItem = {
   name: string
   palette: WebsiteColorLibraryPalette
   sortOrder: number
+  publishStatus: WebsitePublishStatus
 }
 
 type ColorLibraryRow = {
@@ -200,6 +213,7 @@ type ColorLibraryRow = {
   palette: string | WebsiteColorLibraryPalette
   sort_order: number
   is_active: boolean | number
+  publish_status: string
 }
 
 function parseColorLibraryPalette(raw: string | WebsiteColorLibraryPalette): WebsiteColorLibraryPalette {
@@ -213,6 +227,7 @@ function toColorLibraryItem(row: ColorLibraryRow): ColorLibraryItem {
     name: row.name,
     palette: parseColorLibraryPalette(row.palette),
     sortOrder: row.sort_order,
+    publishStatus: readPublishStatus(row.publish_status),
   }
 }
 
@@ -221,9 +236,11 @@ export async function listColorLibrary(input: {
   pageSize?: number
   q?: string
   names?: string | string[]
+  publishedOnly?: boolean
 }): Promise<{ items: ColorLibraryItem[]; total: number; page: number; pageSize: number }> {
   const { names, page, pageSize, offset } = namedListWindow(input, 48)
   let query = db<ColorLibraryRow>('design_website_library_color').where('is_active', true)
+  if (input.publishedOnly) query = query.andWhere('publish_status', 'published')
   applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
@@ -245,6 +262,7 @@ export async function listColorLibrary(input: {
 export async function createColorLibraryItem(input: {
   name: string
   palette: WebsiteColorLibraryPalette
+  publishStatus?: WebsitePublishStatus
 }): Promise<ColorLibraryItem> {
   const palette = parseColorLibraryPalette(input.palette)
   const existing = await db<ColorLibraryRow>('design_website_library_color')
@@ -256,6 +274,7 @@ export async function createColorLibraryItem(input: {
         is_active: true,
         name: input.name,
         palette: JSON.stringify(palette),
+        publish_status: input.publishStatus ?? 'draft',
       })
     }
     const row = await db<ColorLibraryRow>('design_website_library_color').where({ id: existing.id }).first()
@@ -272,12 +291,14 @@ export async function createColorLibraryItem(input: {
     palette: JSON.stringify(palette),
     sort_order: sortOrder,
     is_active: true,
+    publish_status: input.publishStatus ?? 'draft',
   })
   return {
     id,
     name: input.name,
     palette,
     sortOrder,
+    publishStatus: input.publishStatus ?? 'draft',
   }
 }
 
@@ -286,6 +307,7 @@ export async function updateColorLibraryItem(
   input: {
     name: string
     palette: WebsiteColorLibraryPalette
+    publishStatus?: WebsitePublishStatus
   },
 ): Promise<ColorLibraryItem> {
   const row = await db<ColorLibraryRow>('design_website_library_color').where({ id }).first()
@@ -304,6 +326,7 @@ export async function updateColorLibraryItem(
   await db('design_website_library_color').where({ id }).update({
     name: input.name.trim(),
     palette: JSON.stringify(palette),
+    ...(input.publishStatus ? { publish_status: input.publishStatus } : {}),
   })
   const updated = await db<ColorLibraryRow>('design_website_library_color').where({ id }).first()
   if (!updated) throw new HttpError(500, 'Could not save the color palette', 'COLOR_LIBRARY_SAVE_FAILED')
@@ -330,6 +353,7 @@ export type ElementLibraryPatch<TDefinition> = {
   html?: string
   styles?: string
   scripts?: string
+  publishStatus?: WebsitePublishStatus
 }
 
 function readCustomization(value: unknown): WebsiteElementCustomization {
@@ -388,6 +412,7 @@ export type TextLibraryItem = {
   name: string
   definition: TextLibraryDefinition
   sortOrder: number
+  publishStatus: WebsitePublishStatus
 }
 
 type TextLibraryRow = {
@@ -396,6 +421,7 @@ type TextLibraryRow = {
   definition: string | TextLibraryDefinition
   sort_order: number
   is_active: boolean | number
+  publish_status: string
 }
 
 function parseTextLibraryDefinition(raw: string | TextLibraryDefinition): TextLibraryDefinition {
@@ -411,6 +437,7 @@ function toTextLibraryItem(row: TextLibraryRow): TextLibraryItem {
     name: row.name,
     definition: customization ? { ...definition, customization } : { ...definition, customization: undefined },
     sortOrder: row.sort_order,
+    publishStatus: readPublishStatus(row.publish_status),
   }
 }
 
@@ -419,9 +446,11 @@ export async function listTextLibrary(input: {
   pageSize?: number
   q?: string
   names?: string | string[]
+  publishedOnly?: boolean
 }): Promise<{ items: TextLibraryItem[]; total: number; page: number; pageSize: number }> {
   const { names, page, pageSize, offset } = namedListWindow(input, 48)
   let query = db<TextLibraryRow>('design_website_library_text').where('is_active', true)
+  if (input.publishedOnly) query = query.andWhere('publish_status', 'published')
   applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
@@ -451,6 +480,7 @@ export async function getTextLibraryItem(id: string): Promise<TextLibraryItem> {
 export async function createTextLibraryItem(input: {
   name: string
   definition: TextLibraryDefinition
+  publishStatus?: WebsitePublishStatus
 }): Promise<TextLibraryItem> {
   const existing = await db<TextLibraryRow>('design_website_library_text')
     .whereRaw('LOWER(name) = ?', [input.name.trim().toLowerCase()])
@@ -461,6 +491,7 @@ export async function createTextLibraryItem(input: {
         is_active: true,
         name: input.name,
         definition: JSON.stringify(input.definition),
+        publish_status: input.publishStatus ?? 'draft',
       })
     }
     const row = await db<TextLibraryRow>('design_website_library_text').where({ id: existing.id }).first()
@@ -477,12 +508,14 @@ export async function createTextLibraryItem(input: {
     definition: JSON.stringify(input.definition),
     sort_order: sortOrder,
     is_active: true,
+    publish_status: input.publishStatus ?? 'draft',
   })
   return {
     id,
     name: input.name,
     definition: input.definition,
     sortOrder,
+    publishStatus: input.publishStatus ?? 'draft',
   }
 }
 
@@ -491,6 +524,7 @@ export async function updateTextLibraryItem(
   input: {
     name: string
     definition: TextLibraryDefinition
+    publishStatus?: WebsitePublishStatus
   },
 ): Promise<TextLibraryItem> {
   const row = await db<TextLibraryRow>('design_website_library_text').where({ id }).first()
@@ -508,6 +542,7 @@ export async function updateTextLibraryItem(
   await db('design_website_library_text').where({ id }).update({
     name: input.name.trim(),
     definition: JSON.stringify(input.definition),
+    ...(input.publishStatus ? { publish_status: input.publishStatus } : {}),
   })
   const updated = await db<TextLibraryRow>('design_website_library_text').where({ id }).first()
   if (!updated) throw new HttpError(500, 'Could not save the text style', 'TEXT_LIBRARY_SAVE_FAILED')
@@ -538,7 +573,7 @@ export async function patchTextLibraryItem(
     delete mergedDefinition.customization
   }
   const parsed = textLibraryDefinitionSchema.parse(mergedDefinition)
-  return updateTextLibraryItem(id, { name, definition: parsed })
+  return updateTextLibraryItem(id, { name, definition: parsed, publishStatus: patch.publishStatus })
 }
 
 export async function deleteTextLibraryItem(id: string): Promise<void> {
@@ -573,6 +608,7 @@ export type ButtonLibraryItem = {
   name: string
   definition: ButtonLibraryDefinition
   sortOrder: number
+  publishStatus: WebsitePublishStatus
 }
 
 type ButtonLibraryRow = {
@@ -581,6 +617,7 @@ type ButtonLibraryRow = {
   definition: string | ButtonLibraryDefinition
   sort_order: number
   is_active: boolean | number
+  publish_status: string
 }
 
 function parseButtonLibraryDefinition(raw: string | ButtonLibraryDefinition): ButtonLibraryDefinition {
@@ -596,6 +633,7 @@ function toButtonLibraryItem(row: ButtonLibraryRow): ButtonLibraryItem {
     name: row.name,
     definition: customization ? { ...definition, customization } : { ...definition, customization: undefined },
     sortOrder: row.sort_order,
+    publishStatus: readPublishStatus(row.publish_status),
   }
 }
 
@@ -604,9 +642,11 @@ export async function listButtonLibrary(input: {
   pageSize?: number
   q?: string
   names?: string | string[]
+  publishedOnly?: boolean
 }): Promise<{ items: ButtonLibraryItem[]; total: number; page: number; pageSize: number }> {
   const { names, page, pageSize, offset } = namedListWindow(input, 48)
   let query = db<ButtonLibraryRow>('design_website_library_button').where('is_active', true)
+  if (input.publishedOnly) query = query.andWhere('publish_status', 'published')
   applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
@@ -636,6 +676,7 @@ export async function getButtonLibraryItem(id: string): Promise<ButtonLibraryIte
 export async function createButtonLibraryItem(input: {
   name: string
   definition: ButtonLibraryDefinition
+  publishStatus?: WebsitePublishStatus
 }): Promise<ButtonLibraryItem> {
   const existing = await db<ButtonLibraryRow>('design_website_library_button')
     .whereRaw('LOWER(name) = ?', [input.name.trim().toLowerCase()])
@@ -646,6 +687,7 @@ export async function createButtonLibraryItem(input: {
         is_active: true,
         name: input.name,
         definition: JSON.stringify(input.definition),
+        publish_status: input.publishStatus ?? 'draft',
       })
     }
     const row = await db<ButtonLibraryRow>('design_website_library_button').where({ id: existing.id }).first()
@@ -662,12 +704,14 @@ export async function createButtonLibraryItem(input: {
     definition: JSON.stringify(input.definition),
     sort_order: sortOrder,
     is_active: true,
+    publish_status: input.publishStatus ?? 'draft',
   })
   return {
     id,
     name: input.name,
     definition: input.definition,
     sortOrder,
+    publishStatus: input.publishStatus ?? 'draft',
   }
 }
 
@@ -676,6 +720,7 @@ export async function updateButtonLibraryItem(
   input: {
     name: string
     definition: ButtonLibraryDefinition
+    publishStatus?: WebsitePublishStatus
   },
 ): Promise<ButtonLibraryItem> {
   const row = await db<ButtonLibraryRow>('design_website_library_button').where({ id }).first()
@@ -693,6 +738,7 @@ export async function updateButtonLibraryItem(
   await db('design_website_library_button').where({ id }).update({
     name: input.name.trim(),
     definition: JSON.stringify(input.definition),
+    ...(input.publishStatus ? { publish_status: input.publishStatus } : {}),
   })
   const updated = await db<ButtonLibraryRow>('design_website_library_button').where({ id }).first()
   if (!updated) throw new HttpError(500, 'Could not save the button style', 'BUTTON_LIBRARY_SAVE_FAILED')
@@ -729,7 +775,7 @@ export async function patchButtonLibraryItem(
     delete mergedDefinition.customization
   }
   const parsed = buttonLibraryDefinitionSchema.parse(mergedDefinition)
-  return updateButtonLibraryItem(id, { name, definition: parsed })
+  return updateButtonLibraryItem(id, { name, definition: parsed, publishStatus: patch.publishStatus })
 }
 
 export async function deleteButtonLibraryItem(id: string): Promise<void> {

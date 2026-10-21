@@ -17,7 +17,7 @@ export const websiteButtonLibraryStore = createPaginatedFeatureStore<WebsiteButt
     }),
 })
 
-type CreateButtonLibraryBody = { name: string; definition: WebsiteButtonLibraryItem['definition'] }
+type CreateButtonLibraryBody = { name: string; definition: WebsiteButtonLibraryItem['definition']; publishStatus?: 'draft' | 'published' }
 
 type CreateState = {
   status: 'idle' | 'saving' | 'succeeded' | 'error'
@@ -26,7 +26,7 @@ type CreateState = {
 
 const initialCreateState: CreateState = { status: 'idle', error: null }
 
-type UpdateButtonLibraryBody = { id: string; name: string; definition: WebsiteButtonLibraryItem['definition'] }
+type UpdateButtonLibraryBody = { id: string; name: string; definition: WebsiteButtonLibraryItem['definition']; publishStatus?: 'draft' | 'published' }
 
 export const websiteButtonLibraryUpdateSlice = createSlice({
   name: 'websiteButtonLibraryUpdate',
