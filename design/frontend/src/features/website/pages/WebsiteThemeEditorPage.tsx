@@ -118,7 +118,7 @@ export function WebsiteThemeEditorPage() {
       title={theme.name || t('themes')}
       onBack={() => goToWebsite('/website/themes')}
       actions={
-        canManage && theme.sourceLibraryId && !theme.isLocked ? (
+        canManage && theme.sourceLibraryId ? (
           <WebsiteLibraryDownloadUpdateButton
             disabled={revert.reverting}
             onClick={() => revert.ask({ kind: 'themes', id: theme.id, name: theme.name })}
@@ -134,13 +134,7 @@ export function WebsiteThemeEditorPage() {
           <AlertDescription>{detailError}</AlertDescription>
         </Alert>
       ) : null}
-      {theme.isLocked ? (
-        <Alert>
-          <AlertDescription>{t('defaultLocked')}</AlertDescription>
-        </Alert>
-      ) : (
-        <WebsiteLibrarySourceTag sourceLibraryId={theme.sourceLibraryId} />
-      )}
+      <WebsiteLibrarySourceTag sourceLibraryId={theme.sourceLibraryId} />
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(value as ThemeTabId)}

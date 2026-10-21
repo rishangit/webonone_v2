@@ -4,6 +4,7 @@ import { emptyWebsiteDocument, websiteDocumentSchema } from './websiteDocument.s
 export const createWebsiteChromeSchema = z.object({
   name: z.string().trim().min(1).max(255),
   isDefault: z.boolean().optional().default(false),
+  colorPaletteId: z.string().trim().max(64).nullable().optional(),
   document: websiteDocumentSchema.optional().default(emptyWebsiteDocument),
 })
 
@@ -11,6 +12,7 @@ export const updateWebsiteChromeSchema = z
   .object({
     name: z.string().trim().min(1).max(255).optional(),
     isDefault: z.boolean().optional(),
+    colorPaletteId: z.string().trim().max(64).nullable().optional(),
     document: websiteDocumentSchema.optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'At least one field is required' })

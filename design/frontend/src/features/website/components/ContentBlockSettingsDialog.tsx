@@ -23,7 +23,14 @@ import { pickElementChrome } from '../document/chrome'
 import { websiteDatasetsActions } from '../store'
 import { childGroupNames } from '../document/dataBinding'
 import { blockSettingsSchema } from '../schemas/websiteDesignerSchemas'
-import type { BlockDataBinding, ElementChrome, WebsiteBlock, WebsiteDataset } from '../types'
+import type { BlockDataBinding, ElementChrome, WebsiteBlock, WebsiteDataset, WebsiteElementCustomization, WebsiteTheme } from '../types'
+import {
+  defaultElementHtml,
+  emptyWebsiteElementCustomization,
+  normalizeWebsiteElementCustomization,
+  storedBlockCustomization,
+} from '../utils/websiteElementCustomization'
+import { WebsiteElementCodeSection } from './WebsiteElementEditorTabs'
 import { BindingValueTypeBadge } from './BindingValueTypeBadge'
 import { BoundDatasetSelect } from './BoundDatasetSelect'
 import { ElementChromeSettingsFields } from './ElementChromeSettingsFields'
@@ -31,13 +38,14 @@ import { ParentPropertySelect } from './ParentPropertySelect'
 
 export const BLOCK_SETTINGS_DIALOG_SIZE = {
   sizeWidth: 'medium' as const,
-  sizeHeight: 'auto' as const,
+  sizeHeight: 'large' as const,
 }
 
 export type BlockSettingsPatch = ElementChrome & {
   name: string | undefined
   groupName: string | undefined
   dataBinding: BlockDataBinding | undefined
+  customization: WebsiteElementCustomization | undefined
 }
 
 /** Dataset already supplied by a parent owner (e.g. content slider). */
@@ -55,6 +63,8 @@ interface ContentBlockSettingsDialogProps {
   block: WebsiteBlock | null
   /** When set, Data Binding shows inherited rows and skips local dataset owner UI. */
   inheritedBinding?: InheritedBlockBinding | null
+  theme?: WebsiteTheme | null
+  inheritedPaletteId?: string | null
   onOpenChange: (open: boolean) => void
   onSave: (blockId: string, patch: BlockSettingsPatch) => void
 }
@@ -63,6 +73,8 @@ export function ContentBlockSettingsDialog({
   open,
   block,
   inheritedBinding = null,
+  theme = null,
+  inheritedPaletteId = null,
   onOpenChange,
   onSave,
 }: ContentBlockSettingsDialogProps) {
@@ -78,6 +90,7 @@ export function ContentBlockSettingsDialog({
   const [itemGroup, setItemGroup] = useState(block?.dataBinding?.itemGroup ?? '')
   const [itemGap, setItemGap] = useState(String(block?.dataBinding?.itemGap ?? 0))
   const [itemsPath, setItemsPath] = useState(block?.dataBinding?.itemsPath ?? '')
+  const [customization, setCustomization] = useState<WebsiteElementCustomization>(emptyWebsiteElementCustomization())
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
 
   const childGroups = useMemo(() => (block ? childGroupNames(block) : []), [block])
@@ -112,6 +125,7 @@ export function ContentBlockSettingsDialog({
     setItemGroup(block?.dataBinding?.itemGroup ?? '')
     setItemGap(String(block?.dataBinding?.itemGap ?? 0))
     setItemsPath(block?.dataBinding?.itemsPath ?? '')
+    setCustomization(block ? normalizeWebsiteElementCustomization(block.customization) : emptyWebsiteElementCustomization())
     setFieldErrors({})
     dispatch(websiteDatasetsActions.loadListRequested({ page: 1, pageSize: 100, force: false }))
   }, [block, dispatch, open])
@@ -141,6 +155,7 @@ export function ContentBlockSettingsDialog({
             itemsPath: null as string | null,
           }
         : undefined
+    const storedCustomization = block ? storedBlockCustomization(customization, block.id) : undefined
     const parsed = blockSettingsSchema.safeParse({
       ...chrome,
       backgroundColor: chrome.backgroundColor || undefined,
@@ -148,6 +163,7 @@ export function ContentBlockSettingsDialog({
       name: name.trim() || undefined,
       groupName: groupName.trim() || undefined,
       dataBinding,
+      customization: storedCustomization,
     })
     if (!parsed.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
@@ -163,6 +179,7 @@ export function ContentBlockSettingsDialog({
       boxShadow: parsed.data.boxShadow,
       padding: parsed.data.padding,
       margin: parsed.data.margin,
+      colorPaletteId: parsed.data.colorPaletteId || undefined,
       name: parsed.data.name || undefined,
       groupName: parsed.data.groupName || undefined,
       dataBinding: nextBinding
@@ -173,6 +190,7 @@ export function ContentBlockSettingsDialog({
             itemsPath: nextBinding.itemsPath ?? null,
           }
         : undefined,
+      customization: parsed.data.customization,
     })
     onOpenChange(false)
   }
@@ -203,6 +221,9 @@ export function ContentBlockSettingsDialog({
             <TabsTrigger value="basic">{t('basicSetting')}</TabsTrigger>
             <TabsTrigger value="settings">{t('settingsTab')}</TabsTrigger>
             <TabsTrigger value="dataBinding">{t('dataBindingTab')}</TabsTrigger>
+            <TabsTrigger value="html">{t('elementTabHtml')}</TabsTrigger>
+            <TabsTrigger value="styles">{t('elementTabStyles')}</TabsTrigger>
+            <TabsTrigger value="scripts">{t('elementTabScripts')}</TabsTrigger>
           </TabsList>
           <TabsContent value="basic" className="space-y-4">
             <FormField label={t('elementName')} htmlFor="block-settings-name">
@@ -228,6 +249,8 @@ export function ContentBlockSettingsDialog({
               onChange={setChrome}
               fieldErrors={fieldErrors}
               idPrefix="block-settings"
+              theme={theme}
+              inheritedPaletteId={inheritedPaletteId}
             />
           </TabsContent>
           <TabsContent value="dataBinding" className="space-y-4">
@@ -326,6 +349,40 @@ export function ContentBlockSettingsDialog({
               </>
             )}
           </TabsContent>
+          {block ? (
+            <>
+              <TabsContent value="html" className="space-y-4">
+                <WebsiteElementCodeSection
+                  section="html"
+                  kind="block"
+                  customization={customization}
+                  onCustomizationChange={setCustomization}
+                  scopeId={block.id}
+                  defaultHtml={defaultElementHtml('block', block.id)}
+                />
+              </TabsContent>
+              <TabsContent value="styles" className="space-y-4">
+                <WebsiteElementCodeSection
+                  section="styles"
+                  kind="block"
+                  customization={customization}
+                  onCustomizationChange={setCustomization}
+                  scopeId={block.id}
+                  defaultHtml={defaultElementHtml('block', block.id)}
+                />
+              </TabsContent>
+              <TabsContent value="scripts" className="space-y-4">
+                <WebsiteElementCodeSection
+                  section="scripts"
+                  kind="block"
+                  customization={customization}
+                  onCustomizationChange={setCustomization}
+                  scopeId={block.id}
+                  defaultHtml={defaultElementHtml('block', block.id)}
+                />
+              </TabsContent>
+            </>
+          ) : null}
         </Tabs>
       </Form>
     </CustomDialog>

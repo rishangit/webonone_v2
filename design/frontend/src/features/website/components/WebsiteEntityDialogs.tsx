@@ -26,7 +26,9 @@ import {
 } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { pageMetaSchema, slugifyPath, type PageMetaValues } from '../schemas/websiteMeta'
-import type { WebsiteLayout } from '../types'
+import type { WebsiteLayout, WebsiteTheme } from '../types'
+import { themeForLayout } from '../document/palette'
+import { ColorPaletteField } from './ColorPaletteField'
 
 export const WEBSITE_PAGE_DIALOG_SIZE = {
   sizeWidth: 'medium' as const,
@@ -40,6 +42,7 @@ interface WebsitePageDialogProps {
   entityId?: string
   initial?: PageMetaValues
   layouts?: WebsiteLayout[]
+  themes?: WebsiteTheme[]
   onOpenChange: (open: boolean) => void
   onSubmit: (values: PageMetaValues) => void
   onHostedSaved?: () => void
@@ -53,6 +56,7 @@ export function WebsitePageDialog({
   entityId,
   initial,
   layouts = [],
+  themes = [],
   onOpenChange,
   onSubmit,
   onHostedSaved,
@@ -65,7 +69,7 @@ export function WebsitePageDialog({
   const isEdit = Boolean(initial)
   const defaultLayoutId = layouts.find((item) => item.isDefault)?.id ?? layouts[0]?.id ?? null
   const [values, setValues] = useState<PageMetaValues>(
-    initial ?? { name: '', path: '', status: 'active', layoutId: defaultLayoutId },
+    initial ?? { name: '', path: '', status: 'active', layoutId: defaultLayoutId, colorPaletteId: null },
   )
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
   const [pathTouched, setPathTouched] = useState(Boolean(initial))
@@ -93,7 +97,7 @@ export function WebsitePageDialog({
 
   useEffect(() => {
     if (!open && chrome === 'dialog') return
-    setValues(initial ?? { name: '', path: '', status: 'active', layoutId: defaultLayoutId })
+    setValues(initial ?? { name: '', path: '', status: 'active', layoutId: defaultLayoutId, colorPaletteId: null })
     setFieldErrors({})
     setPathTouched(Boolean(initial))
   }, [open, chrome, initial, defaultLayoutId])
@@ -190,6 +194,13 @@ export function WebsitePageDialog({
           </Select>
         </FormField>
       ) : null}
+      <ColorPaletteField
+        id="website-page-palette"
+        theme={themeForLayout(values.layoutId, layouts, themes)}
+        value={values.colorPaletteId}
+        disabled={isSaving}
+        onChange={(colorPaletteId) => setValues((prev) => ({ ...prev, colorPaletteId }))}
+      />
     </Form>
   )
 
@@ -227,7 +238,10 @@ export function WebsiteChromeDialog({
   open,
   isSaving,
   error,
+  entityId,
   initialName,
+  initialColorPaletteId = null,
+  theme = null,
   onOpenChange,
   onSubmit,
   onHostedSaved,
@@ -237,9 +251,12 @@ export function WebsiteChromeDialog({
   open: boolean
   isSaving: boolean
   error: string | null
+  entityId?: string
   initialName?: string
+  initialColorPaletteId?: string | null
+  theme?: WebsiteTheme | null
   onOpenChange: (open: boolean) => void
-  onSubmit: (name: string, isDefault: boolean) => void
+  onSubmit: (name: string, isDefault: boolean, colorPaletteId: string | null) => void
   onHostedSaved?: () => void
   chrome?: 'dialog' | 'embed-page'
 }) {
@@ -249,20 +266,28 @@ export function WebsiteChromeDialog({
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const [name, setName] = useState(initialName ?? '')
   const [isDefault, setIsDefault] = useState(false)
+  const [colorPaletteId, setColorPaletteId] = useState<string | null>(initialColorPaletteId)
+  const isEdit = Boolean(entityId)
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
       : null
-  const title = kind === 'headers' ? t('createHeaderTitle') : t('createFooterTitle')
-  const description = kind === 'headers' ? t('createHeaderDescription') : t('createFooterDescription')
+  const title = isEdit
+    ? kind === 'headers'
+      ? t('editHeaderTitle')
+      : t('editFooterTitle')
+    : kind === 'headers'
+      ? t('createHeaderTitle')
+      : t('createFooterTitle')
+  const description = isEdit ? undefined : kind === 'headers' ? t('createHeaderDescription') : t('createFooterDescription')
 
   const { isHosted } = useRequestPlatformPeerDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
     open: chrome === 'dialog' && open,
-    path: `/embed/dialogs/website/${kind}/create`,
+    path: entityId ? `/embed/dialogs/website/${kind}/${entityId}` : `/embed/dialogs/website/${kind}/create`,
     title,
     description,
-    submitLabel: t('create'),
+    submitLabel: isEdit ? tc('save') : t('create'),
     ...WEBSITE_PAGE_DIALOG_SIZE,
     onResult: () => {
       onOpenChange(false)
@@ -275,7 +300,8 @@ export function WebsiteChromeDialog({
     if (!open && chrome === 'dialog') return
     setName(initialName ?? '')
     setIsDefault(false)
-  }, [open, chrome, initialName])
+    setColorPaletteId(initialColorPaletteId ?? null)
+  }, [open, chrome, initialColorPaletteId, initialName])
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
@@ -285,7 +311,7 @@ export function WebsiteChromeDialog({
   function submit() {
     const trimmed = name.trim()
     if (!trimmed) return
-    onSubmit(trimmed, isDefault)
+    onSubmit(trimmed, isDefault, colorPaletteId)
   }
 
   usePlatformPeerDialogSubmit({
@@ -304,10 +330,19 @@ export function WebsiteChromeDialog({
       <FormField label={t('name')} htmlFor={`website-${kind}-name`} required>
         <Input id={`website-${kind}-name`} value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} />
       </FormField>
-      <label className="flex items-center gap-2 text-sm">
-        <Checkbox checked={isDefault} onCheckedChange={(value) => setIsDefault(value === true)} />
-        {t('setDefault')}
-      </label>
+      <ColorPaletteField
+        id={`website-${kind}-palette`}
+        theme={theme}
+        value={colorPaletteId}
+        disabled={isSaving}
+        onChange={setColorPaletteId}
+      />
+      {isEdit ? null : (
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox checked={isDefault} onCheckedChange={(value) => setIsDefault(value === true)} />
+          {t('setDefault')}
+        </label>
+      )}
     </Form>
   )
 
@@ -330,7 +365,7 @@ export function WebsiteChromeDialog({
             {tc('cancel')}
           </Button>
           <Button type="button" className="h-10 px-4" onClick={submit} disabled={isSaving}>
-            {isSaving ? t('creating') : t('create')}
+            {isSaving ? (isEdit ? t('saving') : t('creating')) : isEdit ? tc('save') : t('create')}
           </Button>
         </>
       }
@@ -346,6 +381,8 @@ export function WebsitePresetDialog({
   error,
   entityId,
   initialName,
+  initialColorPaletteId = null,
+  theme = null,
   onOpenChange,
   onSubmit,
   onHostedSaved,
@@ -357,8 +394,10 @@ export function WebsitePresetDialog({
   error: string | null
   entityId?: string
   initialName?: string
+  initialColorPaletteId?: string | null
+  theme?: WebsiteTheme | null
   onOpenChange: (open: boolean) => void
-  onSubmit: (name: string) => void
+  onSubmit: (name: string, colorPaletteId: string | null) => void
   onHostedSaved?: () => void
   chrome?: 'dialog' | 'embed-page'
   saveAs?: boolean
@@ -368,6 +407,7 @@ export function WebsitePresetDialog({
   const [searchParams] = useSearchParams()
   const parentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const [name, setName] = useState(initialName ?? '')
+  const [colorPaletteId, setColorPaletteId] = useState<string | null>(initialColorPaletteId)
   const isEdit = Boolean(entityId)
   const isSaveAs = Boolean(saveAs)
   const dialogRequestId =
@@ -401,7 +441,8 @@ export function WebsitePresetDialog({
   useEffect(() => {
     if (!open && chrome === 'dialog') return
     setName(initialName ?? '')
-  }, [open, chrome, initialName])
+    setColorPaletteId(initialColorPaletteId ?? null)
+  }, [open, chrome, initialColorPaletteId, initialName])
 
   useEffect(() => {
     if (!dialogRequestId || !parentOrigin) return
@@ -411,7 +452,7 @@ export function WebsitePresetDialog({
   function submit() {
     const trimmed = name.trim()
     if (!trimmed) return
-    onSubmit(trimmed)
+    onSubmit(trimmed, colorPaletteId)
   }
 
   usePlatformPeerDialogSubmit({
@@ -430,6 +471,13 @@ export function WebsitePresetDialog({
       <FormField label={t('name')} htmlFor="website-preset-name" required>
         <Input id="website-preset-name" value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} />
       </FormField>
+      <ColorPaletteField
+        id="website-preset-palette"
+        theme={theme}
+        value={colorPaletteId}
+        disabled={isSaving}
+        onChange={setColorPaletteId}
+      />
     </Form>
   )
 

@@ -49,6 +49,7 @@ export function ButtonStyleBasicSettingsFields({
   idPrefix,
   allowNone = false,
   noneLabel,
+  paletteNoneLabel,
   fontPlaceholder,
   colorPlaceholder,
 }: {
@@ -63,6 +64,8 @@ export function ButtonStyleBasicSettingsFields({
   idPrefix: string
   allowNone?: boolean
   noneLabel?: string
+  /** When set, the palette list includes Inherit. An empty palette id selects the theme palette. */
+  paletteNoneLabel?: string
   fontPlaceholder?: string
   colorPlaceholder?: string
 }) {
@@ -91,7 +94,7 @@ export function ButtonStyleBasicSettingsFields({
                   <span className="truncate">{selectedPalette.name}</span>
                 </span>
               ) : (
-                '—'
+                paletteNoneLabel || '—'
               )
             }
           />
@@ -139,7 +142,7 @@ export function ButtonStyleBasicSettingsFields({
         <FormField
           label={t('buttonColorPalette')}
           htmlFor={`${idPrefix}-palette`}
-          required
+          required={!paletteNoneLabel}
           error={fieldErrors.colorPaletteId}
         >
           <ThemeColorPaletteSelect
@@ -147,6 +150,8 @@ export function ButtonStyleBasicSettingsFields({
             value={values.colorPaletteId}
             options={paletteOptions}
             placeholder={t('pickColorPaletteRequired')}
+            allowNone={Boolean(paletteNoneLabel)}
+            noneLabel={paletteNoneLabel}
             onChange={(colorPaletteId) => patch({ colorPaletteId })}
           />
         </FormField>

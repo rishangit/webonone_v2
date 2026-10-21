@@ -628,4 +628,44 @@ describe('formatDesignerCanvasContext', () => {
     assert.match(context, new RegExp(`addon ${button.id} in block ${block.id}`))
     assert.match(context, /The user copied this element/)
   })
+
+  it('includes the focused block shell without child markup', () => {
+    const placed = applyCanvasOperations(emptyWebsiteDocument(), {
+      operations: [
+        { op: 'add_block', name: 'Hero' },
+        { op: 'add_addon', type: 'text', text: 'Welcome' },
+      ],
+    })
+    const block = placed.document.blocks[0]
+    assert.ok(block)
+    const context = formatDesignerCanvasContext({
+      kind: 'pages',
+      id: 'page-1',
+      name: 'Home',
+      document: placed.document,
+      focus: { kind: 'block', blockId: block.id },
+    })
+    assert.match(context, /\{\{children\}\}/)
+    assert.match(context, /Do not paste child or addon markup/)
+    const htmlLine = context.split('\n').find((line) => line.startsWith('html: '))
+    assert.match(htmlLine ?? '', /\{\{children\}\}/)
+    assert.doesNotMatch(htmlLine ?? '', /Welcome/)
+    const styled = applyCanvasOperations(placed.document, {
+      operations: [
+        {
+          op: 'update_block',
+          blockId: block.id,
+          html: '<div class="hero-shell">{{children}}</div>',
+          styles: `.website-el-${block.id} { outline: 1px solid red; }`,
+          scripts: 'root.dataset.ready = "yes"',
+        },
+      ],
+    })
+    const next = styled.document.blocks[0]
+    assert.equal(next?.addons[0]?.type, 'text')
+    assert.match(next?.customization?.html ?? '', /hero-shell/)
+    assert.match(next?.customization?.html ?? '', /\{\{children\}\}/)
+    assert.doesNotMatch(next?.customization?.html ?? '', /Welcome/)
+    assert.match(next?.customization?.scripts ?? '', /dataset.ready/)
+  })
 })

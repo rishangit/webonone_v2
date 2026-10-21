@@ -9,6 +9,8 @@ import {
   elementScopeClass,
   finalizeElementCustomization,
   hasElementCustomization,
+  normalizeElementRootHtml,
+  storedBlockCustomization,
   isDefaultElementStyles,
   isSkeletonElementHtml,
   scopedElementVisualOverrideCss,
@@ -192,5 +194,32 @@ describe('websiteElementCustomization', () => {
     assert.equal(finalized.html, '')
     assert.equal(finalized.styles, '')
     assert.equal(hasElementCustomization(finalized), false)
+  })
+
+  it('shows only the block shell and keeps a children slot', () => {
+    const html = defaultElementHtml('block', 'block-1')
+    assert.match(html, /data-website-element="block"/)
+    assert.match(html, /\{\{children\}\}<\/div>$/)
+    assert.doesNotMatch(html, /data-addon-id|data-block-id/)
+    const withChildMarkup = '<div class="card">{{children}}</div>'
+    const normalized = normalizeElementRootHtml(withChildMarkup, 'block', 'block-1')
+    assert.match(normalized, /website-el-block-1/)
+    assert.match(normalized, /\{\{children\}\}/)
+    assert.doesNotMatch(normalized, /data-addon/)
+    assert.equal(
+      storedBlockCustomization({ html: '', styles: '', scripts: '' }, 'block-1'),
+      undefined,
+    )
+    const custom = storedBlockCustomization(
+      {
+        html: '<section class="hero">{{children}}</section>',
+        styles: '.website-el-block-1 { padding: 8px; }',
+        scripts: 'root.classList.add("ready")',
+      },
+      'block-1',
+    )
+    assert.match(custom?.html ?? '', /<section/)
+    assert.match(custom?.html ?? '', /\{\{children\}\}/)
+    assert.match(custom?.styles ?? '', /padding: 8px/)
   })
 })

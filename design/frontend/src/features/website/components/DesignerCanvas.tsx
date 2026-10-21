@@ -12,9 +12,11 @@ import {
   pinchSpansFromPoints,
   pinchToRect,
   pointerToRect,
+  resolveContainerHeight,
   resolveLayoutRect,
   ROW_HEIGHT,
   snapRowSpan,
+  writeContainerHeight,
   writeLayoutRect,
   type LayoutLimits,
   type PinchSpans,
@@ -173,10 +175,11 @@ function applySessionRect(
     if (drag.isRootBlock) {
       nextDocument = {
         ...nextDocument,
-        container: {
-          ...nextDocument.container,
-          height: Math.max(nextDocument.container.height, nextBottom + ROW_HEIGHT),
-        },
+        container: writeContainerHeight(
+          nextDocument.container,
+          breakpoint,
+          Math.max(resolveContainerHeight(nextDocument.container, breakpoint), nextBottom + ROW_HEIGHT),
+        ),
       }
     }
   } else if (drag.selection.kind === 'templateBlock' && drag.hostBlockId && drag.sliderAddonId && drag.templateBlockId) {
@@ -235,6 +238,9 @@ interface DesignerCanvasProps {
   selection: DesignerSelection | null
   highlight?: DesignerSelection | null
   theme: WebsiteTheme | null
+  paletteId?: string | null
+  headerPaletteId?: string | null
+  footerPaletteId?: string | null
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   designerKind?: WebsiteDesignerKind
@@ -305,6 +311,9 @@ export function DesignerCanvas({
   selection,
   highlight = null,
   theme,
+  paletteId = null,
+  headerPaletteId = null,
+  footerPaletteId = null,
   pages,
   currentPageId = null,
   designerKind,
@@ -532,7 +541,8 @@ export function DesignerCanvas({
     mode === 'visual' && headerDocument ? documentContentHeight(headerDocument, breakpoint) : 0
   const footerHeight =
     mode === 'visual' && footerDocument ? documentContentHeight(footerDocument, breakpoint) : 0
-  const logicalHeight = headerHeight + document.container.height + footerHeight
+  const canvasHeight = resolveContainerHeight(document.container, breakpoint)
+  const logicalHeight = headerHeight + canvasHeight + footerHeight
 
   function onHandlePointerDown(
     event: ReactPointerEvent,
@@ -568,7 +578,7 @@ export function DesignerCanvas({
     if (mode !== 'edit') return
     event.preventDefault()
     const startY = event.clientY
-    const startHeight = document.container.height
+    const startHeight = resolveContainerHeight(document.container, breakpoint)
     const currentScale = scale
     const minRowSpan = minContainerRowSpanForDesignerKind(designerKind)
     function onMove(moveEvent: PointerEvent) {
@@ -609,6 +619,7 @@ export function DesignerCanvas({
           document={headerDocument}
           breakpoint={breakpoint}
           theme={theme}
+          paletteId={headerPaletteId}
           mode="visual"
           fit="content"
           pages={pages}
@@ -619,6 +630,7 @@ export function DesignerCanvas({
         document={document}
         breakpoint={breakpoint}
         theme={theme}
+        paletteId={paletteId}
         mode={mode}
         selection={selection}
         highlight={mode === 'edit' ? highlight : null}
@@ -660,6 +672,7 @@ export function DesignerCanvas({
           document={footerDocument}
           breakpoint={breakpoint}
           theme={theme}
+          paletteId={footerPaletteId}
           mode="visual"
           fit="content"
           pages={pages}

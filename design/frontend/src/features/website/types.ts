@@ -46,6 +46,8 @@ export type TextAddonSnapshot = {
 
 export type TextAddonProps = {
   textStyleId: string
+  /** Position in the theme text list. A theme change uses the style at this position. */
+  textStyleIndex?: number | null
   content: string
   fontSizeByBreakpoint?: Partial<Record<WebsiteBreakpoint, number>>
   snapshot: TextAddonSnapshot
@@ -64,6 +66,8 @@ export type ButtonAddonSnapshot = {
 
 export type ButtonAddonProps = {
   buttonStyleId: string
+  /** Position in the theme button list. A theme change uses the style at this position. */
+  buttonStyleIndex?: number | null
   label: string
   linkPageId?: string | null
   snapshot: ButtonAddonSnapshot
@@ -164,6 +168,8 @@ export type ElementChrome = {
   boxShadow?: ElementBoxShadow
   padding?: ElementPadding
   margin?: ElementMargin
+  /** Theme palette for this element. Omitted means inherit from the parent. */
+  colorPaletteId?: string | null
 }
 
 type WebsiteAddonBase = {
@@ -209,11 +215,19 @@ export type WebsiteBlock = {
   layout: LayoutByBreakpoint
   addons: WebsiteAddon[]
   children: WebsiteBlock[]
+  /** Shell markup for this block only. Children render at {{children}}, not inside this HTML. */
+  customization?: WebsiteElementCustomization
 } & ElementChrome
 
 export type WebsiteDocumentV1 = {
   version: 1
-  container: { height: number; backgroundColor?: string }
+  container: {
+    /** Fallback height for sizes that have not been resized. */
+    height: number
+    /** Canvas height for sm, md, lg, xl, and 2xl. A resize writes only that size. */
+    heightByBreakpoint?: Partial<Record<WebsiteBreakpoint, number>>
+    backgroundColor?: string
+  }
   blocks: WebsiteBlock[]
 }
 
@@ -229,7 +243,7 @@ export type WebsitePage = {
   layoutName: string | null
   sortOrder: number
   document: WebsiteDocumentV1
-  isLocked: boolean
+  colorPaletteId: string | null
   sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
@@ -252,7 +266,6 @@ export type WebsiteLayout = {
   footerId: string | null
   themeId: string | null
   isDefault: boolean
-  isLocked: boolean
   sourceLibraryId: string | null
   pages: WebsiteLayoutPage[]
   createdBy: string | null
@@ -265,8 +278,8 @@ export type WebsiteChrome = {
   companyId: string
   name: string
   isDefault: boolean
-  isLocked: boolean
   document: WebsiteDocumentV1
+  colorPaletteId: string | null
   sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
@@ -278,7 +291,7 @@ export type WebsitePreset = {
   companyId: string
   name: string
   document: WebsiteDocumentV1
-  isLocked: boolean
+  colorPaletteId: string | null
   sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
@@ -290,6 +303,7 @@ export type WebsiteFontToken = {
   name: string
   googleFontUrl: string
   family: string
+  sourceLibraryId?: string | null
 }
 
 export type WebsiteFontLibraryItem = {
@@ -427,7 +441,6 @@ export type WebsiteTheme = {
   accent2Index: number
   isActive: boolean
   isDefault: boolean
-  isLocked: boolean
   sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
   colorPalettes: WebsiteThemeColorPalette[]
@@ -500,7 +513,6 @@ export type WebsiteDataset = {
   config: WebsiteDatasetConfig
   selectedFields: string[]
   status: WebsiteDatasetStatus
-  isLocked: boolean
   createdBy: string | null
   createdAt: string
   updatedAt: string

@@ -12,7 +12,6 @@ function emptyTheme(): WebsiteTheme {
     bodyTextColor: '#111827',
     isActive: true,
     isDefault: false,
-    isLocked: false,
     sourceLibraryId: null,
     fonts: [],
     colorPaletteId: '',

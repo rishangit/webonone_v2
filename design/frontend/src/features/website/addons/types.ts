@@ -13,6 +13,8 @@ export interface AddonRenderProps {
   addon: WebsiteAddon
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
+  /** Effective palette for this add-on. Null keeps each style's own palette. */
+  paletteId?: string | null
   pages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   companyId?: string

@@ -30,10 +30,11 @@ const ROLE_FIELDS: Array<{
 export function ThemeBasicSettingsTab({ theme, onChange, fieldErrors = {} }: ThemeBasicSettingsTabProps) {
   const { t } = useTranslation('website')
   const paletteOptions = themePaletteSelectOptions(theme)
-  const colorPaletteId = theme.colorPaletteId || paletteOptions[0]?.id || ''
+  const colorPaletteId = theme.colorPaletteId?.trim() || paletteOptions[0]?.id || ''
   const colorOptions: ThemeTokenOption[] = themeColorOptionsForPalette(theme, colorPaletteId)
 
   function onPaletteChange(nextPaletteId: string) {
+    if (!nextPaletteId) return
     onChange(
       applyThemeChrome({
         ...theme,

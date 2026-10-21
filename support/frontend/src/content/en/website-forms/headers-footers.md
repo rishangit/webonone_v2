@@ -8,7 +8,7 @@ summary: "Edit site chrome in the header and footer designers, then pick them on
 ---
 
 1. Open **Website → Headers** or **Website → Footers**.
-2. Edit the chrome (logo, Nav menu, and blocks) in the designer. Choose **Add header** or **Add footer**, then **Add from library** or **Create new**. Super Admin uses those Add buttons to add a library header or footer directly.
+2. Edit the chrome (logo, Nav menu, and blocks) in the designer. Choose **Add header** or **Add footer**, then **Add from library** or **Create new**. **Edit details** sets the color palette for that header or footer. Inherit uses the theme palette, and a chosen palette applies to content that does not set its own. Super Admin uses those Add buttons to add a library header or footer directly.
 3. Save. A **layout** picks which header and footer wrap each page.
 
 Add a **Nav menu** add-on on the header so layout pages appear as links. On phones that menu becomes a hamburger. See [Header menu](/docs/website-forms/header-menu) and [Website layouts](/docs/website-forms/website-layouts).

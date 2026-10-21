@@ -48,6 +48,7 @@ interface AddonSettingsDialogProps {
    * that array/object item (e.g. galleryImages → url / fileId).
    */
   fieldPathPrefix?: string | null
+  inheritedPaletteId?: string | null
   onOpenChange: (open: boolean) => void
   onSave: (addon: WebsiteAddon) => void
 }
@@ -62,6 +63,7 @@ export function AddonSettingsDialog({
   pages,
   datasetIdOverride,
   fieldPathPrefix = null,
+  inheritedPaletteId = null,
   onOpenChange,
   onSave,
 }: AddonSettingsDialogProps) {
@@ -111,6 +113,7 @@ export function AddonSettingsDialog({
       boxShadow: chrome.boxShadow,
       padding: chrome.padding,
       margin: chrome.margin,
+      colorPaletteId: chrome.colorPaletteId || undefined,
     })
   }
 
@@ -168,6 +171,8 @@ export function AddonSettingsDialog({
                 value={pickElementChrome(draft)}
                 onChange={updateChrome}
                 idPrefix="addon-settings"
+                theme={theme}
+                inheritedPaletteId={inheritedPaletteId}
               />
             </TabsContent>
             <TabsContent value="dataBinding" className="space-y-4">

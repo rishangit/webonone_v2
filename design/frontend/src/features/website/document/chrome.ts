@@ -39,7 +39,7 @@ const SHADOW_CLASS: Record<ElementBoxShadow, string> = {
 }
 
 export function pickElementChrome(source: ElementChrome): ElementChrome {
-  return {
+  const chrome: ElementChrome = {
     backgroundColor: source.backgroundColor,
     borderColor: source.borderColor,
     borderRadius: source.borderRadius,
@@ -47,6 +47,9 @@ export function pickElementChrome(source: ElementChrome): ElementChrome {
     padding: source.padding,
     margin: source.margin,
   }
+  const colorPaletteId = source.colorPaletteId?.trim()
+  if (colorPaletteId) chrome.colorPaletteId = colorPaletteId
+  return chrome
 }
 
 export function chromeClassName(chrome: ElementChrome): string {

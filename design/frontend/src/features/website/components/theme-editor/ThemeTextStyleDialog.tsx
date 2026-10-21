@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { nanoid } from 'nanoid'
@@ -42,10 +42,18 @@ const TEXT_LIBRARY_DIALOG_SIZE = {
   sizeHeight: 'large' as const,
 }
 
+function themeTextDialogPath(themeId: string, styleId?: string, tab?: WebsiteElementEditorTab) {
+  const path = styleId
+    ? `/embed/dialogs/website/themes/${themeId}/texts/${styleId}`
+    : `/embed/dialogs/website/themes/${themeId}/texts/create`
+  return tab ? `${path}?tab=${encodeURIComponent(tab)}` : path
+}
+
 export function ThemeTextStyleDialog({
   open,
   theme,
   initial,
+  initialTab,
   onOpenChange,
   onSubmit,
   chrome = 'dialog',
@@ -53,6 +61,7 @@ export function ThemeTextStyleDialog({
   open: boolean
   theme: WebsiteTheme
   initial?: WebsiteTextStyle
+  initialTab?: WebsiteElementEditorTab
   onOpenChange: (open: boolean) => void
   onSubmit: (style: WebsiteTextStyle, patch?: ThemeTokenPatch) => void
   chrome?: 'dialog' | 'embed-page'
@@ -70,7 +79,7 @@ export function ThemeTextStyleDialog({
   const [values, setValues] = useState<WebsiteTextStyle>(emptyTextStyle(theme, initial))
   const [previewBreakpoint, setPreviewBreakpoint] = useState<WebsiteBreakpoint>('lg')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [elementTab, setElementTab] = useState<WebsiteElementEditorTab>('preview')
+  const [elementTab, setElementTab] = useState<WebsiteElementEditorTab>(initialTab ?? 'preview')
   const dialogRequestId =
     chrome === 'embed-page'
       ? (searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? null)
@@ -82,9 +91,7 @@ export function ThemeTextStyleDialog({
   const { isHosted } = useRequestPlatformPeerDialog({
     parentOrigin: chrome === 'dialog' ? parentOrigin : null,
     open: chrome === 'dialog' && open,
-    path: initial
-      ? `/embed/dialogs/website/themes/${theme.id}/texts/${initial.id}`
-      : `/embed/dialogs/website/themes/${theme.id}/texts/create`,
+    path: themeTextDialogPath(theme.id, initial?.id, initialTab),
     title: isEdit ? t('editTextStyleTitle') : t('createTextStyleTitle'),
     description: isEdit ? undefined : t('createTextStyleDescription'),
     submitLabel: isEdit ? tc('save') : choosing ? tc('next') : t('create'),
@@ -97,16 +104,27 @@ export function ThemeTextStyleDialog({
     onCancel: () => onOpenChange(false),
   })
 
+  const editSessionRef = useRef<string | null>(null)
+
   useEffect(() => {
     if (!open && chrome === 'dialog') return
+    if (!open) {
+      editSessionRef.current = null
+      return
+    }
+
+    const sessionKey = `${theme.id}:${initial?.id ?? 'create'}:${initialTab ?? 'preview'}`
+    if (editSessionRef.current === sessionKey) return
+    editSessionRef.current = sessionKey
+
     setValues(emptyTextStyle(theme, initial))
     setPreviewBreakpoint('lg')
     setFieldErrors({})
     setChoice(null)
     setSource(null)
     setSelectedId(null)
-    setElementTab('preview')
-  }, [chrome, initial, open, theme])
+    setElementTab(initialTab ?? 'preview')
+  }, [chrome, initial, initialTab, open, theme])
 
   useEffect(() => {
     if (isEdit || source !== 'library' || (!open && chrome === 'dialog')) return

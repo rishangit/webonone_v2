@@ -90,17 +90,19 @@ export async function getPublicWebsiteSite(input: {
     const listed = await listWebsitePages({ companyId, page: 1, pageSize: 100, status: 'active' })
     const page = await resolvePublicWebsitePage({ companyId, path: input.path })
     const resolvedLayout = await resolveLayoutForPage({ companyId, layoutId: page.layoutId })
-    const [header, footer, theme] = resolvedLayout
+    const [header, footer, activeTheme] = resolvedLayout
       ? await Promise.all([
           chromeOrNull({ kind: 'headers', companyId, id: resolvedLayout.headerId }),
           chromeOrNull({ kind: 'footers', companyId, id: resolvedLayout.footerId }),
-          themeForLayout(companyId, resolvedLayout.themeId),
+          getDefaultWebsiteTheme({ companyId }),
         ])
       : await Promise.all([
           defaultChrome({ kind: 'headers', companyId }),
           defaultChrome({ kind: 'footers', companyId }),
           getDefaultWebsiteTheme({ companyId }),
         ])
+    const theme =
+      activeTheme ?? (resolvedLayout ? await themeForLayout(companyId, resolvedLayout.themeId) : null)
     return {
       companyId,
       webSlug: company.webSlug,

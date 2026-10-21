@@ -122,7 +122,7 @@ export function WebsiteLayoutsPage() {
                       type="button"
                       className="block w-full text-left"
                       onClick={() =>
-                        canManage && !item.isLocked
+                        canManage
                           ? setDialog({
                               id: item.id,
                               initial: {
@@ -140,7 +140,6 @@ export function WebsiteLayoutsPage() {
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{item.name}</p>
                         {item.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
-                        {item.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
                         <WebsiteLibrarySourceTag sourceLibraryId={item.sourceLibraryId} />
                       </div>
                       <p className="text-sm text-muted-foreground">
@@ -172,7 +171,7 @@ export function WebsiteLayoutsPage() {
                       >
                         {t('duplicate')}
                       </DropdownMenuItem>
-                      {item.sourceLibraryId && !item.isLocked ? (
+                      {item.sourceLibraryId ? (
                         <DropdownMenuItem
                           disabled={revert.reverting}
                           onClick={() => revert.ask({ kind: 'layouts', id: item.id, name: item.name })}
@@ -180,8 +179,7 @@ export function WebsiteLayoutsPage() {
                           {t('downloadUpdatedFromLibrary')}
                         </DropdownMenuItem>
                       ) : null}
-                      {item.isLocked ? null : (
-                        <DropdownMenuItem
+                      <DropdownMenuItem
                           onClick={() =>
                             setDialog({
                               id: item.id,
@@ -198,8 +196,7 @@ export function WebsiteLayoutsPage() {
                         >
                           {t('editDetails')}
                         </DropdownMenuItem>
-                      )}
-                      {!item.isDefault && !item.isLocked ? (
+                      {!item.isDefault ? (
                         <DropdownMenuItem
                           onClick={() => {
                             dispatch(websiteLayoutsActions.saveDetailRequested({ id: item.id, body: { isDefault: true } }))
@@ -210,15 +207,13 @@ export function WebsiteLayoutsPage() {
                           {t('setDefault')}
                         </DropdownMenuItem>
                       ) : null}
-                      {item.isLocked ? null : <DropdownMenuSeparator />}
-                      {item.isLocked ? null : (
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setPendingDelete({ id: item.id, name: item.name })}
-                        >
-                          {t('common:delete')}
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                      >
+                        {t('common:delete')}
+                      </DropdownMenuItem>
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>

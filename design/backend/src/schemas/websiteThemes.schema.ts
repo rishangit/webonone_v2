@@ -162,6 +162,7 @@ export const websiteFontTokenSchema = z.object({
   name: z.string().trim().min(1).max(128),
   googleFontUrl: z.string().max(2048).default(''),
   family: z.string().trim().min(1).max(255),
+  sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
 })
 
 export const websiteColorTokenSchema = z.object({

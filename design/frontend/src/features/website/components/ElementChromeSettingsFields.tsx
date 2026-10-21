@@ -16,7 +16,9 @@ import type {
   ElementChrome,
   ElementMargin,
   ElementPadding,
+  WebsiteTheme,
 } from '../types'
+import { ColorPaletteField } from './ColorPaletteField'
 
 const NONE = '__none__'
 
@@ -30,6 +32,8 @@ interface ElementChromeSettingsFieldsProps {
   onChange: (next: ElementChrome) => void
   fieldErrors?: Partial<Record<string, string>>
   idPrefix?: string
+  theme?: WebsiteTheme | null
+  inheritedPaletteId?: string | null
 }
 
 export function ElementChromeSettingsFields({
@@ -37,6 +41,8 @@ export function ElementChromeSettingsFields({
   onChange,
   fieldErrors = {},
   idPrefix = 'element-chrome',
+  theme = null,
+  inheritedPaletteId = null,
 }: ElementChromeSettingsFieldsProps) {
   const { t } = useTranslation('website')
 
@@ -46,6 +52,13 @@ export function ElementChromeSettingsFields({
 
   return (
     <div className="space-y-4">
+      <ColorPaletteField
+        id={`${idPrefix}-palette`}
+        theme={theme}
+        value={value.colorPaletteId}
+        inheritedPaletteId={inheritedPaletteId}
+        onChange={(colorPaletteId) => patch({ colorPaletteId: colorPaletteId || undefined })}
+      />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField label={t('background')} htmlFor={`${idPrefix}-bg`} error={fieldErrors.backgroundColor}>
           <ColorInput

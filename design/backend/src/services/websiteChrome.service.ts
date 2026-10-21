@@ -1,7 +1,6 @@
 import { nanoid } from 'nanoid'
 import { db, type DesignWebsiteChromeRow } from '../models/db.js'
 import { HttpError } from './httpError.js'
-import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { emptyWebsiteDocument, websiteDocumentSchema, type WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
 import type { CreateWebsiteChromeBody, UpdateWebsiteChromeBody } from '../schemas/websiteChrome.schema.js'
@@ -16,8 +15,8 @@ export type WebsiteChromeDto = {
   companyId: string
   name: string
   isDefault: boolean
-  isLocked: boolean
   document: WebsiteDocumentV1
+  colorPaletteId: string | null
   sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
@@ -48,8 +47,8 @@ function toDto(row: DesignWebsiteChromeRow): WebsiteChromeDto {
     companyId: row.company_id,
     name: row.name,
     isDefault: toBool(row.is_default),
-    isLocked: isLockedFlag(row.is_locked),
     document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
+    colorPaletteId: row.color_palette_id || null,
     sourceLibraryId: row.source_library_id ?? null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -125,6 +124,8 @@ export async function createWebsiteChrome(input: {
     name: input.body.name,
     is_default: input.body.isDefault,
     document: JSON.stringify(input.body.document),
+    color_palette_id: input.body.colorPaletteId || null,
+    source_library_id: null,
     created_by: input.userId,
     created_at: db.fn.now(3),
     updated_at: db.fn.now(3),
@@ -142,7 +143,6 @@ export async function updateWebsiteChrome(input: {
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Not found', notFoundCode(input.kind))
-  assertWebsiteUnlocked(existing.is_locked)
   if (input.body.isDefault) {
     await clearDefaults(input.kind, input.companyId)
   }
@@ -150,7 +150,8 @@ export async function updateWebsiteChrome(input: {
   if (input.body.name != null) updates.name = input.body.name
   if (input.body.isDefault != null) updates.is_default = input.body.isDefault
   if (input.body.document != null) updates.document = JSON.stringify(input.body.document)
-  await db(tableName(input.kind)).where({ id: input.id }).update(updates)
+  if (input.body.colorPaletteId !== undefined) updates.color_palette_id = input.body.colorPaletteId || null
+  await db(tableName(input.kind)).where({ id: input.id, company_id: input.companyId }).update(updates)
   return getWebsiteChrome({ kind: input.kind, companyId: input.companyId, id: input.id })
 }
 
@@ -176,7 +177,6 @@ export async function deleteWebsiteChrome(input: {
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Not found', notFoundCode(input.kind))
-  assertWebsiteUnlocked(existing.is_locked)
   const used = await countLayoutsUsingChrome({ kind: input.kind, companyId: input.companyId, id: input.id })
   if (used > 0) {
     throw new HttpError(

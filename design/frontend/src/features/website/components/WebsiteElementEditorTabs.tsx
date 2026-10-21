@@ -97,8 +97,7 @@ export function WebsiteElementEditorTabs({
   const isDetail = layout === 'detail'
   const isView = mode === 'view'
   const canEditSection = isDetail && isView && Boolean(onEdit)
-  const htmlPlaceholder =
-    kind === 'button' ? t('elementHtmlPlaceholderButton') : t('elementHtmlPlaceholderText')
+  const htmlPlaceholder = elementHtmlPlaceholder(kind, t)
   const scopedDefaultHtml = defaultHtml || defaultElementHtml(kind, scopeId)
   const scopedDefaultStyles = defaultElementStyles(scopeId)
   const currentHtml = effectiveElementHtml(customization, scopedDefaultHtml, visual)
@@ -241,13 +240,43 @@ export function WebsiteElementEditorTabs({
           {tabWithPreview(generalBody)}
         </TabsContent>
         <TabsContent value="html" className={tabsPageContentClassName}>
-          {tabWithPreview(htmlBody)}
+          {tabWithPreview(
+            <WebsiteElementCodeSection
+              section="html"
+              kind={kind}
+              customization={customization}
+              onCustomizationChange={onCustomizationChange}
+              scopeId={scopeId}
+              defaultHtml={defaultHtml}
+              visual={visual}
+            />,
+          )}
         </TabsContent>
         <TabsContent value="styles" className={tabsPageContentClassName}>
-          {tabWithPreview(stylesBody)}
+          {tabWithPreview(
+            <WebsiteElementCodeSection
+              section="styles"
+              kind={kind}
+              customization={customization}
+              onCustomizationChange={onCustomizationChange}
+              scopeId={scopeId}
+              defaultHtml={defaultHtml}
+              visual={visual}
+            />,
+          )}
         </TabsContent>
         <TabsContent value="scripts" className={tabsPageContentClassName}>
-          {tabWithPreview(scriptsBody)}
+          {tabWithPreview(
+            <WebsiteElementCodeSection
+              section="scripts"
+              kind={kind}
+              customization={customization}
+              onCustomizationChange={onCustomizationChange}
+              scopeId={scopeId}
+              defaultHtml={defaultHtml}
+              visual={visual}
+            />,
+          )}
         </TabsContent>
       </Tabs>
     )
@@ -312,5 +341,98 @@ export function WebsiteElementEditorTabs({
         )}
       </TabsContent>
     </Tabs>
+  )
+}
+
+export type WebsiteElementCodeSectionName = 'html' | 'styles' | 'scripts'
+
+function elementHtmlPlaceholder(kind: WebsiteElementKind, t: (key: string) => string): string {
+  if (kind === 'button') return t('elementHtmlPlaceholderButton')
+  if (kind === 'block') return t('elementHtmlPlaceholderBlock')
+  return t('elementHtmlPlaceholderText')
+}
+
+/** HTML, styles, or script editor shared by button, text, and block settings. */
+export function WebsiteElementCodeSection({
+  section,
+  kind,
+  customization,
+  onCustomizationChange,
+  scopeId,
+  defaultHtml,
+  visual,
+  readOnly = false,
+}: {
+  section: WebsiteElementCodeSectionName
+  kind: WebsiteElementKind
+  customization: WebsiteElementCustomization
+  onCustomizationChange: (next: WebsiteElementCustomization) => void
+  scopeId: string
+  defaultHtml: string
+  visual?: ElementVisualStyle
+  readOnly?: boolean
+}) {
+  const { t } = useTranslation('website')
+  const htmlPlaceholder = elementHtmlPlaceholder(kind, t)
+  const scopedDefaultHtml = defaultHtml || defaultElementHtml(kind, scopeId)
+  const scopedDefaultStyles = defaultElementStyles(scopeId)
+  const currentHtml = effectiveElementHtml(customization, scopedDefaultHtml, visual)
+  const htmlHint = kind === 'block' ? t('elementHtmlBlockHint') : t('elementHtmlCurrentHint')
+
+  if (section === 'html') {
+    return (
+      <>
+        <p className="text-xs text-muted-foreground">{htmlHint}</p>
+        <p className="text-xs text-muted-foreground">{htmlPlaceholder}</p>
+        <FormField label={t('elementTabHtml')} htmlFor={`element-html-${scopeId}`}>
+          <Textarea
+            id={`element-html-${scopeId}`}
+            aria-label={t('elementTabHtml')}
+            className="min-h-[220px] font-mono text-sm"
+            value={currentHtml}
+            onChange={(event) => onCustomizationChange({ ...customization, html: event.target.value })}
+            placeholder={htmlPlaceholder}
+            readOnly={readOnly}
+          />
+        </FormField>
+      </>
+    )
+  }
+
+  if (section === 'styles') {
+    const stylesEditorValue = customization.styles.trim() ? customization.styles : scopedDefaultStyles
+    return (
+      <>
+        <p className="text-xs text-muted-foreground">{t('elementStylesHint')}</p>
+        <FormField label={t('elementTabStyles')} htmlFor={`element-styles-${scopeId}`}>
+          <Textarea
+            id={`element-styles-${scopeId}`}
+            aria-label={t('elementTabStyles')}
+            className="min-h-[220px] font-mono text-sm"
+            value={stylesEditorValue}
+            onChange={(event) => onCustomizationChange({ ...customization, styles: event.target.value })}
+            placeholder={scopedDefaultStyles}
+            readOnly={readOnly}
+          />
+        </FormField>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <p className="text-xs text-muted-foreground">{t('elementScriptsHint')}</p>
+      <FormField label={t('elementTabScripts')} htmlFor={`element-scripts-${scopeId}`}>
+        <Textarea
+          id={`element-scripts-${scopeId}`}
+          aria-label={t('elementTabScripts')}
+          className="min-h-[160px] font-mono text-sm"
+          value={customization.scripts}
+          onChange={(event) => onCustomizationChange({ ...customization, scripts: event.target.value })}
+          placeholder={t('elementScriptsHint')}
+          readOnly={readOnly}
+        />
+      </FormField>
+    </>
   )
 }

@@ -47,6 +47,7 @@ function SliderAddonRenderer({
   companyId,
   interactive,
   publish,
+  paletteId = null,
   datasetItemsById = {},
   hostBlockId,
   selection,
@@ -211,6 +212,7 @@ function SliderAddonRenderer({
                   block={resolvedBlock}
                   breakpoint={breakpoint}
                   theme={theme}
+                  parentPaletteId={paletteId}
                   pages={pages}
                   currentPageId={currentPageId}
                   companyId={companyId}

@@ -14,6 +14,7 @@ import {
 } from '@webonone/ui-kit'
 import { nanoid } from 'nanoid'
 import { resolveTextStyle } from '../../document/theme'
+import { paletteForColors } from '../../utils/websitePalette'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { MenuItem, WebsiteAddon, WebsiteTextStyle, WebsiteTheme } from '../../types'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
@@ -55,9 +56,12 @@ function itemLinkStyle(
   theme: WebsiteTheme | null | undefined,
   textStyleId: string,
   breakpoint: AddonRenderProps['breakpoint'],
+  elementPaletteId?: string | null,
 ): CSSProperties {
   const style = theme?.textStyles.find((item) => item.id === textStyleId)
-  const snap = resolveTextStyle(theme ?? null, style, breakpoint)
+  const paintId = paletteForColors(theme, style?.colorPaletteId, elementPaletteId)
+  const paintStyle = style && paintId ? { ...style, colorPaletteId: paintId } : style
+  const snap = resolveTextStyle(theme ?? null, paintStyle, breakpoint)
   return {
     fontFamily: snap.fontFamily,
     fontSize: snap.size,
@@ -73,6 +77,7 @@ type MenuLinkContext = {
   companyId?: string
   interactive: boolean
   publish: boolean
+  paletteId?: string | null
   onNavigatePage?: (path: string) => void
 }
 
@@ -95,7 +100,7 @@ function MenuLink({
   const path = resolvePagePath(context.pages, item.linkPageId)
   const current = Boolean(path && context.currentPageId && context.pages?.find((p) => p.id === context.currentPageId)?.path === path)
   const href = context.publish && path && context.companyId ? publicPageHref(context.companyId, path) : undefined
-  const style = itemLinkStyle(context.theme, item.textStyleId, context.breakpoint)
+  const style = itemLinkStyle(context.theme, item.textStyleId, context.breakpoint, context.paletteId)
   const canNavigate = !context.interactive && Boolean(path && context.onNavigatePage)
   const baseClass = stacked
     ? 'block w-full px-4 py-3 text-left no-underline'
@@ -181,7 +186,7 @@ function InlineDropdownItem({
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null)
   const hasChildren = item.children.length > 0
   const open = openId === item.id
-  const style = itemLinkStyle(context.theme, item.textStyleId, context.breakpoint)
+  const style = itemLinkStyle(context.theme, item.textStyleId, context.breakpoint, context.paletteId)
 
   useLayoutEffect(() => {
     if (!open || !triggerRef.current) {
@@ -274,7 +279,7 @@ function HamburgerMenu({
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const canOpen = !context.interactive
   const panelClass = settings.panelSide === 'left' ? 'left-0' : 'right-0'
-  const iconColor = items[0] ? itemLinkStyle(context.theme, items[0].textStyleId, context.breakpoint).color : undefined
+  const iconColor = items[0] ? itemLinkStyle(context.theme, items[0].textStyleId, context.breakpoint, context.paletteId).color : undefined
 
   useEffect(() => {
     if (!open) return
@@ -358,7 +363,7 @@ function HamburgerMenu({
                           type="button"
                           data-addon-control=""
                           className="flex w-full items-center justify-between px-4 py-3 text-left"
-                          style={itemLinkStyle(context.theme, item.textStyleId, context.breakpoint)}
+                          style={itemLinkStyle(context.theme, item.textStyleId, context.breakpoint, context.paletteId)}
                           aria-expanded={expanded}
                           onClick={() => setExpandedId(expanded ? null : item.id)}
                         >
@@ -400,6 +405,7 @@ function MenuRenderer({
   addon,
   breakpoint,
   theme,
+  paletteId = null,
   pages = [],
   currentPageId,
   companyId,
@@ -435,6 +441,7 @@ function MenuRenderer({
     companyId,
     interactive,
     publish,
+    paletteId,
     onNavigatePage,
   }
 

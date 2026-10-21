@@ -1,14 +1,16 @@
 import type { PointerEvent as ReactPointerEvent } from 'react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { cn } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../addons/registry'
 import { chromeBoxStyle, chromeClassName, chromeInlineStyle, pickElementChrome } from '../document/chrome'
 import {
   documentContentHeight,
+  resolveContainerHeight,
   resolveLayoutRect,
   ROW_HEIGHT,
   type ResizeHandle,
 } from '../document/layout'
+import { inheritPaletteId } from '../document/palette'
 import { expandDocumentForPublish, resolveAddonProps, resolveBlockDataItem } from '../document/dataBinding'
 import {
   ADDON_FRAME,
@@ -24,6 +26,7 @@ import {
 import { isChromePointerTarget, shouldDeferToSelectedAncestor } from '../document/selectionPointer'
 import { CanvasHighlightProvider, useCanvasHighlight } from '../document/canvasHighlight'
 import { themeChromeCssVars } from '../utils/websitePalette'
+import { BlockCustomizationHost, blockShellScopeClass } from './BlockCustomizationHost'
 import { SelectionChrome } from './SelectionChrome'
 import type {
   DesignerMode,
@@ -40,6 +43,8 @@ interface DocumentRendererProps {
   document: WebsiteDocumentV1
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
+  /** Document palette. Children inherit it until they set their own. */
+  paletteId?: string | null
   mode?: DesignerMode | 'publish'
   /** `content` shrink-wraps header/footer; `page` fills leftover viewport height. */
   fit?: 'canvas' | 'content' | 'page'
@@ -116,6 +121,7 @@ export function DocumentRenderer({
   document,
   breakpoint,
   theme,
+  paletteId = null,
   mode = 'visual',
   fit = 'canvas',
   selection,
@@ -171,7 +177,7 @@ export function DocumentRenderer({
     selection?.kind === 'block' &&
     renderDocument.blocks.some((block) => block.id === selection.blockId)
   const contentHeight = documentContentHeight(renderDocument, breakpoint)
-  const canvasHeight = renderDocument.container.height
+  const canvasHeight = resolveContainerHeight(renderDocument.container, breakpoint)
   const overlayHeight =
     fit === 'content' ? contentHeight : fit === 'page' ? Math.max(canvasHeight, contentHeight) : canvasHeight
   const sizeStyle =
@@ -208,6 +214,7 @@ export function DocumentRenderer({
         <BlockView
           key={block.id}
           block={block}
+          parentPaletteId={paletteId}
           breakpoint={breakpoint}
           theme={theme}
           selection={selection}
@@ -252,6 +259,7 @@ export function DocumentRenderer({
 
 function BlockView({
   block,
+  parentPaletteId = null,
   breakpoint,
   theme,
   selection,
@@ -285,6 +293,7 @@ function BlockView({
   onNavigatePage,
 }: {
   block: WebsiteBlock
+  parentPaletteId?: string | null
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
   selection?: DesignerSelection | null
@@ -321,6 +330,7 @@ function BlockView({
   onDeleteSelection?: () => void
   onNavigatePage?: (path: string) => void
 }) {
+  const paletteId = inheritPaletteId(block.colorPaletteId, parentPaletteId)
   const rect = resolveLayoutRect(block.layout, breakpoint)
   const highlight = useCanvasHighlight()
   const selected = selection?.kind === 'block' && selection.blockId === block.id
@@ -345,9 +355,13 @@ function BlockView({
   const rawDataItem = dataItemByBlockId[block.id] ?? null
   const dataItem = resolveBlockDataItem(block, rawDataItem)
   const chrome = pickElementChrome(block)
+  const [blockRoot, setBlockRoot] = useState<HTMLDivElement | null>(null)
+  const shellClass = blockShellScopeClass(block.id, block.customization)
   return (
     <div
+      ref={setBlockRoot}
       className={cn(
+        shellClass,
         interactive && !block.backgroundColor && 'bg-primary/5',
         selected || childSelected || highlighted || parentOutlined ? 'overflow-visible' : 'overflow-hidden',
         outlined && CONTENT_ELEMENT_OUTLINE,
@@ -442,10 +456,12 @@ function BlockView({
       ) : null}
       {outlined ? <div className={CONTENT_ELEMENT_FRAME} /> : null}
       {parentOutlined ? <div className={CONTENT_ELEMENT_PARENT_FRAME} /> : null}
+      <BlockCustomizationHost blockId={block.id} customization={block.customization} blockRoot={blockRoot}>
       {addons.map((addon) => (
         <AddonView
           key={addon.id}
           blockId={block.id}
+          parentPaletteId={paletteId}
           addon={resolveAddonProps(addon, dataItem)}
           breakpoint={breakpoint}
           theme={theme}
@@ -484,6 +500,7 @@ function BlockView({
         <BlockView
           key={child.id}
           block={child}
+          parentPaletteId={paletteId}
           breakpoint={breakpoint}
           theme={theme}
           selection={selection}
@@ -517,6 +534,7 @@ function BlockView({
           onNavigatePage={onNavigatePage}
         />
       ))}
+      </BlockCustomizationHost>
       {interactive && selected && onResizePointerDown ? (
         <SelectionChrome
           kind="block"
@@ -538,6 +556,7 @@ function BlockView({
 
 function AddonView({
   blockId,
+  parentPaletteId = null,
   addon,
   breakpoint,
   theme,
@@ -572,6 +591,7 @@ function AddonView({
   onDuplicateSelection,
 }: {
   blockId: string
+  parentPaletteId?: string | null
   addon: WebsiteAddon
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
@@ -611,6 +631,7 @@ function AddonView({
 }) {
   const module = getAddonModuleByType(addon.type)
   const RenderComponent = module?.RenderComponent
+  const paletteId = inheritPaletteId(addon.colorPaletteId, parentPaletteId)
   const rect = resolveLayoutRect(addon.layout, breakpoint)
   const hostSelected = selection?.kind === 'addon' && selection.addonId === addon.id
   const hostOutlined = hostSelected || highlighted
@@ -692,6 +713,7 @@ function AddonView({
             addon={addon}
             breakpoint={breakpoint}
             theme={theme}
+            paletteId={paletteId}
             pages={pages}
             currentPageId={currentPageId}
             companyId={companyId}

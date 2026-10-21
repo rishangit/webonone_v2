@@ -69,7 +69,7 @@ export function WebsiteThemeButtonStyleDetailPage() {
         .filter((url) => Boolean(url) && parseGoogleFontFamily(url)),
     [theme?.fonts],
   )
-  const canEdit = canManage && Boolean(theme) && !theme?.isLocked
+  const canEdit = canManage && Boolean(theme)
 
   if (!accessToken) return <Navigate to="/login" replace />
 
@@ -118,13 +118,7 @@ export function WebsiteThemeButtonStyleDetailPage() {
       {fontUrls.map((url) => (
         <link key={url} rel="stylesheet" href={url} />
       ))}
-      {theme.isLocked ? (
-        <Alert>
-          <AlertDescription>{t('defaultLocked')}</AlertDescription>
-        </Alert>
-      ) : (
-        <WebsiteLibrarySourceTag sourceLibraryId={values.sourceLibraryId} />
-      )}
+      <WebsiteLibrarySourceTag sourceLibraryId={values.sourceLibraryId} />
       <ThemeButtonStyleEditPanel
         theme={theme}
         values={values}

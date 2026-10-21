@@ -22,11 +22,12 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteDesignerUrl } from '@/features/shell/utils/navigateDesign'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
-import { websiteFootersActions, websiteHeadersActions } from '../store'
+import { websiteFootersActions, websiteHeadersActions, websiteThemesActions } from '../store'
 import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsiteChromeDialog } from '../components/WebsiteEntityDialogs'
+import { defaultWebsiteTheme } from '../document/palette'
 import type { WebsiteChrome } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
 import type { RootState } from '@/app/store'
@@ -50,7 +51,9 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   const user = useAppSelector((s) => s.auth.user)
   const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
   const companyId = user?.companyId ?? null
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const themes = useAppSelector((s) => s.websiteThemes.items)
+  const theme = defaultWebsiteTheme(themes)
+  const [dialog, setDialog] = useState<{ id?: string; name?: string; colorPaletteId?: string | null } | null>(null)
   const [awaitingCreate, setAwaitingCreate] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
   const revert = useWebsiteLibraryRevert()
@@ -62,10 +65,15 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   usePlatformLoading(list.loading ? t('loading') : null)
 
   useEffect(() => {
+    if (!accessToken) return
+    dispatch(websiteThemesActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+  }, [accessToken, dispatch])
+
+  useEffect(() => {
     if (!awaitingCreate) return
     if (detailStatus === 'idle') {
       setAwaitingCreate(false)
-      setDialogOpen(false)
+      setDialog(null)
       toast({ title: t('created') })
     }
     if (detailStatus === 'error') setAwaitingCreate(false)
@@ -96,7 +104,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
             searchAriaLabel={kind === 'headers' ? t('searchHeaders') : t('searchFooters')}
             canManage={user?.role === 'super_admin'}
             addLabel={kind === 'headers' ? t('addHeader') : t('addFooter')}
-            onAdd={() => setDialogOpen(true)}
+            onAdd={() => setDialog({})}
             compactAddLabel={tc('add')}
             extra={
               user?.role === 'company_admin' ? (
@@ -104,7 +112,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                   kind={kind}
                   addLabel={kind === 'headers' ? t('addHeader') : t('addFooter')}
                   compactAddLabel={tc('add')}
-                  onCreate={() => setDialogOpen(true)}
+                  onCreate={() => setDialog({})}
                 />
               ) : undefined
             }
@@ -135,7 +143,6 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{item.name}</p>
                         {item.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
-                        {item.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
                         <WebsiteLibrarySourceTag sourceLibraryId={item.sourceLibraryId} />
                       </div>
                     </a>
@@ -154,6 +161,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                               body: {
                                 name: duplicateItemName(item.name),
                                 isDefault: false,
+                                colorPaletteId: item.colorPaletteId,
                                 document: item.document,
                               },
                             }),
@@ -164,7 +172,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                       >
                         {t('duplicate')}
                       </DropdownMenuItem>
-                      {item.sourceLibraryId && !item.isLocked ? (
+                      {item.sourceLibraryId ? (
                         <DropdownMenuItem
                           disabled={revert.reverting}
                           onClick={() => revert.ask({ kind, id: item.id, name: item.name })}
@@ -172,7 +180,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                           {t('downloadUpdatedFromLibrary')}
                         </DropdownMenuItem>
                       ) : null}
-                      {!item.isDefault && !item.isLocked ? (
+                      {!item.isDefault ? (
                         <DropdownMenuItem
                           onClick={() => {
                             dispatch(actions.saveDetailRequested({ id: item.id, body: { isDefault: true } }))
@@ -183,15 +191,20 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
                           {t('setDefault')}
                         </DropdownMenuItem>
                       ) : null}
-                      {item.isLocked ? null : <DropdownMenuSeparator />}
-                      {item.isLocked ? null : (
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setPendingDelete({ id: item.id, name: item.name })}
-                        >
-                          {t('common:delete')}
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setDialog({ id: item.id, name: item.name, colorPaletteId: item.colorPaletteId })
+                        }
+                      >
+                        {t('editDetails')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                      >
+                        {t('common:delete')}
+                      </DropdownMenuItem>
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>
@@ -204,13 +217,26 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
       </ListPageBody>
       <WebsiteChromeDialog
         kind={kind}
-        open={dialogOpen}
+        open={dialog !== null}
+        entityId={dialog?.id}
+        initialName={dialog?.name}
+        initialColorPaletteId={dialog?.colorPaletteId}
+        theme={theme}
         isSaving={detailStatus === 'saving'}
-        error={detailError}
-        onOpenChange={setDialogOpen}
-        onSubmit={(name, isDefault) => {
+        error={dialog?.id ? null : detailError}
+        onOpenChange={(open) => {
+          if (!open) setDialog(null)
+        }}
+        onSubmit={(name, isDefault, colorPaletteId) => {
+          if (dialog?.id) {
+            dispatch(actions.saveDetailRequested({ id: dialog.id, body: { name, colorPaletteId } }))
+            setDialog(null)
+            toast({ title: t('saved') })
+            list.load(1, list.pageSize, true)
+            return
+          }
           setAwaitingCreate(true)
-          dispatch(actions.saveDetailRequested({ body: { name, isDefault } }))
+          dispatch(actions.saveDetailRequested({ body: { name, isDefault, colorPaletteId } }))
         }}
         onHostedSaved={() => list.load(1, list.pageSize, true)}
       />

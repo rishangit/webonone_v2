@@ -1,23 +1,24 @@
 import { useTranslation } from 'react-i18next'
-import { FormField, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@webonone/ui-kit'
+import { FormField, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@webonone/ui-kit'
 import { nanoid } from 'nanoid'
 import { CustomWebsiteElementHost } from '../../components/CustomWebsiteElementHost'
-import { resolveTextStyle } from '../../document/theme'
-import { themePaletteColorValues } from '../../utils/websitePalette'
+import { resolveTextStyle, textStyleAtIndex } from '../../document/theme'
+import { paletteForColors, themePaletteColorValues } from '../../utils/websitePalette'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon } from '../../types'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
 
-function TextAddonRenderer({ addon, breakpoint, theme, interactive }: AddonRenderProps) {
+function TextAddonRenderer({ addon, breakpoint, theme, paletteId, interactive }: AddonRenderProps) {
   const { t } = useTranslation('website')
   if (addon.type !== 'text') return null
-  const style = theme?.textStyles.find((item) => item.id === addon.props.textStyleId)
-  const snap = style ? resolveTextStyle(theme ?? null, style, breakpoint) : addon.props.snapshot
-  const size = addon.props.fontSizeByBreakpoint?.[breakpoint] ?? snap.size
+  const style = textStyleAtIndex(theme, addon.props.textStyleIndex, addon.props.textStyleId)
+  const paintId = paletteForColors(theme, style?.colorPaletteId, paletteId)
+  const paintStyle = style && paintId ? { ...style, colorPaletteId: paintId } : style
+  const snap = paintStyle ? resolveTextStyle(theme ?? null, paintStyle, breakpoint) : addon.props.snapshot
   const content = addon.props.content || (interactive ? t('text') : '')
   const baseStyle = {
     fontFamily: snap.fontFamily,
-    fontSize: size,
+    fontSize: snap.size,
     color: snap.color,
   }
 
@@ -28,28 +29,43 @@ function TextAddonRenderer({ addon, breakpoint, theme, interactive }: AddonRende
       customization={style?.customization}
       placeholders={{ content }}
       baseStyle={baseStyle}
-      paletteColors={theme ? themePaletteColorValues(theme, style?.colorPaletteId) : undefined}
+      paletteColors={theme ? themePaletteColorValues(theme, paintId) : undefined}
       className="h-full w-full overflow-hidden whitespace-pre-wrap p-2"
       fallback={<div style={baseStyle}>{content}</div>}
     />
   )
 }
 
-function TextAddonPropsFields({ addon, breakpoint, theme, onChange }: AddonPropsFieldsProps) {
+function TextAddonPropsFields({ addon, theme, onChange }: AddonPropsFieldsProps) {
   const { t } = useTranslation('website')
   if (addon.type !== 'text') return null
+
+  const styles = theme?.textStyles ?? []
+  const selected = textStyleAtIndex(theme, addon.props.textStyleIndex, addon.props.textStyleId)
 
   return (
     <>
       <FormField label={t('textStyle')} htmlFor="text-style">
         <Select
-          value={addon.props.textStyleId || '__none'}
-          onValueChange={(value) =>
+          value={selected?.id || '__none'}
+          onValueChange={(value) => {
+            if (value === '__none') {
+              onChange({
+                ...addon,
+                props: { ...addon.props, textStyleId: '', textStyleIndex: null },
+              })
+              return
+            }
+            const textStyleIndex = styles.findIndex((style) => style.id === value)
             onChange({
               ...addon,
-              props: { ...addon.props, textStyleId: value === '__none' ? '' : value },
+              props: {
+                ...addon.props,
+                textStyleId: value,
+                textStyleIndex: textStyleIndex >= 0 ? textStyleIndex : null,
+              },
             })
-          }
+          }}
         >
           <SelectTrigger id="text-style">
             <SelectValue />
@@ -72,25 +88,6 @@ function TextAddonPropsFields({ addon, breakpoint, theme, onChange }: AddonProps
             onChange({
               ...addon,
               props: { ...addon.props, content: event.target.value },
-            })
-          }
-        />
-      </FormField>
-      <FormField label={t('fontSize')} htmlFor="text-size">
-        <Input
-          id="text-size"
-          type="number"
-          value={addon.props.fontSizeByBreakpoint?.[breakpoint] ?? ''}
-          onChange={(event) =>
-            onChange({
-              ...addon,
-              props: {
-                ...addon.props,
-                fontSizeByBreakpoint: {
-                  ...addon.props.fontSizeByBreakpoint,
-                  [breakpoint]: Number(event.target.value) || undefined,
-                },
-              },
             })
           }
         />

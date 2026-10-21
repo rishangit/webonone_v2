@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid'
 import { db, type DesignWebsitePresetRow } from '../models/db.js'
 import { HttpError } from './httpError.js'
-import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
+import { presetHasReferences } from './websiteDeleteReferences.js'
 import { getCompanyFromWebOnOne } from './webononeCompanyClient.js'
 import { emptyWebsiteDocument, websiteDocumentSchema, type WebsiteDocumentV1 } from '../schemas/websiteDocument.schema.js'
 import type { CreateWebsitePresetBody, UpdateWebsitePresetBody } from '../schemas/websitePresets.schema.js'
@@ -13,7 +13,7 @@ export type WebsitePresetDto = {
   companyId: string
   name: string
   document: WebsiteDocumentV1
-  isLocked: boolean
+  colorPaletteId: string | null
   sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
@@ -32,7 +32,7 @@ function toDto(row: DesignWebsitePresetRow): WebsitePresetDto {
     companyId: row.company_id,
     name: row.name,
     document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
-    isLocked: isLockedFlag(row.is_locked),
+    colorPaletteId: row.color_palette_id || null,
     sourceLibraryId: row.source_library_id ?? null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -84,6 +84,7 @@ export async function createWebsitePreset(input: {
     company_id: input.companyId,
     name: input.body.name,
     document: JSON.stringify(input.body.document),
+    color_palette_id: input.body.colorPaletteId || null,
     created_by: input.userId,
     created_at: db.fn.now(3),
     updated_at: db.fn.now(3),
@@ -100,10 +101,10 @@ export async function updateWebsitePreset(input: {
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Not found', 'WEBSITE_PRESET_NOT_FOUND')
-  assertWebsiteUnlocked(existing.is_locked)
   const updates: Record<string, unknown> = { updated_at: db.fn.now(3) }
   if (input.body.name != null) updates.name = input.body.name
   if (input.body.document != null) updates.document = JSON.stringify(input.body.document)
+  if (input.body.colorPaletteId !== undefined) updates.color_palette_id = input.body.colorPaletteId || null
   await db('design_website_presets').where({ id: input.id }).update(updates)
   return getWebsitePreset({ companyId: input.companyId, id: input.id })
 }
@@ -113,6 +114,8 @@ export async function deleteWebsitePreset(input: { companyId: string; id: string
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Not found', 'WEBSITE_PRESET_NOT_FOUND')
-  assertWebsiteUnlocked(existing.is_locked)
+  if (await presetHasReferences(input.companyId, input.id)) {
+    throw new HttpError(409, 'This preset is still used on the site', 'WEBSITE_PRESET_IN_USE')
+  }
   await db('design_website_presets').where({ id: input.id, company_id: input.companyId }).del()
 }

@@ -4,7 +4,7 @@ export type WebsiteElementCustomization = {
   scripts: string
 }
 
-export type WebsiteElementKind = 'button' | 'text'
+export type WebsiteElementKind = 'button' | 'text' | 'block'
 
 export function elementScopeClass(scopeId: string): string {
   return `website-el-${scopeId.replace(/[^a-zA-Z0-9_-]/g, '')}`
@@ -79,6 +79,7 @@ const ELEMENT_VISUAL_PAINT_PROPS = new Set([
 ])
 
 const BUTTON_ROOT_LAYOUT_CLASSES = 'inline-flex items-center justify-center px-4 py-2'
+const BLOCK_ROOT_LAYOUT_CLASSES = 'absolute inset-0'
 
 /**
  * Class + tag beats Tailwind preflight (`button { background-color: transparent }`).
@@ -222,6 +223,10 @@ export function defaultElementHtml(
     const rootClass = classList('website-element-root', scopeClass, BUTTON_ROOT_LAYOUT_CLASSES)
     return `<button type="button" class="${rootClass}" data-website-element="button"${styleAttr}>{{label}}</button>`
   }
+  if (kind === 'block') {
+    const rootClass = classList('website-element-root', scopeClass, BLOCK_ROOT_LAYOUT_CLASSES)
+    return `<div class="${rootClass}" data-website-element="block"${styleAttr}>{{children}}</div>`
+  }
   const rootClass = classList('website-element-root', scopeClass)
   return `<div class="${rootClass}" data-website-element="text"${styleAttr}><span class="website-text-content">{{content}}</span></div>`
 }
@@ -277,6 +282,9 @@ export function normalizeElementRootHtml(
   const trimmed = html.trim()
   if (!trimmed) return trimmed
   const scopeClass = elementScopeClass(scopeId)
+  if (kind === 'block') {
+    return ensureChildrenSlot(ensureRootClasses(trimmed, 'block', scopeClass))
+  }
   if (kind !== 'button') {
     return ensureRootClasses(trimmed, kind, scopeClass)
   }
@@ -311,7 +319,9 @@ function ensureRootClasses(html: string, kind: WebsiteElementKind, scopeClass: s
   const required =
     kind === 'button'
       ? classList('website-element-root', scopeClass, BUTTON_ROOT_LAYOUT_CLASSES)
-      : classList('website-element-root', scopeClass)
+      : kind === 'block'
+        ? classList('website-element-root', scopeClass, BLOCK_ROOT_LAYOUT_CLASSES)
+        : classList('website-element-root', scopeClass)
   attrs = setAttr(attrs, 'class', classList(readAttr(attrs, 'class'), required))
   attrs = setAttr(attrs, 'data-website-element', kind)
   let nextTag = tag
@@ -431,8 +441,15 @@ export function queryWebsiteElementRoot(host: HTMLElement | null): HTMLElement |
   return host.querySelector('.website-element-root') ?? host
 }
 
+function ensureChildrenSlot(html: string): string {
+  if (html.includes('{{children}}')) return html
+  return html.replace(/(<\/[a-zA-Z][\w:-]*>)\s*$/, '{{children}}$1')
+}
+
 function inferElementKind(html: string): WebsiteElementKind {
-  return /data-website-element="text"/.test(html) ? 'text' : 'button'
+  if (/data-website-element="block"/.test(html)) return 'block'
+  if (/data-website-element="text"/.test(html)) return 'text'
+  return 'button'
 }
 
 function inferScopeId(html: string): string | undefined {
@@ -506,6 +523,15 @@ export function substituteElementPlaceholders(
 
 export function hasElementCustomization(customization: WebsiteElementCustomization): boolean {
   return Boolean(customization.html.trim() || customization.styles.trim() || customization.scripts.trim())
+}
+
+/** Persist block shell markup only. Empty and generated defaults stay off the document. */
+export function storedBlockCustomization(
+  customization: WebsiteElementCustomization,
+  blockId: string,
+): WebsiteElementCustomization | undefined {
+  const next = finalizeElementCustomization(customization, defaultElementHtml('block', blockId), blockId)
+  return hasElementCustomization(next) ? next : undefined
 }
 
 function resolveElementScriptQuery(root: HTMLElement, selector: string): Element | null {

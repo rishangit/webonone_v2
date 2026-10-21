@@ -3,12 +3,14 @@ import { emptyWebsiteDocument, websiteDocumentSchema } from './websiteDocument.s
 
 export const createWebsitePresetSchema = z.object({
   name: z.string().trim().min(1).max(255),
+  colorPaletteId: z.string().trim().max(64).nullable().optional(),
   document: websiteDocumentSchema.optional().default(emptyWebsiteDocument),
 })
 
 export const updateWebsitePresetSchema = z
   .object({
     name: z.string().trim().min(1).max(255).optional(),
+    colorPaletteId: z.string().trim().max(64).nullable().optional(),
     document: websiteDocumentSchema.optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'At least one field is required' })

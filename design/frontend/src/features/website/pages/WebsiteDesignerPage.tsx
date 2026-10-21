@@ -33,8 +33,9 @@ import {
 } from '../components/WebsiteLibraryRevert'
 import { websiteLiveUrl } from '../components/WebsiteHubTabs'
 import { useWebsiteLiveOrigin } from '../hooks/useWebsiteLiveOrigin'
-import { minContainerHeightForDesignerKind } from '../document/layout'
+import { minContainerHeightForDesignerKind, resolveContainerHeight, writeContainerHeight } from '../document/layout'
 import { slugifyGroupName } from '../document/blockTree'
+import { paletteInheritedByAddon, paletteInheritedByBlock } from '../document/palette'
 import { collectBoundDatasetIds } from '../document/dataBinding'
 import {
   changeTemplateAddonLayer,
@@ -110,9 +111,6 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         : kind === 'footers'
           ? footersState
           : presetsState
-  const lockedDocument = Boolean(
-    feature.detail && feature.detail.id === id && feature.detail.isLocked,
-  )
   const sourceLibraryId =
     feature.detail && feature.detail.id === id ? feature.detail.sourceLibraryId : null
   const [document, setDocument] = useState<WebsiteDocumentV1>(emptyWebsiteDocument())
@@ -121,11 +119,13 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [assistantFocus, setAssistantFocus] = useState<DesignerSelection | null>(null)
   const [saved, setSaved] = useState(() => JSON.stringify(emptyWebsiteDocument()))
+  const [rootPaletteId, setRootPaletteId] = useState<string | null>(null)
+  const [savedPaletteId, setSavedPaletteId] = useState<string | null>(null)
   const [mode, setMode] = useState<DesignerMode>('edit')
   const [breakpoint, setBreakpoint] = useState<WebsiteBreakpoint>('2xl')
   const [selection, setSelection] = useState<DesignerSelection>({ kind: 'container' })
   const [treeHover, setTreeHover] = useState<DesignerSelection | null>(null)
-  const dirty = JSON.stringify(document) !== saved
+  const dirty = JSON.stringify(document) !== saved || rootPaletteId !== savedPaletteId
   const [containerSettingsOpen, setContainerSettingsOpen] = useState(false)
   const [blockSettings, setBlockSettings] = useState<{
     blockId: string
@@ -145,7 +145,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   const [treeOpen, setTreeOpen] = useState(false)
   const [datasetItemsById, setDatasetItemsById] = useState<Record<string, Record<string, unknown>[]>>({})
 
-  const defaultTheme = themesState.items.find((item) => item.isDefault) ?? themesState.items[0] ?? themesState.detail
+  const listedActiveTheme = themesState.items.find((item) => item.isDefault) ?? null
   const name =
     kind === 'pages'
       ? pagesState.detail?.name
@@ -191,11 +191,21 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       : null
   const previewLayout =
     kind === 'pages' ? pageLayout : kind === 'headers' ? headerPreviewLayout : kind === 'footers' ? footerPreviewLayout : null
-  const themeFromLayout = previewLayout?.themeId
-    ? themesState.items.find((item) => item.id === previewLayout.themeId) ??
-      (themesState.detail?.id === previewLayout.themeId ? themesState.detail : null)
+  const activeThemeId =
+    listedActiveTheme?.id ??
+    (themesState.detail?.isDefault ? themesState.detail.id : null) ??
+    previewLayout?.themeId ??
+    themesState.items[0]?.id ??
+    null
+  const themeFromList = activeThemeId
+    ? themesState.items.find((item) => item.id === activeThemeId) ?? null
     : null
-  const theme = themeFromLayout ?? defaultTheme
+  const theme =
+    (activeThemeId && themesState.detail?.id === activeThemeId ? themesState.detail : null) ??
+    themeFromList ??
+    listedActiveTheme ??
+    themesState.items[0] ??
+    null
   usePlatformLoading(feature.detailStatus === 'loading' && !feature.detail ? t('loadingDesigner') : null)
 
   useLayoutEffect(() => {
@@ -242,17 +252,20 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
   }, [accessToken, dispatch, kind, pageLayout])
 
   useEffect(() => {
-    if (!accessToken || !previewLayout?.themeId) return
-    dispatch(websiteThemesActions.fetchDetailRequested({ id: previewLayout.themeId, force: true }))
-  }, [accessToken, dispatch, previewLayout?.themeId])
+    if (!accessToken || !activeThemeId) return
+    dispatch(websiteThemesActions.fetchDetailRequested({ id: activeThemeId, force: true }))
+  }, [accessToken, activeThemeId, dispatch])
 
   useEffect(() => {
     const detail = feature.detail
     if (!detail || detail.id !== id) return
     const raw = 'document' in detail ? detail.document : emptyWebsiteDocument()
     const next = normalizeSliderSlideShells(raw)
+    const palette = 'colorPaletteId' in detail ? detail.colorPaletteId ?? null : null
     setDocument(next)
     setSaved(JSON.stringify(next))
+    setRootPaletteId(palette)
+    setSavedPaletteId(palette)
   }, [feature.detail, id])
 
   useEffect(() => {
@@ -364,18 +377,15 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
 
   function save() {
     if (!id) return
-    if (lockedDocument) {
-      toast({ title: t('defaultLocked'), variant: 'destructive' })
-      return
-    }
     const next = snapshotDocument(document, theme ?? null)
-    const body = { document: next }
+    const body = { document: next, colorPaletteId: rootPaletteId }
     if (kind === 'pages') dispatch(websitePagesActions.saveDetailRequested({ id, body }))
     if (kind === 'headers') dispatch(websiteHeadersActions.saveDetailRequested({ id, body }))
     if (kind === 'footers') dispatch(websiteFootersActions.saveDetailRequested({ id, body }))
     if (kind === 'presets') dispatch(websitePresetsActions.saveDetailRequested({ id, body }))
     setDocument(next)
     setSaved(JSON.stringify(next))
+    setSavedPaletteId(rootPaletteId)
     toast({ title: t('saved') })
   }
 
@@ -640,7 +650,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     setSaveAsPresetBlockId(blockId)
   }
 
-  function handleSaveAsPreset(name: string) {
+  function handleSaveAsPreset(name: string, colorPaletteId: string | null) {
     if (!saveAsPresetBlockId) return
     const block = findBlock(document, saveAsPresetBlockId)
     if (!block) return
@@ -650,7 +660,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       block.groupName?.trim() || !groupStamp ? block : { ...block, groupName: groupStamp }
     dispatch(
       websitePresetsActions.saveDetailRequested({
-        body: { name, document: snapshotDocument(documentFromBlock(stamped), theme ?? null) },
+        body: {
+          name,
+          colorPaletteId,
+          document: snapshotDocument(documentFromBlock(stamped), theme ?? null),
+        },
       }),
     )
   }
@@ -781,11 +795,6 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         <link key={url} rel="stylesheet" href={url} />
       ))}
       <header className="glass-card z-50 shrink-0 border-b">
-        {lockedDocument ? (
-          <Alert className="rounded-none border-x-0 border-t-0">
-            <AlertDescription>{t('defaultLocked')}</AlertDescription>
-          </Alert>
-        ) : null}
         <div className="flex h-14 w-full items-center gap-2 px-2 sm:px-6">
           {mode === 'edit' ? (
             <button
@@ -806,9 +815,8 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scrollbar-themed">
             <div className="flex shrink-0 items-center gap-2">
               <SegmentedSwitch
-                value={lockedDocument ? 'visual' : mode}
+                value={mode}
                 onValueChange={(value) => {
-                  if (lockedDocument) return
                   setMode(value as DesignerMode)
                 }}
                 size="sm"
@@ -841,7 +849,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               ) : null}
             </div>
             <div className="ml-auto flex shrink-0 items-center gap-2">
-              {canManage && !lockedDocument ? (
+              {canManage ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -867,7 +875,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                   </SegmentedSwitchItem>
                 ))}
               </SegmentedSwitch>
-              {canManage && sourceLibraryId && id && !lockedDocument ? (
+              {canManage && sourceLibraryId && id ? (
                 <WebsiteLibraryDownloadUpdateButton
                   size="sm"
                   disabled={revert.reverting}
@@ -875,7 +883,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                 />
               ) : null}
               {canManage ? (
-                <Button type="button" size="sm" onClick={save} disabled={lockedDocument || feature.detailStatus === 'saving'}>
+                <Button type="button" size="sm" onClick={save} disabled={feature.detailStatus === 'saving'}>
                   {feature.detailStatus === 'saving' ? t('saving') : t('save')}
                 </Button>
               ) : null}
@@ -1000,7 +1008,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               saveAsPresetDisabled={kind === 'presets'}
               onHover={setTreeHover}
               onCopyToAi={
-                canManage && !lockedDocument
+                canManage
                   ? (next) => {
                       selectFromTree(next)
                       setAssistantFocus(next)
@@ -1029,6 +1037,9 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             selection={selection}
             highlight={treeHover}
             theme={theme ?? null}
+            paletteId={rootPaletteId}
+            headerPaletteId={previewHeader?.colorPaletteId}
+            footerPaletteId={previewFooter?.colorPaletteId}
             pages={pagesState.items}
             currentPageId={kind === 'pages' ? pagesState.detail?.id ?? null : null}
             designerKind={kind}
@@ -1037,7 +1048,10 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             onSelect={setSelection}
             onChangeDocument={setDocument}
             onResizeContainer={(height) =>
-              setDocument({ ...document, container: { ...document.container, height } })
+              setDocument({
+                ...document,
+                container: writeContainerHeight(document.container, breakpoint, height),
+              })
             }
             onAddAddon={handleAddAddon}
             onAddPreset={handleAddPreset}
@@ -1093,7 +1107,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             }}
           />
         </main>
-        {assistantOpen && id && canManage && !lockedDocument ? (
+        {assistantOpen && id && canManage ? (
           <DesignerAssistantPanel
             kind={kind}
             entityId={id}
@@ -1119,15 +1133,42 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       </div>
       <ContentContainerSettingsDialog
         open={containerSettingsOpen}
-        container={document.container}
+        container={{
+          ...document.container,
+          height: resolveContainerHeight(document.container, breakpoint),
+        }}
+        theme={theme ?? null}
+        colorPaletteId={rootPaletteId}
         minHeight={minContainerHeight}
         onOpenChange={setContainerSettingsOpen}
-        onSave={(next) => setDocument({ ...document, container: next })}
+        onSave={(next, paletteId) => {
+          setDocument({
+            ...document,
+            container: {
+              ...writeContainerHeight(document.container, breakpoint, next.height),
+              backgroundColor: next.backgroundColor,
+            },
+          })
+          setRootPaletteId(paletteId)
+        }}
       />
       <ContentBlockSettingsDialog
         open={blockSettings !== null}
         block={settingsBlock}
         inheritedBinding={blockInheritedBinding}
+        theme={theme ?? null}
+        inheritedPaletteId={
+          blockSettings
+            ? paletteInheritedByBlock(
+                document,
+                blockSettings.blockId,
+                rootPaletteId,
+                blockSettings.hostBlockId && blockSettings.sliderAddonId
+                  ? { hostBlockId: blockSettings.hostBlockId, sliderAddonId: blockSettings.sliderAddonId }
+                  : undefined,
+              )
+            : null
+        }
         onOpenChange={(open) => {
           if (!open) setBlockSettings(null)
         }}
@@ -1147,9 +1188,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
                   boxShadow: patch.boxShadow,
                   padding: patch.padding,
                   margin: patch.margin,
+                  colorPaletteId: patch.colorPaletteId || undefined,
                   name: patch.name,
                   groupName: patch.groupName,
                   dataBinding: patch.dataBinding,
+                  customization: patch.customization,
                 }),
               ),
             )
@@ -1164,9 +1207,11 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
               boxShadow: patch.boxShadow,
               padding: patch.padding,
               margin: patch.margin,
+              colorPaletteId: patch.colorPaletteId || undefined,
               name: patch.name,
               groupName: patch.groupName,
               dataBinding: patch.dataBinding,
+              customization: patch.customization,
             })),
           )
         }}
@@ -1181,6 +1226,18 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         pages={pagesState.items}
         datasetIdOverride={settingsDatasetIdOverride}
         fieldPathPrefix={settingsFieldPathPrefix}
+        inheritedPaletteId={
+          addonSettings
+            ? paletteInheritedByAddon(
+                document,
+                addonSettings.blockId,
+                rootPaletteId,
+                addonSettings.sliderAddonId && addonSettings.templateBlockId
+                  ? { sliderAddonId: addonSettings.sliderAddonId, templateBlockId: addonSettings.templateBlockId }
+                  : undefined,
+              )
+            : null
+        }
         onOpenChange={(open) => {
           if (!open) setAddonSettings(null)
         }}
@@ -1210,6 +1267,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           if (!open && !awaitingSaveAs) setSaveAsPresetBlockId(null)
         }}
         onSubmit={handleSaveAsPreset}
+        theme={theme ?? null}
       />
       {revert.dialog}
     </div>

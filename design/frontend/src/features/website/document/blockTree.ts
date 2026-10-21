@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid'
+import { elementScopeClass } from '../utils/websiteElementCustomization'
 import { DEFAULT_CONTENT_BLOCK_COL_SPAN, DEFAULT_CONTENT_BLOCK_HEIGHT, ROW_HEIGHT } from './layout'
 import { emptyLayoutByBreakpoint, WEBSITE_BREAKPOINTS } from '../types'
 import type { LayoutByBreakpoint, MenuItem, WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../types'
@@ -190,6 +191,7 @@ export function cloneBlockTree(
   const children = [...(block.children ?? [])]
     .sort((a, b) => a.zIndex - b.zIndex)
     .map((child, index) => cloneBlockTree(child, index, allowedTypes))
+  const id = nanoid(10)
   return {
     ...structuredClone({
       id: block.id,
@@ -204,11 +206,27 @@ export function cloneBlockTree(
       groupName: block.groupName,
       dataBinding: block.dataBinding,
       layout: block.layout,
+      customization: remapBlockCustomization(block.customization, block.id, id),
     }),
-    id: nanoid(10),
+    id,
     zIndex,
     addons,
     children,
+  }
+}
+
+function remapBlockCustomization(
+  customization: WebsiteBlock['customization'],
+  fromId: string,
+  toId: string,
+): WebsiteBlock['customization'] {
+  if (!customization || fromId === toId) return customization
+  const fromClass = elementScopeClass(fromId)
+  const toClass = elementScopeClass(toId)
+  return {
+    html: customization.html.split(fromClass).join(toClass),
+    styles: customization.styles.split(fromClass).join(toClass),
+    scripts: customization.scripts.split(fromClass).join(toClass),
   }
 }
 
