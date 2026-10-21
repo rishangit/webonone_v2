@@ -18,7 +18,7 @@ import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
 
-import { websitePagesActions, websiteLayoutsActions } from '../store'
+import { websitePagesActions, websiteLayoutsActions, websiteThemesActions } from '../store'
 
 import { WebsiteHubListPage } from '../components/WebsiteHubListPage'
 
@@ -78,6 +78,8 @@ export function WebsitePagesPage() {
 
   const layouts = useAppSelector((s) => s.websiteLayouts.items)
 
+  const themes = useAppSelector((s) => s.websiteThemes.items)
+
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websitePages)
 
   usePlatformLoading(list.loading ? t('loading') : null)
@@ -89,6 +91,8 @@ export function WebsitePagesPage() {
     if (!accessToken) return
 
     dispatch(websiteLayoutsActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+
+    dispatch(websiteThemesActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
 
   }, [accessToken, dispatch])
 
@@ -285,6 +289,8 @@ export function WebsitePagesPage() {
 
                 layoutId: page.layoutId,
 
+                colorPaletteId: page.colorPaletteId,
+
               },
 
             })
@@ -308,6 +314,8 @@ export function WebsitePagesPage() {
                   status: page.status,
 
                   layoutId: page.layoutId,
+
+                  colorPaletteId: page.colorPaletteId,
 
                   document: page.document,
 
@@ -340,6 +348,8 @@ export function WebsitePagesPage() {
         entityId={dialog?.id}
 
         layouts={layouts}
+
+        themes={themes}
 
         isSaving={detailStatus === 'saving'}
 

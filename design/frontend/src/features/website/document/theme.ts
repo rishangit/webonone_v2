@@ -49,6 +49,35 @@ export function textStyleSnapshot(
   }
 }
 
+export function textStyleAtIndex(
+  theme: WebsiteTheme | null | undefined,
+  index: number | null | undefined,
+  styleId?: string | null,
+): WebsiteTextStyle | undefined {
+  return styleAtIndex(theme?.textStyles, index, styleId)
+}
+
+export function buttonStyleAtIndex(
+  theme: WebsiteTheme | null | undefined,
+  index: number | null | undefined,
+  styleId?: string | null,
+): WebsiteButtonStyle | undefined {
+  return styleAtIndex(theme?.buttonStyles, index, styleId)
+}
+
+function styleAtIndex<T extends { id: string }>(
+  styles: T[] | undefined,
+  index: number | null | undefined,
+  styleId?: string | null,
+): T | undefined {
+  const list = styles ?? []
+  if (index != null && Number.isInteger(index) && index >= 0 && index < list.length) {
+    return list[index]
+  }
+  if (!styleId) return undefined
+  return list.find((item) => item.id === styleId)
+}
+
 export function resolveTextStyle(
   theme: WebsiteTheme | null,
   style: WebsiteTextStyle | undefined,
@@ -105,16 +134,32 @@ export function snapshotDocument(document: WebsiteDocumentV1, theme: WebsiteThem
 
 function snapshotAddon(addon: WebsiteAddon, theme: WebsiteTheme | null): WebsiteAddon {
   if (addon.type === 'text') {
-    const style = theme?.textStyles.find((item) => item.id === addon.props.textStyleId)
-    return { ...addon, props: { ...addon.props, snapshot: textStyleSnapshot(theme, style) } }
+    const style = textStyleAtIndex(theme, addon.props.textStyleIndex, addon.props.textStyleId)
+    const styles = theme?.textStyles ?? []
+    const resolvedIndex = style ? styles.findIndex((item) => item.id === style.id) : -1
+    const textProps = { ...addon.props }
+    delete textProps.fontSizeByBreakpoint
+    return {
+      ...addon,
+      props: {
+        ...textProps,
+        textStyleId: style?.id ?? addon.props.textStyleId,
+        textStyleIndex: resolvedIndex >= 0 ? resolvedIndex : (addon.props.textStyleIndex ?? null),
+        snapshot: textStyleSnapshot(theme, style),
+      },
+    }
   }
   if (addon.type === 'button') {
-    const button = theme?.buttonStyles.find((item) => item.id === addon.props.buttonStyleId)
+    const button = buttonStyleAtIndex(theme, addon.props.buttonStyleIndex, addon.props.buttonStyleId)
+    const styles = theme?.buttonStyles ?? []
+    const resolvedIndex = button ? styles.findIndex((item) => item.id === button.id) : -1
     const snap = resolveButtonStyle(theme, button)
     return {
       ...addon,
       props: {
         ...addon.props,
+        buttonStyleId: button?.id ?? addon.props.buttonStyleId,
+        buttonStyleIndex: resolvedIndex >= 0 ? resolvedIndex : (addon.props.buttonStyleIndex ?? null),
         snapshot: {
           background: snap.background,
           textColor: snap.textColor,

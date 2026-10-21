@@ -17,10 +17,11 @@ import type {
 } from '../schemas/websiteThemes.schema.js'
 import { patchThemeColorFields, readThemeColorFields, writeThemeColorFields } from '../utils/themeColorStorage.js'
 import { detachCompanyDocumentRefs } from './websiteLibraryDocument.js'
-import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
 import type { WebsiteChromeKind } from './websiteChrome.service.js'
 import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 import { rewriteWebsiteDocumentMedia } from '../utils/rewriteWebsiteDocumentMedia.js'
+import { classifyTokenColumn, companyItemSource, remapDocumentTokenIds, type TokenRemap } from '../utils/companyThemeTokens.js'
+import { storeCompanyThemeTokens } from './websiteCompanyTokens.js'
 
 type Sql = Knex | Knex.Transaction
 
@@ -75,17 +76,7 @@ function parseJsonArray<T>(raw: unknown): T[] {
   return []
 }
 
-function copiedThemeColorColumns(source: ThemeRow) {
-  return {
-    color_palette_id: source.color_palette_id,
-    page_background_index: source.page_background_index,
-    surface_index: source.surface_index,
-    body_text_index: source.body_text_index,
-    accent_1_index: source.accent_1_index,
-    accent_2_index: source.accent_2_index,
-    color_palettes: JSON.stringify(parseJsonArray(source.color_palettes ?? [])),
-  }
-}
+const EMPTY_REMAP: TokenRemap = { text: {}, button: {} }
 
 function stamp() {
   return { created_at: db.fn.now(3), updated_at: db.fn.now(3) }
@@ -123,7 +114,7 @@ export type LibraryPageDto = {
   layoutName: string | null
   sortOrder: number
   document: WebsiteDocumentV1
-  isLocked: boolean
+  colorPaletteId: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -138,6 +129,7 @@ type PageRow = {
   layout_name?: string | null
   sort_order: number
   document: unknown
+  color_palette_id: string | null
   created_by: string | null
   created_at: Date
   updated_at: Date
@@ -154,7 +146,7 @@ function toPageDto(row: PageRow): LibraryPageDto {
     layoutName: row.layout_name ?? null,
     sortOrder: row.sort_order ?? 0,
     document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
-    isLocked: false,
+    colorPaletteId: row.color_palette_id || null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -224,6 +216,7 @@ export async function createLibraryPage(input: { userId: string; body: CreateWeb
     layout_id: layoutId,
     sort_order: Number(sortRow?.max ?? -1) + 1,
     document: JSON.stringify(input.body.document),
+    color_palette_id: input.body.colorPaletteId || null,
     created_by: input.userId,
     ...stamp(),
   })
@@ -242,6 +235,7 @@ export async function updateLibraryPage(input: { id: string; body: UpdateWebsite
   if (input.body.path != null) updates.path = input.body.path
   if (input.body.status != null) updates.status = input.body.status
   if (input.body.document != null) updates.document = JSON.stringify(input.body.document)
+  if (input.body.colorPaletteId !== undefined) updates.color_palette_id = input.body.colorPaletteId || null
   if (input.body.sortOrder != null) updates.sort_order = input.body.sortOrder
   if (input.body.layoutId !== undefined) {
     updates.layout_id = await resolveLibraryLayoutId(input.body.layoutId)
@@ -260,8 +254,8 @@ export type LibraryChromeDto = {
   companyId: string
   name: string
   isDefault: boolean
-  isLocked: boolean
   document: WebsiteDocumentV1
+  colorPaletteId: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -272,6 +266,7 @@ type ChromeRow = {
   name: string
   is_default: number | boolean
   document: unknown
+  color_palette_id: string | null
   created_by: string | null
   created_at: Date
   updated_at: Date
@@ -283,8 +278,8 @@ function toChromeDto(row: ChromeRow): LibraryChromeDto {
     companyId: '',
     name: row.name,
     isDefault: toBool(row.is_default),
-    isLocked: false,
     document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
+    colorPaletteId: row.color_palette_id || null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -331,6 +326,7 @@ export async function createLibraryChrome(input: {
     name: input.body.name,
     is_default: input.body.isDefault,
     document: JSON.stringify(input.body.document),
+    color_palette_id: input.body.colorPaletteId || null,
     created_by: input.userId,
     ...stamp(),
   })
@@ -351,6 +347,7 @@ export async function updateLibraryChrome(input: {
   if (input.body.name != null) updates.name = input.body.name
   if (input.body.isDefault != null) updates.is_default = input.body.isDefault
   if (input.body.document != null) updates.document = JSON.stringify(input.body.document)
+  if (input.body.colorPaletteId !== undefined) updates.color_palette_id = input.body.colorPaletteId || null
   await db(chromeTable(input.kind)).where({ id: input.id }).update(updates)
   return getLibraryChrome(input.kind, input.id)
 }
@@ -367,7 +364,7 @@ export type LibraryPresetDto = {
   companyId: string
   name: string
   document: WebsiteDocumentV1
-  isLocked: boolean
+  colorPaletteId: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
@@ -377,6 +374,7 @@ type PresetRow = {
   id: string
   name: string
   document: unknown
+  color_palette_id: string | null
   created_by: string | null
   created_at: Date
   updated_at: Date
@@ -388,7 +386,7 @@ function toPresetDto(row: PresetRow): LibraryPresetDto {
     companyId: '',
     name: row.name,
     document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
-    isLocked: false,
+    colorPaletteId: row.color_palette_id || null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(),
@@ -421,6 +419,7 @@ export async function createLibraryPreset(input: { userId: string; body: CreateW
     id,
     name: input.body.name,
     document: JSON.stringify(input.body.document),
+    color_palette_id: input.body.colorPaletteId || null,
     created_by: input.userId,
     ...stamp(),
   })
@@ -433,6 +432,7 @@ export async function updateLibraryPreset(input: { id: string; body: UpdateWebsi
   const updates: Record<string, unknown> = { updated_at: db.fn.now(3) }
   if (input.body.name != null) updates.name = input.body.name
   if (input.body.document != null) updates.document = JSON.stringify(input.body.document)
+  if (input.body.colorPaletteId !== undefined) updates.color_palette_id = input.body.colorPaletteId || null
   await db(LIB.presets).where({ id: input.id }).update(updates)
   return getLibraryPreset(input.id)
 }
@@ -450,7 +450,6 @@ export type LibraryThemeDto = {
   bodyTextColor: string
   isActive: boolean
   isDefault: boolean
-  isLocked: boolean
   fonts: WebsiteFontToken[]
   colorPaletteId: string
   pageBackgroundIndex: number
@@ -496,7 +495,6 @@ function toThemeDto(row: ThemeRow): LibraryThemeDto {
     name: row.name,
     isActive: toBool(row.is_active),
     isDefault: toBool(row.is_default),
-    isLocked: false,
     fonts: parseJsonArray<WebsiteFontToken>(row.fonts),
     ...readThemeColorFields(row),
     textStyles: parseJsonArray<WebsiteTextStyle>(row.text_styles),
@@ -587,7 +585,6 @@ export type LibraryLayoutDto = {
   footerId: string | null
   themeId: string | null
   isDefault: boolean
-  isLocked: boolean
   pages: LibraryLayoutPageDto[]
   createdBy: string | null
   createdAt: string
@@ -634,7 +631,6 @@ function toLayoutDto(row: LayoutRow, pages: LibraryLayoutPageDto[]): LibraryLayo
     footerId: row.footer_id,
     themeId: row.theme_id,
     isDefault: toBool(row.is_default),
-    isLocked: false,
     pages,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -761,22 +757,38 @@ async function copyThemeRow(conn: Sql, input: { companyId: string; userId: strin
   const source = await conn<ThemeRow>(LIB.themes).where({ id: input.libraryId }).first()
   if (!source) throw new HttpError(404, 'Theme not found', 'WEBSITE_THEME_NOT_FOUND')
   const id = nanoid()
+  const colors = readThemeColorFields(source)
+  const stored = await storeCompanyThemeTokens(conn, {
+    companyId: input.companyId,
+    userId: input.userId,
+    align: 'id',
+    fonts: parseJsonArray(source.fonts),
+    colorPalettes: colors.colorPalettes,
+    textStyles: parseJsonArray(source.text_styles),
+    buttonStyles: parseJsonArray(source.button_styles),
+    colorPaletteId: colors.colorPaletteId,
+  })
   await conn(COMPANY.themes).insert({
     id,
     company_id: input.companyId,
     name: await availableName(conn, COMPANY.themes, input.companyId, source.name),
-    ...copiedThemeColorColumns(source),
+    color_palette_id: stored.colorPaletteId,
+    page_background_index: source.page_background_index,
+    surface_index: source.surface_index,
+    body_text_index: source.body_text_index,
+    accent_1_index: source.accent_1_index,
+    accent_2_index: source.accent_2_index,
     is_active: true,
     is_default: false,
-    is_locked: false,
-    fonts: JSON.stringify(parseJsonArray(source.fonts)),
-    text_styles: JSON.stringify(parseJsonArray(source.text_styles)),
-    button_styles: JSON.stringify(parseJsonArray(source.button_styles)),
-    source_library_id: source.id,
+    fonts: JSON.stringify(stored.fontIds),
+    color_palettes: JSON.stringify(stored.paletteIds),
+    text_styles: JSON.stringify(stored.textStyleIds),
+    button_styles: JSON.stringify(stored.buttonStyleIds),
+    source_library_id: companyItemSource(source.id),
     created_by: input.userId,
     ...stamp(),
   })
-  return id
+  return { id, remap: stored.remap }
 }
 
 async function copyChromeRow(
@@ -794,8 +806,8 @@ async function copyChromeRow(
     company_id: input.companyId,
     name: await availableName(conn, companyChromeTable(input.kind), input.companyId, source.name),
     is_default: false,
-    is_locked: false,
     document: JSON.stringify(document),
+    color_palette_id: source.color_palette_id || null,
     source_library_id: source.id,
     created_by: input.userId,
     ...stamp(),
@@ -812,9 +824,13 @@ async function copyLayoutRow(conn: Sql, input: { companyId: string; userId: stri
   const footerId = source.footer_id
     ? await copyChromeRow(conn, { kind: 'footers', companyId: input.companyId, userId: input.userId, libraryId: source.footer_id })
     : null
-  const themeId = source.theme_id
+  const theme = source.theme_id
     ? await copyThemeRow(conn, { companyId: input.companyId, userId: input.userId, libraryId: source.theme_id })
     : null
+  if (theme?.remap) {
+    if (headerId) await remapStoredDocument(conn, companyChromeTable('headers'), headerId, theme.remap)
+    if (footerId) await remapStoredDocument(conn, companyChromeTable('footers'), footerId, theme.remap)
+  }
   const id = nanoid()
   await conn(COMPANY.layouts).insert({
     id,
@@ -822,21 +838,78 @@ async function copyLayoutRow(conn: Sql, input: { companyId: string; userId: stri
     name: await availableName(conn, COMPANY.layouts, input.companyId, source.name),
     header_id: headerId,
     footer_id: footerId,
-    theme_id: themeId,
+    theme_id: theme?.id ?? null,
     is_default: false,
-    is_locked: false,
     source_library_id: source.id,
     created_by: input.userId,
     ...stamp(),
   })
-  return id
+  return { id, remap: theme?.remap ?? EMPTY_REMAP }
+}
+
+async function replaceCompanyThemeTokens(conn: Sql, input: { companyId: string; userId: string | null; themeId: string; source: ThemeRow }) {
+  const current = await conn(COMPANY.themes).where({ id: input.themeId, company_id: input.companyId }).first<{
+    fonts: unknown
+    color_palettes: unknown
+    text_styles: unknown
+    button_styles: unknown
+  }>()
+  const colors = readThemeColorFields(input.source)
+  const fonts = classifyTokenColumn(current?.fonts)
+  const palettes = classifyTokenColumn(current?.color_palettes)
+  const texts = classifyTokenColumn(current?.text_styles)
+  const buttons = classifyTokenColumn(current?.button_styles)
+  const stored = await storeCompanyThemeTokens(conn, {
+    companyId: input.companyId,
+    userId: input.userId,
+    align: 'index',
+    currentIds: {
+      fontIds: fonts.kind === 'ids' ? fonts.ids : [],
+      paletteIds: palettes.kind === 'ids' ? palettes.ids : [],
+      textStyleIds: texts.kind === 'ids' ? texts.ids : [],
+      buttonStyleIds: buttons.kind === 'ids' ? buttons.ids : [],
+    },
+    fonts: parseJsonArray(input.source.fonts),
+    colorPalettes: colors.colorPalettes,
+    textStyles: parseJsonArray(input.source.text_styles),
+    buttonStyles: parseJsonArray(input.source.button_styles),
+    colorPaletteId: colors.colorPaletteId,
+  })
+  await conn(COMPANY.themes).where({ id: input.themeId, company_id: input.companyId }).update({
+    color_palette_id: stored.colorPaletteId,
+    page_background_index: input.source.page_background_index,
+    surface_index: input.source.surface_index,
+    body_text_index: input.source.body_text_index,
+    accent_1_index: input.source.accent_1_index,
+    accent_2_index: input.source.accent_2_index,
+    fonts: JSON.stringify(stored.fontIds),
+    color_palettes: JSON.stringify(stored.paletteIds),
+    text_styles: JSON.stringify(stored.textStyleIds),
+    button_styles: JSON.stringify(stored.buttonStyleIds),
+    updated_at: db.fn.now(3),
+  })
+}
+
+async function remapStoredDocument(conn: Sql, table: string, id: string, remap: TokenRemap) {
+  const row = await conn(table).where({ id }).first<{ document: unknown; color_palette_id?: string | null }>()
+  if (!row) return
+  await conn(table).where({ id }).update({
+    document: JSON.stringify(remapDocumentTokenIds(parseDocument(row.document), remap)),
+    color_palette_id: remapPaletteId(row.color_palette_id, remap),
+    updated_at: db.fn.now(3),
+  })
+}
+
+function remapPaletteId(id: string | null | undefined, remap: TokenRemap | undefined): string | null {
+  if (!id) return null
+  return remap?.color?.[id] ?? id
 }
 
 export async function copyLibraryTheme(input: { companyId: string; userId: string; libraryId: string }) {
   await getCompanyFromWebOnOne(input.companyId)
-  const id = await db.transaction((trx) => copyThemeRow(trx, input))
+  const copied = await db.transaction((trx) => copyThemeRow(trx, input))
   const { getWebsiteTheme } = await import('./websiteTheme.service.js')
-  return getWebsiteTheme({ companyId: input.companyId, id })
+  return getWebsiteTheme({ companyId: input.companyId, id: copied.id })
 }
 
 export async function copyLibraryChrome(input: {
@@ -862,7 +935,7 @@ export async function copyLibraryPreset(input: { companyId: string; userId: stri
       company_id: input.companyId,
       name: await availableName(trx, COMPANY.presets, input.companyId, source.name),
       document: JSON.stringify(detachCompanyDocumentRefs(parseDocument(source.document))),
-      is_locked: false,
+      color_palette_id: source.color_palette_id || null,
       source_library_id: source.id,
       created_by: input.userId,
       ...stamp(),
@@ -875,9 +948,9 @@ export async function copyLibraryPreset(input: { companyId: string; userId: stri
 
 export async function copyLibraryLayout(input: { companyId: string; userId: string; libraryId: string }) {
   await getCompanyFromWebOnOne(input.companyId)
-  const id = await db.transaction((trx) => copyLayoutRow(trx, input))
+  const copied = await db.transaction((trx) => copyLayoutRow(trx, input))
   const { getWebsiteLayout } = await import('./websiteLayout.service.js')
-  return getWebsiteLayout({ companyId: input.companyId, id })
+  return getWebsiteLayout({ companyId: input.companyId, id: copied.id })
 }
 
 export async function copyLibraryPage(input: { companyId: string; userId: string; libraryId: string }) {
@@ -885,23 +958,27 @@ export async function copyLibraryPage(input: { companyId: string; userId: string
   const id = await db.transaction(async (trx) => {
     const source = await trx<PageRow>(LIB.pages).where({ id: input.libraryId }).first()
     if (!source) throw new HttpError(404, 'Page not found', 'WEBSITE_PAGE_NOT_FOUND')
-    const layoutId = source.layout_id
+    const layout = source.layout_id
       ? await copyLayoutRow(trx, { companyId: input.companyId, userId: input.userId, libraryId: source.layout_id })
       : null
     const pageId = nanoid()
-    const sortRow = layoutId
-      ? await trx(COMPANY.pages).where({ company_id: input.companyId, layout_id: layoutId }).max<{ max: number | null }>('sort_order as max').first()
+    const sortRow = layout
+      ? await trx(COMPANY.pages).where({ company_id: input.companyId, layout_id: layout.id }).max<{ max: number | null }>('sort_order as max').first()
       : null
+    const document = remapDocumentTokenIds(
+      detachCompanyDocumentRefs(parseDocument(source.document)),
+      layout?.remap ?? EMPTY_REMAP,
+    )
     await trx(COMPANY.pages).insert({
       id: pageId,
       company_id: input.companyId,
       name: await availableName(trx, COMPANY.pages, input.companyId, source.name),
       path: await availablePagePath(trx, input.companyId, source.path),
       status: 'active',
-      layout_id: layoutId,
+      layout_id: layout?.id ?? null,
       sort_order: Number(sortRow?.max ?? -1) + 1,
-      document: JSON.stringify(detachCompanyDocumentRefs(parseDocument(source.document))),
-      is_locked: false,
+      document: JSON.stringify(document),
+      color_palette_id: remapPaletteId(source.color_palette_id, layout?.remap),
       source_library_id: source.id,
       created_by: input.userId,
       ...stamp(),
@@ -916,7 +993,6 @@ type CompanySourceRow = {
   id: string
   company_id: string
   source_library_id: string | null
-  is_locked: number | boolean
 }
 
 function libraryMissing(code: string): HttpError {
@@ -932,7 +1008,6 @@ async function requireLibraryCopy(
 ): Promise<string> {
   const row = await conn<CompanySourceRow>(table).where({ id, company_id: companyId }).first()
   if (!row) throw new HttpError(404, 'Not found', notFoundCode)
-  assertWebsiteUnlocked(row.is_locked)
   if (!row.source_library_id) {
     throw new HttpError(409, 'This item was not added from the library', 'WEBSITE_LIBRARY_SOURCE_MISSING')
   }
@@ -952,14 +1027,13 @@ async function findCompanyCopyId(
 ): Promise<string | null> {
   if (preferredId) {
     const preferred = await conn<CompanySourceRow>(table).where({ id: preferredId, company_id: companyId }).first()
-    if (preferred?.source_library_id === libraryId && !isLockedFlag(preferred.is_locked)) return preferred.id
+    if (preferred?.source_library_id === libraryId) return preferred.id
   }
   const existing = await conn<CompanySourceRow>(table)
     .where({ company_id: companyId, source_library_id: libraryId })
     .orderBy('updated_at', 'desc')
     .first()
-  if (!existing || isLockedFlag(existing.is_locked)) return null
-  return existing.id
+  return existing?.id ?? null
 }
 
 async function restoreCompanyChrome(
@@ -1006,14 +1080,14 @@ async function restoreCompanyTheme(
   if (!source) return null
   const existingId = await findCompanyCopyId(conn, COMPANY.themes, input.companyId, input.libraryId, input.preferredId)
   if (!existingId) {
-    return copyThemeRow(conn, { companyId: input.companyId, userId: input.userId, libraryId: input.libraryId })
+    const copied = await copyThemeRow(conn, { companyId: input.companyId, userId: input.userId, libraryId: input.libraryId })
+    return copied.id
   }
-  await conn(COMPANY.themes).where({ id: existingId }).update({
-    ...copiedThemeColorColumns(source),
-    fonts: JSON.stringify(parseJsonArray(source.fonts)),
-    text_styles: JSON.stringify(parseJsonArray(source.text_styles)),
-    button_styles: JSON.stringify(parseJsonArray(source.button_styles)),
-    updated_at: db.fn.now(3),
+  await replaceCompanyThemeTokens(conn, {
+    companyId: input.companyId,
+    userId: input.userId,
+    themeId: existingId,
+    source,
   })
   return existingId
 }
@@ -1070,12 +1144,11 @@ export async function revertLibraryTheme(input: { companyId: string; id: string 
     const libraryId = await requireLibraryCopy(trx, COMPANY.themes, input.companyId, input.id, 'WEBSITE_THEME_NOT_FOUND')
     const source = await trx<ThemeRow>(LIB.themes).where({ id: libraryId }).first()
     if (!source) throw libraryMissing('WEBSITE_THEME_NOT_FOUND')
-    await trx(COMPANY.themes).where({ id: input.id }).update({
-      ...copiedThemeColorColumns(source),
-      fonts: JSON.stringify(parseJsonArray(source.fonts)),
-      text_styles: JSON.stringify(parseJsonArray(source.text_styles)),
-      button_styles: JSON.stringify(parseJsonArray(source.button_styles)),
-      updated_at: db.fn.now(3),
+    await replaceCompanyThemeTokens(trx, {
+      companyId: input.companyId,
+      userId: null,
+      themeId: input.id,
+      source,
     })
   })
   const { getWebsiteTheme } = await import('./websiteTheme.service.js')

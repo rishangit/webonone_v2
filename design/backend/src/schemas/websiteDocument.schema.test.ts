@@ -13,6 +13,15 @@ describe('websiteDocumentSchema', () => {
     assert.ok(parsed.container.height >= 64)
   })
 
+  it('keeps a canvas height stored for one screen size', () => {
+    const parsed = websiteDocumentSchema.parse({
+      ...emptyWebsiteDocument(),
+      container: { height: 640, heightByBreakpoint: { sm: 320 } },
+    })
+    assert.equal(parsed.container.heightByBreakpoint?.sm, 320)
+    assert.equal(parsed.container.heightByBreakpoint?.md, undefined)
+  })
+
   it('rejects a block that overflows the 12-column grid', () => {
     const result = websiteDocumentSchema.safeParse({
       version: 1,

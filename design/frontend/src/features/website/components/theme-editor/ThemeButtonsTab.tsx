@@ -89,7 +89,7 @@ export function ThemeButtonsTab({ theme, onPersist, saving }: ThemeEditorTabProp
                   <DropdownMenuItem onClick={() => openEditPage(style)} disabled={saving}>
                     {tc('edit')}
                   </DropdownMenuItem>
-                  {style.sourceLibraryId && !theme.isLocked ? (
+                  {style.sourceLibraryId ? (
                     <DropdownMenuItem
                       disabled={saving || download.downloading}
                       onClick={() => download.ask(style)}

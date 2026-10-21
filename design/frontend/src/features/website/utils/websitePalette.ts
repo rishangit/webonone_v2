@@ -112,6 +112,18 @@ export function stylePaletteId(theme: WebsiteTheme, override?: string | null): s
   return theme.colorPaletteId || theme.colorPalettes[0]?.id || ''
 }
 
+/** Element palette wins over a text or button style palette. An empty element palette keeps the style palette. */
+export function paletteForColors(
+  theme: WebsiteTheme | null | undefined,
+  stylePalette: string | null | undefined,
+  elementPalette: string | null | undefined,
+): string | null {
+  if (!theme) return null
+  const element = elementPalette?.trim()
+  if (element && theme.colorPalettes.some((palette) => palette.id === element)) return element
+  return stylePaletteId(theme, stylePalette) || null
+}
+
 export function paletteOverrideForSave(themePaletteId: string, selectedPaletteId: string): string | null {
   if (!selectedPaletteId || selectedPaletteId === themePaletteId) return null
   return selectedPaletteId
@@ -128,8 +140,9 @@ export function themeSlotValue(
 }
 
 export function applyThemeChrome(theme: WebsiteTheme): WebsiteTheme {
-  const colorPaletteId = theme.colorPaletteId || theme.colorPalettes[0]?.id || ''
-  const palette = themePaletteById({ ...theme, colorPaletteId }, colorPaletteId)
+  const colorPaletteId = theme.colorPaletteId?.trim() || ''
+  const effectivePaletteId = colorPaletteId || theme.colorPalettes[0]?.id || ''
+  const palette = themePaletteById({ ...theme, colorPaletteId: effectivePaletteId }, effectivePaletteId)
   const length = palette?.colors.length ?? 1
   const pageBackgroundIndex = clampColorIndex(theme.pageBackgroundIndex, length)
   const surfaceIndex = clampColorIndex(theme.surfaceIndex, length)
@@ -148,11 +161,11 @@ export function applyThemeChrome(theme: WebsiteTheme): WebsiteTheme {
   }
   return {
     ...next,
-    pageBackground: themeSlotValue(next, colorPaletteId, pageBackgroundIndex, '#ffffff'),
-    bodyTextColor: themeSlotValue(next, colorPaletteId, bodyTextIndex, '#111827'),
-    surfaceColor: themeSlotValue(next, colorPaletteId, surfaceIndex, '#ffffff'),
-    accentColor1: themeSlotValue(next, colorPaletteId, accent1Index, '#111827'),
-    accentColor2: themeSlotValue(next, colorPaletteId, accent2Index, '#111827'),
+    pageBackground: themeSlotValue(next, effectivePaletteId, pageBackgroundIndex, '#ffffff'),
+    bodyTextColor: themeSlotValue(next, effectivePaletteId, bodyTextIndex, '#111827'),
+    surfaceColor: themeSlotValue(next, effectivePaletteId, surfaceIndex, '#ffffff'),
+    accentColor1: themeSlotValue(next, effectivePaletteId, accent1Index, '#111827'),
+    accentColor2: themeSlotValue(next, effectivePaletteId, accent2Index, '#111827'),
   }
 }
 

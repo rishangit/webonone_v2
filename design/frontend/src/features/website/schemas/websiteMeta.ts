@@ -9,6 +9,7 @@ export const pageMetaSchema = z.object({
     .regex(/^$|^[a-z0-9]+(?:[/-][a-z0-9]+)*$/, 'Use lowercase letters, numbers, and slashes'),
   status: z.enum(['active', 'inactive']).default('active'),
   layoutId: z.string().trim().max(21).nullable().optional(),
+  colorPaletteId: z.string().trim().max(64).nullable().optional(),
 })
 
 export const chromeMetaSchema = z.object({

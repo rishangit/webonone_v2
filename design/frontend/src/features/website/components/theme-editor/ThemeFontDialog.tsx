@@ -203,6 +203,7 @@ export function ThemeFontDialog({
         name: name.trim() || initial.family,
         googleFontUrl: initial.googleFontUrl,
         family: initial.family,
+        sourceLibraryId: initial.sourceLibraryId ?? null,
       })
       if (!parsed.success) {
         setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
@@ -229,6 +230,7 @@ export function ThemeFontDialog({
         name: selected.name,
         googleFontUrl: selected.googleFontUrl,
         family: selected.family,
+        sourceLibraryId: selected.id,
       })
       if (!parsed.success) {
         setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))
@@ -248,6 +250,7 @@ export function ThemeFontDialog({
       name: name.trim() || customFamily || '',
       googleFontUrl: customUrl,
       family: customFamily ?? '',
+      sourceLibraryId: null,
     })
     if (!parsed.success) {
       setFieldErrors(mapZodIssuesToFieldErrors(parsed.error.issues))

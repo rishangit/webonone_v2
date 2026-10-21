@@ -14,7 +14,6 @@ import {
   ItemListItem,
   ItemListMenu,
   ListPageBody,
-  StatusTag,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -22,11 +21,12 @@ import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingConte
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDesign, websiteDesignerUrl } from '@/features/shell/utils/navigateDesign'
 import { useEpicCatalogList } from '@/shared/hooks/useEpicCatalogList'
-import { websitePresetsActions } from '../store'
+import { websitePresetsActions, websiteThemesActions } from '../store'
 import { WebsiteHubListToolbar } from '../components/WebsiteHubListToolbar'
 import { WebsiteListPageFooter } from '../components/websiteListPageFooter'
 import { WebsiteHubTabs } from '../components/WebsiteHubTabs'
 import { WebsitePresetDialog } from '../components/WebsiteEntityDialogs'
+import { defaultWebsiteTheme } from '../document/palette'
 import type { WebsitePreset } from '../types'
 import { duplicateItemName } from '../utils/duplicateWebsiteItem'
 import { WebsiteAddItemControl } from '../components/WebsiteAddItemControl'
@@ -42,13 +42,20 @@ export function WebsitePresetsPage() {
   const user = useAppSelector((s) => s.auth.user)
   const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
   const companyId = user?.companyId ?? null
-  const [dialog, setDialog] = useState<{ initialName?: string; id?: string } | null>(null)
+  const [dialog, setDialog] = useState<{ initialName?: string; id?: string; colorPaletteId?: string | null } | null>(null)
   const [awaitingCreate, setAwaitingCreate] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null)
   const revert = useWebsiteLibraryRevert()
   const list = useEpicCatalogList((s) => s.websitePresets, websitePresetsActions)
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websitePresets)
+  const themes = useAppSelector((s) => s.websiteThemes.items)
+  const theme = defaultWebsiteTheme(themes)
   usePlatformLoading(list.loading ? t('loading') : null)
+
+  useEffect(() => {
+    if (!accessToken) return
+    dispatch(websiteThemesActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+  }, [accessToken, dispatch])
 
   useEffect(() => {
     if (!awaitingCreate) return
@@ -72,16 +79,16 @@ export function WebsitePresetsPage() {
     )
   }
 
-  function handleSubmit(name: string) {
+  function handleSubmit(name: string, colorPaletteId: string | null) {
     if (dialog?.id) {
-      dispatch(websitePresetsActions.saveDetailRequested({ id: dialog.id, body: { name } }))
+      dispatch(websitePresetsActions.saveDetailRequested({ id: dialog.id, body: { name, colorPaletteId } }))
       setDialog(null)
       toast({ title: t('saved') })
       list.load(1, list.pageSize, true)
       return
     }
     setAwaitingCreate(true)
-    dispatch(websitePresetsActions.saveDetailRequested({ body: { name } }))
+    dispatch(websitePresetsActions.saveDetailRequested({ body: { name, colorPaletteId } }))
   }
 
   return (
@@ -132,11 +139,6 @@ export function WebsitePresetsPage() {
                       className="block w-full text-left"
                     >
                       <p className="font-medium">{item.name}</p>
-                      {item.isLocked ? (
-                        <StatusTag variant="pending" className="mt-1">
-                          {t('lockedDefault')}
-                        </StatusTag>
-                      ) : null}
                       <WebsiteLibrarySourceTag sourceLibraryId={item.sourceLibraryId} />
                     </a>
                   </ItemListContent>
@@ -151,7 +153,7 @@ export function WebsitePresetsPage() {
                         onClick={() => {
                           dispatch(
                             websitePresetsActions.saveDetailRequested({
-                              body: { name: duplicateItemName(item.name), document: item.document },
+                              body: { name: duplicateItemName(item.name), colorPaletteId: item.colorPaletteId, document: item.document },
                             }),
                           )
                           list.load(1, list.pageSize, true)
@@ -160,7 +162,7 @@ export function WebsitePresetsPage() {
                       >
                         {t('duplicate')}
                       </DropdownMenuItem>
-                      {item.sourceLibraryId && !item.isLocked ? (
+                      {item.sourceLibraryId ? (
                         <DropdownMenuItem
                           disabled={revert.reverting}
                           onClick={() => revert.ask({ kind: 'presets', id: item.id, name: item.name })}
@@ -168,20 +170,20 @@ export function WebsitePresetsPage() {
                           {t('downloadUpdatedFromLibrary')}
                         </DropdownMenuItem>
                       ) : null}
-                      {item.isLocked ? null : (
-                        <DropdownMenuItem onClick={() => setDialog({ id: item.id, initialName: item.name })}>
-                          {t('editDetails')}
-                        </DropdownMenuItem>
-                      )}
-                      {item.isLocked ? null : <DropdownMenuSeparator />}
-                      {item.isLocked ? null : (
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setPendingDelete({ id: item.id, name: item.name })}
-                        >
-                          {t('common:delete')}
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setDialog({ id: item.id, initialName: item.name, colorPaletteId: item.colorPaletteId })
+                        }
+                      >
+                        {t('editDetails')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                      >
+                        {t('common:delete')}
+                      </DropdownMenuItem>
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>
@@ -196,6 +198,8 @@ export function WebsitePresetsPage() {
         open={dialog !== null}
         entityId={dialog?.id}
         initialName={dialog?.initialName}
+        initialColorPaletteId={dialog?.colorPaletteId}
+        theme={theme}
         isSaving={detailStatus === 'saving'}
         error={awaitingCreate ? detailError : null}
         onOpenChange={(open) => {

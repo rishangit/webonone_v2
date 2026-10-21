@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   getPlatformEmbedParentOrigin,
@@ -11,10 +11,13 @@ import { Alert, AlertDescription, useToast } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteFootersActions, websiteHeadersActions, websiteThemesActions } from '../store'
+import { defaultWebsiteTheme } from '../document/palette'
 import { WebsiteChromeDialog, WebsiteThemeDialog } from '../components/WebsiteEntityDialogs'
 
 export function WebsiteChromeCreateEmbedPage({ kind }: { kind: 'headers' | 'footers' }) {
   const { t } = useTranslation('website')
+  const { id } = useParams<{ id?: string }>()
+  const isEdit = Boolean(id)
   const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
   const { toast } = useToast()
@@ -22,19 +25,25 @@ export function WebsiteChromeCreateEmbedPage({ kind }: { kind: 'headers' | 'foot
   const { detail, detailStatus, detailError } = useAppSelector((s) =>
     kind === 'headers' ? s.websiteHeaders : s.websiteFooters,
   )
+  const themes = useAppSelector((s) => s.websiteThemes.items)
   const [awaiting, setAwaiting] = useState(false)
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
 
   useEffect(() => {
+    dispatch(websiteThemesActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+    if (id) dispatch(actions.fetchDetailRequested({ id, force: true }))
+  }, [actions, dispatch, id])
+
+  useEffect(() => {
     if (!awaiting || !parentOrigin || !requestId) return
-    if (detailStatus === 'idle' && detail) {
+    if (detailStatus === 'idle' && detail && (!id || detail.id === id)) {
       setAwaiting(false)
-      toast({ title: t('created') })
+      toast({ title: isEdit ? t('saved') : t('created') })
       sendPlatformPeerDialogComplete(parentOrigin, requestId, { id: detail.id })
     }
     if (detailStatus === 'error') setAwaiting(false)
-  }, [awaiting, detail, detailStatus, parentOrigin, requestId, t, toast])
+  }, [awaiting, detail, detailStatus, id, isEdit, parentOrigin, requestId, t, toast])
 
   if (!parentOrigin || !requestId) {
     return (
@@ -46,19 +55,29 @@ export function WebsiteChromeCreateEmbedPage({ kind }: { kind: 'headers' | 'foot
     )
   }
 
+  const editing = isEdit && detail?.id === id ? detail : null
+
   return (
     <WebsiteChromeDialog
       kind={kind}
       open
       chrome="embed-page"
+      entityId={id}
+      initialName={editing?.name}
+      initialColorPaletteId={editing?.colorPaletteId ?? null}
+      theme={defaultWebsiteTheme(themes)}
       isSaving={detailStatus === 'saving'}
       error={awaiting ? detailError : null}
       onOpenChange={(next) => {
         if (!next) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSubmit={(name, isDefault) => {
+      onSubmit={(name, isDefault, colorPaletteId) => {
         setAwaiting(true)
-        dispatch(actions.saveDetailRequested({ body: { name, isDefault } }))
+        dispatch(
+          actions.saveDetailRequested(
+            id ? { id, body: { name, colorPaletteId } } : { body: { name, isDefault, colorPaletteId } },
+          ),
+        )
       }}
     />
   )

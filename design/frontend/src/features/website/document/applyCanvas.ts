@@ -20,7 +20,15 @@ import {
   ROW_HEIGHT,
   type LayoutLimits,
 } from './layout'
-import { createEmptySlideTemplate, DEFAULT_SLIDER_DISPLAY_SETTINGS } from './slider'
+import { createEmptySlideTemplate, DEFAULT_SLIDER_DISPLAY_SETTINGS, findBlockInTree, mapBlockInTree } from './slider'
+import {
+  defaultElementHtml,
+  defaultElementStyles,
+  effectiveElementHtml,
+  effectiveElementStyles,
+  normalizeWebsiteElementCustomization,
+  storedBlockCustomization,
+} from '../utils/websiteElementCustomization'
 
 function createPlacedAddon(
   type: WebsiteAddon['type'],
@@ -124,6 +132,9 @@ type CanvasOp = {
   row?: number
   cols?: number
   rows?: number
+  html?: string
+  styles?: string
+  scripts?: string
 }
 
 export type CanvasApplyResult = {
@@ -205,6 +216,9 @@ function readOps(args: Record<string, unknown>): CanvasOp[] {
       typeof op.name === 'string' ? op.name : undefined,
       op.op === 'rename' && typeof op.text === 'string' ? op.text : undefined,
     ),
+    html: readCode(op.html),
+    styles: readCode(op.styles),
+    scripts: readCode(op.scripts),
   }]
   })
 }
@@ -225,7 +239,7 @@ function normalizeCanvasOp(operation: unknown): Record<string, unknown> | null {
 
 function inferredCanvasOp(op: Record<string, unknown>): string {
   const raw = typeof op.op === 'string' ? op.op.trim().toLowerCase().replace(/[\s-]+/g, '_') : ''
-  if (raw === 'add_block' || raw === 'add_addon' || raw === 'update_text' || raw === 'update_button' || raw === 'update_menu' || raw === 'rename' || raw === 'place_block' || raw === 'move' || raw === 'delete_block' || raw === 'delete_addon') {
+  if (raw === 'add_block' || raw === 'add_addon' || raw === 'update_text' || raw === 'update_button' || raw === 'update_menu' || raw === 'update_block' || raw === 'rename' || raw === 'place_block' || raw === 'move' || raw === 'delete_block' || raw === 'delete_addon') {
     return raw
   }
   if (
@@ -260,6 +274,11 @@ function inferredCanvasOp(op: Record<string, unknown>): string {
   if (/\b(image|photo|picture|banner)\b/i.test(label) && !/\b(section|block)\b/i.test(label)) return 'add_addon'
   if (/\b(section|block)\b/i.test(label)) return 'add_block'
   return ''
+}
+
+function readCode(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  return value.slice(0, 50000)
 }
 
 function readGrid(value: unknown, min: number, max: number): number | undefined {
@@ -1151,6 +1170,31 @@ export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<
       continue
     }
 
+    if (op.op === 'update_block' && op.blockId && (op.html !== undefined || op.styles !== undefined || op.scripts !== undefined)) {
+      const current = findBlock(next, op.blockId) ?? findTemplateBlock(next, op.blockId)
+      if (!current) continue
+      const existing = normalizeWebsiteElementCustomization(current.customization)
+      const customization = storedBlockCustomization(
+        {
+          html: op.html !== undefined ? op.html : existing.html,
+          styles: op.styles !== undefined ? op.styles : existing.styles,
+          scripts: op.scripts !== undefined ? op.scripts : existing.scripts,
+        },
+        current.id,
+      )
+      next = {
+        ...next,
+        blocks: next.blocks.map((block) =>
+          mapBlockInTree(block, current.id, (item) => ({ ...item, customization })),
+        ),
+      }
+      touched.add(current.id)
+      applied += 1
+      pendingBlockId = current.id
+      selection = { kind: 'block', blockId: current.id }
+      continue
+    }
+
     if (op.op === 'rename' && op.elementName && (op.addonId || op.blockId)) {
       if (op.addonId) {
         const blockId = findAddonHostId(next.blocks, op.addonId) ?? undefined
@@ -1422,6 +1466,46 @@ function outlineBlocks(blocks: WebsiteBlock[], indent: string): string[] {
   return lines
 }
 
+function findTemplateBlock(document: WebsiteDocumentV1, blockId: string): WebsiteBlock | null {
+  function walk(blocks: WebsiteBlock[]): WebsiteBlock | null {
+    for (const block of blocks) {
+      for (const addon of block.addons) {
+        if (addon.type !== 'slider' || !addon.props.slideTemplate) continue
+        const found = findBlockInTree(addon.props.slideTemplate, blockId)
+        if (found) return found
+      }
+      const nested = walk(block.children ?? [])
+      if (nested) return nested
+    }
+    return null
+  }
+  return walk(document.blocks)
+}
+
+function blockShellLines(block: WebsiteBlock): string[] {
+  const customization = normalizeWebsiteElementCustomization(block.customization)
+  const html = effectiveElementHtml(customization, defaultElementHtml('block', block.id))
+  const styles = effectiveElementStyles(customization, defaultElementStyles(block.id), block.id)
+  return [
+    `Block shell for ${block.id}. update_block edits this block only.`,
+    'html is the block shell. Keep {{children}} where nested blocks and add-ons render. Do not paste child or addon markup into html.',
+    `html: ${html}`,
+    `styles: ${styles}`,
+    `scripts: ${customization.scripts}`,
+  ]
+}
+
+function focusedShellBlock(
+  document: WebsiteDocumentV1,
+  focus: DesignerSelection | null | undefined,
+): WebsiteBlock | null {
+  if (!focus || focus.kind === 'container' || focus.kind === 'addon' || focus.kind === 'templateAddon') return null
+  if (focus.kind === 'block') return findBlock(document, focus.blockId)
+  const slider = findBlock(document, focus.hostBlockId)?.addons.find((addon) => addon.id === focus.sliderAddonId)
+  if (!slider || slider.type !== 'slider' || !slider.props.slideTemplate) return null
+  return findBlockInTree(slider.props.slideTemplate, focus.templateBlockId)
+}
+
 function canvasFocusLine(focus: DesignerSelection | null | undefined): string | null {
   if (!focus || focus.kind === 'container') return null
   if (focus.kind === 'block') return `block ${focus.blockId}`
@@ -1442,6 +1526,8 @@ export function formatDesignerCanvasContext(input: {
   const blocks = outlineBlocks(input.document.blocks, '')
   const body = blocks.length > 0 ? blocks.join('\n') : '(empty canvas)'
   const focus = canvasFocusLine(input.focus)
+  const shellBlock = focusedShellBlock(input.document, input.focus)
+  const shell = shellBlock ? blockShellLines(shellBlock) : []
   return [
     '[designer-canvas]',
     `kind: ${input.kind}`,
@@ -1453,7 +1539,8 @@ export function formatDesignerCanvasContext(input: {
       ? `The user copied this element into the assistant. Change this element unless they name a different one: ${focus}.`
       : 'No element was copied. Ask which element to change when the request is ambiguous.',
     'This outline is the canvas right now, including every change the user made by hand. Ignore any earlier designer-canvas outline. Edit these ids in place. Do not recreate a block that is already listed, and do not change text, items, or positions you were not asked to change.',
-    'Create with add_block and add_addon. add_addon type is text, button, image, slider, or menu. group true nests a block in the current section. rename, update_text, update_button, and update_menu edit an existing id. move uses col, row, cols, and rows from this outline. place_block align is start, center, or end. delete_block and delete_addon remove an existing id. Do not recreate an element to rename it. Do not name an element Block, Text, Button, Image, Slider, or Menu. Set role heading or body on text. span full is only for a wide image.',
+    'Create with add_block and add_addon. add_addon type is text, button, image, slider, or menu. group true nests a block in the current section. rename, update_text, update_button, update_menu, and update_block edit an existing id. update_block sets html, styles, and scripts for that block shell only. Keep {{children}} in html. Do not paste child or addon markup into html. move uses col, row, cols, and rows from this outline. place_block align is start, center, or end. delete_block and delete_addon remove an existing id. Do not recreate an element to rename it. Do not name an element Block, Text, Button, Image, Slider, or Menu. Set role heading or body on text. span full is only for a wide image.',
+    ...shell,
     'Do not create a new page, header, footer, preset, layout, or theme unless the user asked for a new record.',
     'Images have no media until the user picks one. Do not invent media ids.',
     'blocks:',

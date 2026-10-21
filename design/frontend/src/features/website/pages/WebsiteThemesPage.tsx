@@ -120,8 +120,7 @@ export function WebsiteThemesPage() {
                     >
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{theme.name}</p>
-                        {theme.isDefault ? <StatusTag variant="approved">{t('default')}</StatusTag> : null}
-                        {theme.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
+                        {theme.isDefault ? <StatusTag variant="approved">{t('activeTheme')}</StatusTag> : null}
                         <WebsiteLibrarySourceTag sourceLibraryId={theme.sourceLibraryId} />
                         {!theme.isActive ? <StatusTag variant="pending">{t('inactive')}</StatusTag> : null}
                       </div>
@@ -158,7 +157,7 @@ export function WebsiteThemesPage() {
                       >
                         {t('duplicate')}
                       </DropdownMenuItem>
-                      {theme.sourceLibraryId && !theme.isLocked ? (
+                      {theme.sourceLibraryId ? (
                         <DropdownMenuItem
                           disabled={revert.reverting}
                           onClick={() => revert.ask({ kind: 'themes', id: theme.id, name: theme.name })}
@@ -166,12 +165,10 @@ export function WebsiteThemesPage() {
                           {t('downloadUpdatedFromLibrary')}
                         </DropdownMenuItem>
                       ) : null}
-                      {theme.isLocked ? null : (
-                        <DropdownMenuItem onClick={() => goToWebsite(`/website/themes/${theme.id}`)}>
-                          {t('common:edit')}
-                        </DropdownMenuItem>
-                      )}
-                      {!theme.isDefault && !theme.isLocked ? (
+                      <DropdownMenuItem onClick={() => goToWebsite(`/website/themes/${theme.id}`)}>
+                        {t('common:edit')}
+                      </DropdownMenuItem>
+                      {!theme.isDefault ? (
                         <DropdownMenuItem
                           onClick={() => {
                             dispatch(
@@ -184,18 +181,16 @@ export function WebsiteThemesPage() {
                             toast({ title: t('saved') })
                           }}
                         >
-                          {t('setDefault')}
+                          {t('setActiveTheme')}
                         </DropdownMenuItem>
                       ) : null}
-                      {theme.isLocked ? null : <DropdownMenuSeparator />}
-                      {theme.isLocked ? null : (
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setPendingDelete({ id: theme.id, name: theme.name })}
-                        >
-                          {t('common:delete')}
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setPendingDelete({ id: theme.id, name: theme.name })}
+                      >
+                        {t('common:delete')}
+                      </DropdownMenuItem>
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>

@@ -12,7 +12,6 @@ function theme(): WebsiteTheme {
     bodyTextColor: '#111827',
     isActive: true,
     isDefault: false,
-    isLocked: false,
     sourceLibraryId: null,
     fonts: [{ id: 'font-1', name: 'Inter', googleFontUrl: 'https://fonts.googleapis.com/css2?family=Inter', family: 'Inter' }],
     colorPaletteId: 'palette-1',

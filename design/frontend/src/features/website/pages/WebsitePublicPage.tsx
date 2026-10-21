@@ -143,6 +143,7 @@ export function WebsitePublicPage() {
             document={headerDocument}
             breakpoint={breakpoint}
             theme={site.theme}
+            paletteId={site.header?.colorPaletteId}
             mode="publish"
             fit="content"
             pages={pages}
@@ -158,6 +159,7 @@ export function WebsitePublicPage() {
           document={site.page.document}
           breakpoint={breakpoint}
           theme={site.theme}
+          paletteId={site.page.colorPaletteId}
           mode="publish"
           fit="page"
           pages={pages}
@@ -172,6 +174,7 @@ export function WebsitePublicPage() {
           document={footerDocument}
           breakpoint={breakpoint}
           theme={site.theme}
+          paletteId={site.footer?.colorPaletteId}
           mode="publish"
           fit="content"
           pages={pages}

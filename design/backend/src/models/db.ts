@@ -47,7 +47,7 @@ export interface DesignWebsitePageRow {
   layout_id: string | null
   sort_order: number
   document: string | Record<string, unknown>
-  is_locked: number | boolean
+  color_palette_id: string | null
   source_library_id: string | null
   created_by: string | null
   created_at: Date
@@ -62,7 +62,6 @@ export interface DesignWebsiteLayoutRow {
   footer_id: string | null
   theme_id: string | null
   is_default: number | boolean
-  is_locked: number | boolean
   source_library_id: string | null
   created_by: string | null
   created_at: Date
@@ -74,8 +73,8 @@ export interface DesignWebsiteChromeRow {
   company_id: string
   name: string
   is_default: number | boolean
-  is_locked: number | boolean
   document: string | Record<string, unknown>
+  color_palette_id: string | null
   source_library_id: string | null
   created_by: string | null
   created_at: Date
@@ -87,7 +86,7 @@ export interface DesignWebsitePresetRow {
   company_id: string
   name: string
   document: string | Record<string, unknown>
-  is_locked: number | boolean
+  color_palette_id: string | null
   source_library_id: string | null
   created_by: string | null
   created_at: Date
@@ -113,7 +112,6 @@ export interface DesignWebsiteThemeRow {
   accent_2_index: number
   is_active: number | boolean
   is_default: number | boolean
-  is_locked: number | boolean
   source_library_id: string | null
   fonts: string | unknown[]
   color_palettes: string | unknown[] | null
@@ -143,7 +141,6 @@ export interface DesignWebsiteDatasetRow {
   config: string | Record<string, unknown> | null
   selected_fields: string | string[] | null
   status: WebsiteDatasetStatus
-  is_locked: number | boolean
   created_by: string | null
   created_at: Date
   updated_at: Date

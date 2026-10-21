@@ -14,6 +14,7 @@ import {
 import { isChromePointerTarget, shouldDeferToSelectedAncestor } from '../document/selectionPointer'
 import { useCanvasHighlight } from '../document/canvasHighlight'
 import { resolveLayoutRect, type ResizeHandle } from '../document/layout'
+import { inheritPaletteId } from '../document/palette'
 import type {
   DesignerSelection,
   WebsiteAddon,
@@ -28,6 +29,7 @@ export interface NestedBlockTreeProps {
   block: WebsiteBlock
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
+  parentPaletteId?: string | null
   pages?: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
   currentPageId?: string | null
   companyId?: string
@@ -69,6 +71,7 @@ export function NestedBlockTree({
   block,
   breakpoint,
   theme,
+  parentPaletteId = null,
   pages = [],
   currentPageId = null,
   companyId,
@@ -95,6 +98,7 @@ export function NestedBlockTree({
   onNavigatePage,
 }: NestedBlockTreeProps) {
   const rect = resolveLayoutRect(block.layout, breakpoint)
+  const paletteId = inheritPaletteId(block.colorPaletteId, parentPaletteId)
   const addons = [...block.addons].sort((a, b) => a.zIndex - b.zIndex)
   const children = [...(block.children ?? [])].sort((a, b) => a.zIndex - b.zIndex)
   const highlight = useCanvasHighlight()
@@ -254,6 +258,7 @@ export function NestedBlockTree({
           key={addon.id}
           addon={addon}
           templateBlockId={block.id}
+          parentPaletteId={paletteId}
           breakpoint={breakpoint}
           theme={theme}
           pages={pages}
@@ -283,6 +288,7 @@ export function NestedBlockTree({
           block={child}
           breakpoint={breakpoint}
           theme={theme}
+          parentPaletteId={paletteId}
           pages={pages}
           currentPageId={currentPageId}
           companyId={companyId}
@@ -336,6 +342,7 @@ export function NestedBlockTree({
 function NestedAddonView({
   addon,
   templateBlockId,
+  parentPaletteId = null,
   breakpoint,
   theme,
   pages,
@@ -360,6 +367,7 @@ function NestedAddonView({
 }: {
   addon: WebsiteAddon
   templateBlockId: string
+  parentPaletteId?: string | null
   breakpoint: WebsiteBreakpoint
   theme?: WebsiteTheme | null
   pages: Pick<WebsitePage, 'id' | 'path' | 'name'>[]
@@ -404,6 +412,7 @@ function NestedAddonView({
     highlight.sliderAddonId === sliderAddonId
   const outlined = selected || highlighted
   if (!RenderComponent) return null
+  const paletteId = inheritPaletteId(addon.colorPaletteId, parentPaletteId)
   const chrome = pickElementChrome(addon)
   // Same as page-level AddonView: resolve field bindings from the current row.
   const resolvedAddon = resolveAddonProps(addon, parentDataItem ?? null)
@@ -501,6 +510,7 @@ function NestedAddonView({
           addon={resolvedAddon}
           breakpoint={breakpoint}
           theme={theme}
+          paletteId={paletteId}
           pages={pages}
           currentPageId={currentPageId}
           companyId={companyId}

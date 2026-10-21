@@ -10,7 +10,7 @@ import {
   nextPageSortOrder,
 } from './websiteLayout.service.js'
 import { ensureCompanyWebsiteDefaults } from './websiteLibrary.service.js'
-import { assertWebsiteUnlocked, isLockedFlag } from './websiteLock.js'
+import { pageHasReferences } from './websiteDeleteReferences.js'
 import { applyNamesFilter, namedListWindow } from '../utils/namesQuery.js'
 import { rewriteWebsiteDocumentMedia } from '../utils/rewriteWebsiteDocumentMedia.js'
 
@@ -24,7 +24,7 @@ export type WebsitePageDto = {
   layoutName: string | null
   sortOrder: number
   document: WebsiteDocumentV1
-  isLocked: boolean
+  colorPaletteId: string | null
   sourceLibraryId: string | null
   createdBy: string | null
   createdAt: string
@@ -50,7 +50,7 @@ function toDto(row: PageRowWithLayout): WebsitePageDto {
     layoutName: row.layout_name ?? null,
     sortOrder: row.sort_order ?? 0,
     document: rewriteWebsiteDocumentMedia(parseDocument(row.document)),
-    isLocked: isLockedFlag(row.is_locked),
+    colorPaletteId: row.color_palette_id || null,
     sourceLibraryId: row.source_library_id ?? null,
     createdBy: row.created_by,
     createdAt: new Date(row.created_at).toISOString(),
@@ -168,6 +168,8 @@ export async function createWebsitePage(input: {
     layout_id: layoutId,
     sort_order: sortOrder,
     document: JSON.stringify(input.body.document),
+    color_palette_id: input.body.colorPaletteId || null,
+    source_library_id: null,
     created_by: input.userId,
     created_at: db.fn.now(3),
     updated_at: db.fn.now(3),
@@ -184,7 +186,6 @@ export async function updateWebsitePage(input: {
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Page not found', 'WEBSITE_PAGE_NOT_FOUND')
-  assertWebsiteUnlocked(existing.is_locked)
   if (input.body.path != null && input.body.path !== existing.path) {
     const clash = await db('design_website_pages')
       .where({ company_id: input.companyId, path: input.body.path })
@@ -199,6 +200,7 @@ export async function updateWebsitePage(input: {
   if (input.body.path != null) updates.path = input.body.path
   if (input.body.status != null) updates.status = input.body.status
   if (input.body.document != null) updates.document = JSON.stringify(input.body.document)
+  if (input.body.colorPaletteId !== undefined) updates.color_palette_id = input.body.colorPaletteId || null
   if (input.body.sortOrder != null) updates.sort_order = input.body.sortOrder
   if (input.body.layoutId !== undefined) {
     const layoutId = await resolveLayoutId({
@@ -210,7 +212,7 @@ export async function updateWebsitePage(input: {
       updates.sort_order = await nextPageSortOrder({ companyId: input.companyId, layoutId })
     }
   }
-  await db('design_website_pages').where({ id: input.id }).update(updates)
+  await db('design_website_pages').where({ id: input.id, company_id: input.companyId }).update(updates)
   return getWebsitePage({ companyId: input.companyId, id: input.id })
 }
 
@@ -219,6 +221,8 @@ export async function deleteWebsitePage(input: { companyId: string; id: string }
     .where({ id: input.id, company_id: input.companyId })
     .first()
   if (!existing) throw new HttpError(404, 'Page not found', 'WEBSITE_PAGE_NOT_FOUND')
-  assertWebsiteUnlocked(existing.is_locked)
+  if (await pageHasReferences(input.companyId, input.id)) {
+    throw new HttpError(409, 'This page is still used by the site', 'WEBSITE_PAGE_IN_USE')
+  }
   await db('design_website_pages').where({ id: input.id, company_id: input.companyId }).del()
 }

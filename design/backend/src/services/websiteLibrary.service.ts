@@ -1,3 +1,4 @@
+import type { Knex } from 'knex'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import {
@@ -19,6 +20,9 @@ import {
   websiteColorLibraryPaletteSchema,
   websiteColorTokenSchema,
   websiteFontTokenSchema,
+  type WebsiteButtonStyle,
+  type WebsiteTextStyle,
+  type WebsiteThemeColorPalette,
 } from '../schemas/websiteThemes.schema.js'
 import {
   normalizeColorLibraryPalette,
@@ -27,6 +31,8 @@ import {
 } from '../utils/colorLibraryPalette.js'
 import { normalizeStoredCustomization } from '../utils/websiteElementRoot.js'
 import { starterThemeColumns } from '../utils/themeColorStorage.js'
+import { remapDocumentTokenIds } from '../utils/companyThemeTokens.js'
+import { storeCompanyThemeTokens } from './websiteCompanyTokens.js'
 
 const starterThemeSchema = z.object({
   name: z.string().min(1),
@@ -415,7 +421,7 @@ export async function listTextLibrary(input: {
   names?: string | string[]
 }): Promise<{ items: TextLibraryItem[]; total: number; page: number; pageSize: number }> {
   const { names, page, pageSize, offset } = namedListWindow(input, 48)
-  let query = db<TextLibraryRow>('design_website_text_library').where('is_active', true)
+  let query = db<TextLibraryRow>('design_website_library_text').where('is_active', true)
   applyNamesFilter(query, 'name', names)
   if (input.q?.trim()) {
     const q = `%${input.q.trim().toLowerCase()}%`
@@ -435,7 +441,7 @@ export async function listTextLibrary(input: {
 }
 
 export async function getTextLibraryItem(id: string): Promise<TextLibraryItem> {
-  const row = await db<TextLibraryRow>('design_website_text_library').where({ id }).first()
+  const row = await db<TextLibraryRow>('design_website_library_text').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Text style not found', 'TEXT_LIBRARY_NOT_FOUND')
   }
@@ -446,26 +452,26 @@ export async function createTextLibraryItem(input: {
   name: string
   definition: TextLibraryDefinition
 }): Promise<TextLibraryItem> {
-  const existing = await db<TextLibraryRow>('design_website_text_library')
+  const existing = await db<TextLibraryRow>('design_website_library_text')
     .whereRaw('LOWER(name) = ?', [input.name.trim().toLowerCase()])
     .first()
   if (existing) {
     if (!existing.is_active) {
-      await db('design_website_text_library').where({ id: existing.id }).update({
+      await db('design_website_library_text').where({ id: existing.id }).update({
         is_active: true,
         name: input.name,
         definition: JSON.stringify(input.definition),
       })
     }
-    const row = await db<TextLibraryRow>('design_website_text_library').where({ id: existing.id }).first()
+    const row = await db<TextLibraryRow>('design_website_library_text').where({ id: existing.id }).first()
     if (!row) throw new HttpError(500, 'Could not save the text style', 'TEXT_LIBRARY_SAVE_FAILED')
     return toTextLibraryItem(row)
   }
 
-  const maxRow = await db('design_website_text_library').max<{ max: number | string | null }>('sort_order as max').first()
+  const maxRow = await db('design_website_library_text').max<{ max: number | string | null }>('sort_order as max').first()
   const sortOrder = Number(maxRow?.max ?? 0) + 1
   const id = nanoid()
-  await db('design_website_text_library').insert({
+  await db('design_website_library_text').insert({
     id,
     name: input.name,
     definition: JSON.stringify(input.definition),
@@ -487,11 +493,11 @@ export async function updateTextLibraryItem(
     definition: TextLibraryDefinition
   },
 ): Promise<TextLibraryItem> {
-  const row = await db<TextLibraryRow>('design_website_text_library').where({ id }).first()
+  const row = await db<TextLibraryRow>('design_website_library_text').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Text style not found', 'TEXT_LIBRARY_NOT_FOUND')
   }
-  const nameTaken = await db<TextLibraryRow>('design_website_text_library')
+  const nameTaken = await db<TextLibraryRow>('design_website_library_text')
     .whereRaw('LOWER(name) = ?', [input.name.trim().toLowerCase()])
     .whereNot({ id })
     .where('is_active', true)
@@ -499,11 +505,11 @@ export async function updateTextLibraryItem(
   if (nameTaken) {
     throw new HttpError(409, 'A text style with this name already exists', 'TEXT_LIBRARY_NAME_TAKEN')
   }
-  await db('design_website_text_library').where({ id }).update({
+  await db('design_website_library_text').where({ id }).update({
     name: input.name.trim(),
     definition: JSON.stringify(input.definition),
   })
-  const updated = await db<TextLibraryRow>('design_website_text_library').where({ id }).first()
+  const updated = await db<TextLibraryRow>('design_website_library_text').where({ id }).first()
   if (!updated) throw new HttpError(500, 'Could not save the text style', 'TEXT_LIBRARY_SAVE_FAILED')
   return toTextLibraryItem(updated)
 }
@@ -536,11 +542,11 @@ export async function patchTextLibraryItem(
 }
 
 export async function deleteTextLibraryItem(id: string): Promise<void> {
-  const row = await db<TextLibraryRow>('design_website_text_library').where({ id }).first()
+  const row = await db<TextLibraryRow>('design_website_library_text').where({ id }).first()
   if (!row || !row.is_active) {
     throw new HttpError(404, 'Text style not found', 'TEXT_LIBRARY_NOT_FOUND')
   }
-  await db('design_website_text_library').where({ id }).update({ is_active: false })
+  await db('design_website_library_text').where({ id }).update({ is_active: false })
 }
 
 export type ButtonLibraryDefinition = {
@@ -762,6 +768,51 @@ function presetDocument(starter: StoredStarter, slug: string): WebsiteDocumentV1
   return preset.document
 }
 
+async function insertStarterCompanyTheme(
+  conn: Knex | Knex.Transaction,
+  input: {
+    companyId: string
+    userId: string | null
+    themeId: string
+    isDefault: boolean
+    theme: z.infer<typeof starterThemeSchema>
+  },
+) {
+  const columns = starterThemeColumns(input.theme)
+  const stored = await storeCompanyThemeTokens(conn, {
+    companyId: input.companyId,
+    userId: input.userId,
+    align: 'id',
+    fonts: input.theme.fonts,
+    colorPalettes: JSON.parse(columns.color_palettes) as WebsiteThemeColorPalette[],
+    textStyles: JSON.parse(columns.text_styles) as WebsiteTextStyle[],
+    buttonStyles: JSON.parse(columns.button_styles) as WebsiteButtonStyle[],
+    colorPaletteId: columns.color_palette_id,
+  })
+  await conn('design_website_themes').insert({
+    id: input.themeId,
+    company_id: input.companyId,
+    name: input.theme.name,
+    color_palette_id: stored.colorPaletteId,
+    page_background_index: columns.page_background_index,
+    surface_index: columns.surface_index,
+    body_text_index: columns.body_text_index,
+    accent_1_index: columns.accent_1_index,
+    accent_2_index: columns.accent_2_index,
+    is_active: true,
+    is_default: input.isDefault,
+    fonts: JSON.stringify(stored.fontIds),
+    color_palettes: JSON.stringify(stored.paletteIds),
+    text_styles: JSON.stringify(stored.textStyleIds),
+    button_styles: JSON.stringify(stored.buttonStyleIds),
+    source_library_id: null,
+    created_by: input.userId,
+    created_at: conn.fn.now(3),
+    updated_at: conn.fn.now(3),
+  })
+  return stored.remap
+}
+
 export async function ensureStarterWebsite(input: {
   companyId: string
   companyName: string
@@ -795,7 +846,6 @@ export async function ensureStarterWebsite(input: {
     company_id: input.companyId,
     name: preset.name,
     document: JSON.stringify(copyPresetDocument(replaceCompanyName(preset.document, companyName))),
-    is_locked: true,
     created_by: input.userId,
     created_at: now(),
     updated_at: now(),
@@ -808,27 +858,25 @@ export async function ensureStarterWebsite(input: {
         .first('id')
       if (raced) return
 
-      await trx('design_website_presets').insert(presetRows)
-      await trx('design_website_themes').insert({
-        id: themeId,
-        company_id: input.companyId,
-        name: starter.theme.name,
-        ...starterThemeColumns(starter.theme),
-        is_active: true,
-        is_default: true,
-        is_locked: true,
-        fonts: JSON.stringify(starter.theme.fonts),
-        created_by: input.userId,
-        created_at: now(),
-        updated_at: now(),
+      const remap = await insertStarterCompanyTheme(trx, {
+        companyId: input.companyId,
+        userId: input.userId,
+        themeId,
+        isDefault: true,
+        theme: starter.theme,
       })
+      await trx('design_website_presets').insert(
+        presetRows.map((row) => ({
+          ...row,
+          document: JSON.stringify(remapDocumentTokenIds(JSON.parse(String(row.document)), remap)),
+        })),
+      )
       await trx('design_website_headers').insert({
         id: headerId,
         company_id: input.companyId,
         name: 'Header',
         is_default: true,
-        is_locked: true,
-        document: JSON.stringify(header),
+        document: JSON.stringify(remapDocumentTokenIds(header, remap)),
         created_by: input.userId,
         created_at: now(),
         updated_at: now(),
@@ -838,8 +886,7 @@ export async function ensureStarterWebsite(input: {
         company_id: input.companyId,
         name: 'Footer',
         is_default: true,
-        is_locked: true,
-        document: JSON.stringify(footer),
+        document: JSON.stringify(remapDocumentTokenIds(footer, remap)),
         created_by: input.userId,
         created_at: now(),
         updated_at: now(),
@@ -852,7 +899,6 @@ export async function ensureStarterWebsite(input: {
         footer_id: footerId,
         theme_id: themeId,
         is_default: true,
-        is_locked: true,
         created_by: input.userId,
         created_at: now(),
         updated_at: now(),
@@ -865,8 +911,7 @@ export async function ensureStarterWebsite(input: {
         status: 'active',
         layout_id: layoutId,
         sort_order: 0,
-        document: JSON.stringify(home),
-        is_locked: true,
+        document: JSON.stringify(remapDocumentTokenIds(home, remap)),
         created_by: input.userId,
         created_at: now(),
         updated_at: now(),
@@ -880,7 +925,6 @@ export async function ensureStarterWebsite(input: {
         config: JSON.stringify({}),
         selected_fields: JSON.stringify(['name']),
         status: 'active',
-        is_locked: true,
         created_by: input.userId,
         created_at: now(),
         updated_at: now(),
@@ -915,30 +959,20 @@ export async function ensureStarterWebsite(input: {
   return { created: true, pageId }
 }
 
-async function hasLockedNamed(table: string, companyId: string, name: string): Promise<boolean> {
+async function hasNamed(table: string, companyId: string, name: string): Promise<boolean> {
   const row = await db(table)
     .where({ company_id: companyId })
-    .where('is_locked', true)
     .whereRaw('BINARY name = ?', [name])
     .first('id')
   return Boolean(row)
 }
 
-async function lockedId(table: string, companyId: string, name?: string): Promise<string | null> {
-  let query = db(table).where({ company_id: companyId }).where('is_locked', true)
-  if (name) query = query.whereRaw('BINARY name = ?', [name])
-  const row = await query.first<{ id: string }>('id')
-  return row?.id ?? null
-}
-
-async function lockNamedRow(table: string, companyId: string, name: string): Promise<void> {
-  if (await hasLockedNamed(table, companyId, name)) return
+async function namedId(table: string, companyId: string, name: string): Promise<string | null> {
   const row = await db(table)
     .where({ company_id: companyId })
     .whereRaw('BINARY name = ?', [name])
     .first<{ id: string }>('id')
-  if (!row) return
-  await db(table).where({ id: row.id }).update({ is_locked: true, updated_at: db.fn.now(3) })
+  return row?.id ?? null
 }
 
 const STARTER_NAMES: Array<[string, string[]]> = [
@@ -951,21 +985,10 @@ const STARTER_NAMES: Array<[string, string[]]> = [
   ['design_website_pages', ['Home']],
 ]
 
-async function releaseMismatchedLocks(companyId: string): Promise<void> {
-  for (const [table, names] of STARTER_NAMES) {
-    const placeholders = names.map(() => '?').join(', ')
-    await db(table)
-      .where({ company_id: companyId })
-      .where('is_locked', true)
-      .whereRaw(`BINARY name NOT IN (${placeholders})`, names)
-      .update({ is_locked: false, updated_at: db.fn.now(3) })
-  }
-}
-
 async function defaultsComplete(companyId: string): Promise<boolean> {
   for (const [table, names] of STARTER_NAMES) {
     for (const name of names) {
-      if (!(await hasLockedNamed(table, companyId, name))) return false
+      if (!(await hasNamed(table, companyId, name))) return false
     }
   }
   return true
@@ -980,50 +1003,29 @@ async function freePagePath(companyId: string): Promise<string> {
   return `home-${suffix}`
 }
 
-async function backfillLockedDefaults(input: {
+async function backfillMissingDefaults(input: {
   companyId: string
   companyName: string
   userId: string | null
 }): Promise<void> {
-  await lockNamedRow('design_website_themes', input.companyId, 'Default')
-  await lockNamedRow('design_website_headers', input.companyId, 'Header')
-  await lockNamedRow('design_website_footers', input.companyId, 'Footer')
-  await lockNamedRow('design_website_layouts', input.companyId, 'Default')
-  await lockNamedRow('design_website_datasets', input.companyId, 'Products')
-
-  const home = await db('design_website_pages')
-    .where({ company_id: input.companyId, path: '' })
-    .whereRaw('BINARY name = ?', ['Home'])
-    .first<{ id: string; is_locked: number | boolean }>('id', 'is_locked')
-  if (home && home.is_locked !== true && home.is_locked !== 1 && !(await hasLockedNamed('design_website_pages', input.companyId, 'Home'))) {
-    await db('design_website_pages').where({ id: home.id }).update({ is_locked: true, updated_at: db.fn.now(3) })
-  }
-
-  for (const name of ['Site header', 'Site footer', 'Welcome']) {
-    await lockNamedRow('design_website_presets', input.companyId, name)
-  }
-
   const starter = await loadActiveStarter()
   const now = () => db.fn.now(3)
   const companyName = input.companyName
+  let starterRemap = { text: {} as Record<string, string>, button: {} as Record<string, string> }
 
-  if (!(await hasLockedNamed('design_website_themes', input.companyId, 'Default'))) {
-    await db('design_website_themes').insert({
-      id: nanoid(),
-      company_id: input.companyId,
-      name: starter.theme.name,
-      ...starterThemeColumns(starter.theme),
-      is_active: true,
-      is_default: false,
-      is_locked: true,
-      fonts: JSON.stringify(starter.theme.fonts),
-      created_by: input.userId,
-      created_at: now(),
-      updated_at: now(),
+  if (!(await hasNamed('design_website_themes', input.companyId, 'Default'))) {
+    const themeId = nanoid()
+    const remap = await insertStarterCompanyTheme(db, {
+      companyId: input.companyId,
+      userId: input.userId,
+      themeId,
+      isDefault: false,
+      theme: starter.theme,
     })
+    starterRemap = remap
   }
 
-  const pageId = (await lockedId('design_website_pages', input.companyId, 'Home')) ?? nanoid()
+  const pageId = (await namedId('design_website_pages', input.companyId, 'Home')) ?? nanoid()
   const headerDocument = linkHomeMenu(
     copyPresetDocument(replaceCompanyName(presetDocument(starter, 'site-header'), companyName)),
     pageId,
@@ -1031,78 +1033,74 @@ async function backfillLockedDefaults(input: {
   const footerDocument = copyPresetDocument(replaceCompanyName(presetDocument(starter, 'site-footer'), companyName))
   const homeDocument = copyPresetDocument(replaceCompanyName(presetDocument(starter, 'welcome'), companyName))
 
-  if (!(await hasLockedNamed('design_website_headers', input.companyId, 'Header'))) {
+  if (!(await hasNamed('design_website_headers', input.companyId, 'Header'))) {
     await db('design_website_headers').insert({
       id: nanoid(),
       company_id: input.companyId,
       name: 'Header',
       is_default: false,
-      is_locked: true,
-      document: JSON.stringify(headerDocument),
+      document: JSON.stringify(remapDocumentTokenIds(headerDocument, starterRemap)),
       created_by: input.userId,
       created_at: now(),
       updated_at: now(),
     })
   }
-  if (!(await hasLockedNamed('design_website_footers', input.companyId, 'Footer'))) {
+  if (!(await hasNamed('design_website_footers', input.companyId, 'Footer'))) {
     await db('design_website_footers').insert({
       id: nanoid(),
       company_id: input.companyId,
       name: 'Footer',
       is_default: false,
-      is_locked: true,
-      document: JSON.stringify(footerDocument),
+      document: JSON.stringify(remapDocumentTokenIds(footerDocument, starterRemap)),
       created_by: input.userId,
       created_at: now(),
       updated_at: now(),
     })
   }
-  if (!(await hasLockedNamed('design_website_layouts', input.companyId, 'Default'))) {
+  if (!(await hasNamed('design_website_layouts', input.companyId, 'Default'))) {
     await db('design_website_layouts').insert({
       id: nanoid(),
       company_id: input.companyId,
       name: 'Default',
-      header_id: await lockedId('design_website_headers', input.companyId, 'Header'),
-      footer_id: await lockedId('design_website_footers', input.companyId, 'Footer'),
-      theme_id: await lockedId('design_website_themes', input.companyId, 'Default'),
+      header_id: await namedId('design_website_headers', input.companyId, 'Header'),
+      footer_id: await namedId('design_website_footers', input.companyId, 'Footer'),
+      theme_id: await namedId('design_website_themes', input.companyId, 'Default'),
       is_default: false,
-      is_locked: true,
       created_by: input.userId,
       created_at: now(),
       updated_at: now(),
     })
   }
-  if (!(await hasLockedNamed('design_website_pages', input.companyId, 'Home'))) {
+  if (!(await hasNamed('design_website_pages', input.companyId, 'Home'))) {
     await db('design_website_pages').insert({
       id: pageId,
       company_id: input.companyId,
       name: 'Home',
       path: await freePagePath(input.companyId),
       status: 'active',
-      layout_id: await lockedId('design_website_layouts', input.companyId, 'Default'),
+      layout_id: await namedId('design_website_layouts', input.companyId, 'Default'),
       sort_order: 0,
-      document: JSON.stringify(homeDocument),
-      is_locked: true,
+      document: JSON.stringify(remapDocumentTokenIds(homeDocument, starterRemap)),
       created_by: input.userId,
       created_at: now(),
       updated_at: now(),
     })
   }
   for (const preset of starter.presets) {
-    const locked = await hasLockedNamed('design_website_presets', input.companyId, preset.name)
-    if (locked) continue
+    if (await hasNamed('design_website_presets', input.companyId, preset.name)) continue
     await db('design_website_presets').insert({
       id: nanoid(),
       company_id: input.companyId,
       name: preset.name,
-      document: JSON.stringify(copyPresetDocument(replaceCompanyName(preset.document, companyName))),
-      is_locked: true,
+      document: JSON.stringify(
+        remapDocumentTokenIds(copyPresetDocument(replaceCompanyName(preset.document, companyName)), starterRemap),
+      ),
       created_by: input.userId,
       created_at: now(),
       updated_at: now(),
     })
   }
-  if (!(await hasLockedNamed('design_website_datasets', input.companyId, 'Products'))) {
+  if (!(await hasNamed('design_website_datasets', input.companyId, 'Products'))) {
     await db('design_website_datasets').insert({
       id: nanoid(),
       company_id: input.companyId,
@@ -1112,7 +1110,6 @@ async function backfillLockedDefaults(input: {
       config: JSON.stringify({}),
       selected_fields: JSON.stringify(['name']),
       status: 'active',
-      is_locked: true,
       created_by: input.userId,
       created_at: now(),
       updated_at: now(),
@@ -1126,7 +1123,6 @@ export async function ensureCompanyWebsiteDefaults(input: {
   companyName?: string
 }): Promise<void> {
   if (await defaultsComplete(input.companyId)) return
-  await releaseMismatchedLocks(input.companyId)
   const companyName =
     input.companyName?.trim() ||
     (await getCompanyFromWebOnOne(input.companyId)).name.trim() ||
@@ -1140,7 +1136,7 @@ export async function ensureCompanyWebsiteDefaults(input: {
     })
   }
   if (await defaultsComplete(input.companyId)) return
-  await backfillLockedDefaults({
+  await backfillMissingDefaults({
     companyId: input.companyId,
     companyName,
     userId: input.userId,

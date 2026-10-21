@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { parseGoogleFontFamily } from '../utils/parseGoogleFontFamily'
 import { Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Save } from 'lucide-react'
-import { Alert, AlertDescription, Button, FeaturePage, useToast } from '@webonone/ui-kit'
+import { Alert, AlertDescription, FeaturePage, LoadingState } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
-import { fallbackTextSize, resolveTextStyle } from '../document/theme'
+import { fallbackTextSize } from '../document/theme'
+import { ThemeTextStyleDialog } from '../components/theme-editor/ThemeTextStyleDialog'
 import { ThemeTextStyleEditPanel } from '../components/theme-editor/ThemeTextStyleEditPanel'
 import type { WebsiteElementEditorTab } from '../components/WebsiteElementEditorTabs'
 import {
@@ -14,17 +15,11 @@ import {
 } from '../components/WebsiteLibraryRevert'
 import { useThemePersistence } from '../hooks/useThemePersistence'
 import { useThemeTextLibraryDownload } from '../hooks/useThemeTextLibraryDownload'
-import { websiteTextStyleSchema } from '../schemas/websiteThemeSchemas'
 import { websiteThemesActions } from '../store'
 import { WEBSITE_BREAKPOINTS, type WebsiteBreakpoint, type WebsiteTextStyle, type WebsiteTheme } from '../types'
-import {
-  defaultElementHtml,
-  finalizeElementCustomization,
-  hasElementCustomization,
-  normalizeWebsiteElementCustomization,
-} from '../utils/websiteElementCustomization'
-import { mapThemeFieldErrors } from '../utils/mapThemeFieldErrors'
+import { applyThemeTokenPatch } from '../utils/themeLibraryMaterialize'
 import { upsertById } from '../utils/upsertById'
+import { normalizeWebsiteElementCustomization } from '../utils/websiteElementCustomization'
 
 function hydrateTextStyle(style: WebsiteTextStyle): WebsiteTextStyle {
   const sizeByBreakpoint = Object.fromEntries(
@@ -45,7 +40,6 @@ export function WebsiteThemeTextStyleDetailPage() {
   const { themeId = '', styleId = '' } = useParams<{ themeId: string; styleId: string }>()
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
-  const { toast } = useToast()
   const dispatch = useAppDispatch()
   const { goToWebsite } = useNavigateDesign()
   const accessToken = useAppSelector((s) => s.auth.accessToken)
@@ -53,10 +47,9 @@ export function WebsiteThemeTextStyleDetailPage() {
   const canManage = user?.role === 'super_admin' || user?.role === 'company_admin'
   const { detail, detailStatus } = useAppSelector((s) => s.websiteThemes)
   const [theme, setTheme] = useState<WebsiteTheme | null>(null)
-  const [values, setValues] = useState<WebsiteTextStyle | null>(null)
-  const [elementTab, setElementTab] = useState<WebsiteElementEditorTab>('preview')
+  const [elementTab, setElementTab] = useState<WebsiteElementEditorTab>('general')
+  const [editTab, setEditTab] = useState<WebsiteElementEditorTab | null>(null)
   const [previewBreakpoint, setPreviewBreakpoint] = useState<WebsiteBreakpoint>('lg')
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const { persistTheme, saving } = useThemePersistence(theme, setTheme)
   const download = useThemeTextLibraryDownload(theme, persistTheme)
@@ -69,34 +62,42 @@ export function WebsiteThemeTextStyleDetailPage() {
     if (detail?.id === themeId) setTheme(detail)
   }, [detail, themeId])
 
-  const initialStyle = useMemo(
-    () => theme?.textStyles.find((style) => style.id === styleId) ?? null,
+  const style = useMemo(
+    () => theme?.textStyles.find((entry) => entry.id === styleId) ?? null,
     [styleId, theme?.textStyles],
   )
-
-  useEffect(() => {
-    if (initialStyle) setValues(hydrateTextStyle(initialStyle))
-  }, [initialStyle])
+  const values = useMemo(() => (style ? hydrateTextStyle(style) : null), [style])
+  const fontUrls = useMemo(
+    () =>
+      (theme?.fonts ?? [])
+        .map((font) => font.googleFontUrl)
+        .filter((url) => Boolean(url) && parseGoogleFontFamily(url)),
+    [theme?.fonts],
+  )
+  const canEdit = canManage && Boolean(theme)
 
   if (!accessToken) return <Navigate to="/login" replace />
 
   const backPath = `/website/themes/${themeId}`
+  const back = () => goToWebsite(backPath)
 
-  if (!theme || !values) {
+  if (!theme) {
     return (
-      <FeaturePage title={t('editTextStyleTitle')} onBack={() => goToWebsite(backPath)}>
+      <FeaturePage title={t('editTextStyleTitle')} onBack={back} backLabel={tc('back')}>
         {detailStatus === 'error' ? (
           <Alert variant="destructive">
             <AlertDescription>{t('loading')}</AlertDescription>
           </Alert>
-        ) : null}
+        ) : (
+          <LoadingState label={t('loading')} />
+        )}
       </FeaturePage>
     )
   }
 
-  if (!initialStyle) {
+  if (!style || !values) {
     return (
-      <FeaturePage title={t('editTextStyleTitle')} onBack={() => goToWebsite(backPath)}>
+      <FeaturePage title={t('editTextStyleTitle')} onBack={back} backLabel={tc('back')}>
         <Alert variant="destructive">
           <AlertDescription>{t('themeTokenMissing')}</AlertDescription>
         </Alert>
@@ -104,45 +105,12 @@ export function WebsiteThemeTextStyleDetailPage() {
     )
   }
 
-  function save() {
-    if (!theme || !values) return
-    const snap = resolveTextStyle(theme, values)
-    const customization = finalizeElementCustomization(
-      normalizeWebsiteElementCustomization(values.customization),
-      defaultElementHtml('text', values.id, {
-        color: snap.color,
-        fontFamily: snap.fontFamily,
-        fontSize: snap.size,
-      }),
-      values.id,
-    )
-    const parsed = websiteTextStyleSchema.safeParse({
-      ...values,
-      size: fallbackTextSize(values.sizeByBreakpoint),
-      customization: hasElementCustomization(customization) ? customization : undefined,
-    })
-    if (!parsed.success) {
-      setFieldErrors(mapThemeFieldErrors(parsed.error.issues))
-      toast({ title: t('textLibrarySaveFailed'), variant: 'destructive' })
-      return
-    }
-    const nextTheme = theme
-    if (!nextTheme) return
-    persistTheme({
-      ...nextTheme,
-      textStyles: upsertById(nextTheme.textStyles, parsed.data),
-    })
-    setFieldErrors({})
-    toast({ title: t('themeChangesSaved') })
-    goToWebsite(backPath)
-  }
-
-  const canEdit = canManage && !theme.isLocked
-
   return (
     <FeaturePage
       title={values.name || t('editTextStyleTitle')}
-      onBack={() => goToWebsite(backPath)}
+      description={t('editTextStyleDescription')}
+      onBack={back}
+      backLabel={tc('back')}
       actions={
         canEdit && values.sourceLibraryId ? (
           <WebsiteLibraryDownloadUpdateButton
@@ -152,29 +120,40 @@ export function WebsiteThemeTextStyleDetailPage() {
         ) : null
       }
     >
-      {theme.isLocked ? null : <WebsiteLibrarySourceTag sourceLibraryId={values.sourceLibraryId} />}
+      {fontUrls.map((url) => (
+        <link key={url} rel="stylesheet" href={url} />
+      ))}
+      <WebsiteLibrarySourceTag sourceLibraryId={values.sourceLibraryId} />
+      <ThemeTextStyleEditPanel
+        theme={theme}
+        values={values}
+        onValuesChange={() => undefined}
+        fieldErrors={{}}
+        elementTab={elementTab}
+        onElementTabChange={setElementTab}
+        previewBreakpoint={previewBreakpoint}
+        onPreviewBreakpointChange={setPreviewBreakpoint}
+        layout="detail"
+        mode="view"
+        onEdit={canEdit ? setEditTab : undefined}
+      />
+      <ThemeTextStyleDialog
+        open={editTab !== null}
+        theme={theme}
+        initial={values}
+        initialTab={editTab ?? undefined}
+        onOpenChange={(open) => {
+          if (!open) setEditTab(null)
+        }}
+        onSubmit={(nextStyle, patch) => {
+          const base = applyThemeTokenPatch(theme, patch)
+          if (!persistTheme({ ...base, textStyles: upsertById(base.textStyles, nextStyle) })) {
+            return
+          }
+          setEditTab(null)
+        }}
+      />
       {download.dialog}
-      <div className="space-y-6">
-        <ThemeTextStyleEditPanel
-          theme={theme}
-          values={values}
-          onValuesChange={setValues}
-          fieldErrors={fieldErrors}
-          elementTab={elementTab}
-          onElementTabChange={setElementTab}
-          previewBreakpoint={previewBreakpoint}
-          onPreviewBreakpointChange={setPreviewBreakpoint}
-        />
-        <div className="flex justify-end gap-2 border-t border-[hsl(var(--glass-border))] pt-4">
-          <Button type="button" variant="outline" className="h-10 px-4" onClick={() => goToWebsite(backPath)}>
-            {tc('cancel')}
-          </Button>
-          <Button type="button" className="h-10 px-4" onClick={save} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" aria-hidden />
-            {saving ? t('saving') : tc('save')}
-          </Button>
-        </div>
-      </div>
     </FeaturePage>
   )
 }

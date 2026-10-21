@@ -167,8 +167,8 @@ const themeProperties = {
   },
   isDefault: {
     type: 'boolean',
-    title: 'Default',
-    description: 'False unless the user asked to make this the default theme.',
+    title: 'Active theme',
+    description: 'True when this is the theme that applies on the site. False unless the user asked to make this the active theme.',
   },
 }
 
@@ -260,9 +260,9 @@ const canvasOperationSchema = {
   properties: {
     op: {
       type: 'string',
-      enum: ['add_block', 'add_addon', 'update_text', 'update_button', 'update_menu', 'rename', 'place_block', 'move', 'delete_block', 'delete_addon'],
+      enum: ['add_block', 'add_addon', 'update_text', 'update_button', 'update_menu', 'update_block', 'rename', 'place_block', 'move', 'delete_block', 'delete_addon'],
       description:
-        'Same operations on a page, header, footer, or preset. Create: add_block, or add_addon with type text, button, image, slider, or menu. Edit: update_text, update_button, update_menu, rename. Place: move, or place_block with align start, center, or end. Remove: delete_block, delete_addon. Copy ids from the latest canvas outline. Never invent ids.',
+        'Same operations on a page, header, footer, or preset. Create: add_block, or add_addon with type text, button, image, slider, or menu. Edit: update_text, update_button, update_menu, update_block, rename. update_block changes that block shell only: html keeps {{children}} and must not include child or addon markup; styles and scripts scope to .website-el-{id}. Place: move, or place_block with align start, center, or end. Remove: delete_block, delete_addon. Copy ids from the latest canvas outline. Never invent ids.',
     },
     type: {
       type: 'string',
@@ -342,6 +342,24 @@ const canvasOperationSchema = {
       enum: ['heading', 'body'],
       description: 'Text only. heading is larger and shorter; body is smaller. Sizes step down on sm and md.',
     },
+    html: {
+      type: 'string',
+      maxLength: 50000,
+      description:
+        'update_block only. HTML for that block shell. Keep {{children}} where nested content renders. Do not include child or addon markup.',
+    },
+    styles: {
+      type: 'string',
+      maxLength: 50000,
+      description:
+        'update_block only. CSS for this block. Include a .website-el-{id} rule using the block id. Do not style children here.',
+    },
+    scripts: {
+      type: 'string',
+      maxLength: 50000,
+      description:
+        'update_block only. JavaScript for this block. Use root or .website-el-{id}. Empty string clears it.',
+    },
   },
 }
 
@@ -367,7 +385,7 @@ const canvasToolSchema = {
 }
 
 const canvasToolDescription =
-  'Edit the website designer canvas that is already open. The same tool covers a page, header, footer, or preset. Do not create another record for that request. The designer-canvas outline in the latest user message is the only current canvas. Ignore every earlier outline. Copy blockId and addonId from that outline. Never invent ids. One call can hold several operations. The user confirms once, the canvas updates, and they still press Save. Elements you can create or edit: block (add_block; group true nests it in the current section), text (add_addon type text, role heading or body, update_text), button (add_addon type button, update_button), image (add_addon type image; it stays empty until the user picks media; span full makes it a wide banner), slider (add_addon type slider), menu (add_addon type menu with items, update_menu). rename changes the content-tree name and leaves the element in place. move sets col, row, cols, or rows on the 12-column grid. place_block sets align start, center, or end. delete_block and delete_addon remove an existing id. Leave every element the user did not mention as it is. Do not name an element Block, Text, Button, Image, Slider, or Menu.'
+  'Edit the website designer canvas that is already open. The same tool covers a page, header, footer, or preset. Do not create another record for that request. The designer-canvas outline in the latest user message is the only current canvas. Ignore every earlier outline. Copy blockId and addonId from that outline. Never invent ids. One call can hold several operations. The user confirms once, the canvas updates, and they still press Save. Elements you can create or edit: block (add_block; group true nests it in the current section; update_block sets that block’s own html, styles, and scripts), text (add_addon type text, role heading or body, update_text), button (add_addon type button, update_button), image (add_addon type image; it stays empty until the user picks media; span full makes it a wide banner), slider (add_addon type slider), menu (add_addon type menu with items, update_menu). update_block html is the block shell only and must keep {{children}}. Do not put child or addon markup in that HTML. Send html, styles, and scripts together when the look or behavior of the block changes. rename changes the content-tree name and leaves the element in place. move sets col, row, cols, or rows on the 12-column grid. place_block sets align start, center, or end. delete_block and delete_addon remove an existing id. Leave every element the user did not mention as it is. Do not name an element Block, Text, Button, Image, Slider, or Menu.'
 
 function canvasTool(name: string, roles: ToolDefinition['requiredRoles'], permission: string): ToolDefinition {
   return designTool({

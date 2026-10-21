@@ -20,11 +20,19 @@ export const elementChromeSchema = z.object({
   boxShadow: z.enum(['sm', 'md', 'lg']).optional(),
   padding: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
   margin: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+  colorPaletteId: z.string().trim().max(64).nullable().optional(),
+})
+
+export const blockCustomizationSchema = z.object({
+  html: z.string().max(50000),
+  styles: z.string().max(50000),
+  scripts: z.string().max(50000),
 })
 
 export const blockSettingsSchema = elementChromeSchema.extend({
   name: z.string().trim().max(64).optional(),
   groupName: z.string().trim().max(64).optional(),
+  customization: blockCustomizationSchema.optional(),
   dataBinding: z
     .object({
       datasetId: z.string().max(21).nullable(),

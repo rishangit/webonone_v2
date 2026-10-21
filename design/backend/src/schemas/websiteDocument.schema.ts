@@ -65,6 +65,7 @@ export const textAddonSnapshotSchema = z.object({
 
 export const textAddonPropsSchema = z.object({
   textStyleId: z.string().max(64).default(''),
+  textStyleIndex: z.number().int().min(0).max(39).nullable().optional(),
   content: z.string().max(20000).default(''),
   fontSizeByBreakpoint: z
     .object({
@@ -91,6 +92,7 @@ export const buttonAddonSnapshotSchema = z.object({
 
 export const buttonAddonPropsSchema = z.object({
   buttonStyleId: z.string().max(64).default(''),
+  buttonStyleIndex: z.number().int().min(0).max(39).nullable().optional(),
   label: z.string().max(255).default('Button'),
   linkPageId: z.string().max(21).nullable().optional(),
   snapshot: buttonAddonSnapshotSchema.default({}),
@@ -163,6 +165,7 @@ export const elementChromeFields = {
   boxShadow: elementBoxShadowSchema.optional(),
   padding: elementPaddingSchema.optional(),
   margin: elementMarginSchema.optional(),
+  colorPaletteId: z.string().trim().max(64).nullable().optional(),
 }
 
 export type ElementChrome = {
@@ -172,6 +175,7 @@ export type ElementChrome = {
   boxShadow?: z.infer<typeof elementBoxShadowSchema>
   padding?: z.infer<typeof elementPaddingSchema>
   margin?: z.infer<typeof elementMarginSchema>
+  colorPaletteId?: string | null
 }
 
 const addonBaseFields = {
@@ -265,6 +269,7 @@ export type WebsiteBlock = {
   layout: z.infer<typeof layoutByBreakpointSchema>
   addons: WebsiteAddon[]
   children: WebsiteBlock[]
+  customization?: { html: string; styles: string; scripts: string }
 } & ElementChrome
 
 export const websiteBlockSchema: z.ZodType<WebsiteBlock> = z.lazy(() =>
@@ -277,6 +282,13 @@ export const websiteBlockSchema: z.ZodType<WebsiteBlock> = z.lazy(() =>
     place: z.enum(['start', 'center', 'end']).optional(),
     dataBinding: blockDataBindingSchema,
     layout: layoutByBreakpointSchema,
+    customization: z
+      .object({
+        html: z.string().max(50000).optional().default(''),
+        styles: z.string().max(50000).optional().default(''),
+        scripts: z.string().max(50000).optional().default(''),
+      })
+      .optional(),
     addons: z.array(websiteAddonSchema).max(80).default([]),
     children: z.array(websiteBlockSchema).max(MAX_BLOCK_CHILDREN).default([]),
   }),
@@ -408,6 +420,15 @@ export const websiteDocumentSchema = z.preprocess(
       version: z.literal(1),
       container: z.object({
         height: z.number().min(64).max(20000).default(640),
+        heightByBreakpoint: z
+          .object({
+            sm: z.number().min(64).max(20000).optional(),
+            md: z.number().min(64).max(20000).optional(),
+            lg: z.number().min(64).max(20000).optional(),
+            xl: z.number().min(64).max(20000).optional(),
+            '2xl': z.number().min(64).max(20000).optional(),
+          })
+          .optional(),
         backgroundColor: z.string().max(32).optional(),
       }),
       blocks: z.array(websiteBlockSchema).max(MAX_ROOT_BLOCKS).default([]),

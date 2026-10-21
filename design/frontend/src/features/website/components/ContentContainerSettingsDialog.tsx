@@ -12,7 +12,8 @@ import {
 } from '@webonone/ui-kit'
 import { MIN_PAGE_CONTAINER_HEIGHT } from '../document/layout'
 import { createContainerSettingsSchema } from '../schemas/websiteDesignerSchemas'
-import type { WebsiteDocumentV1 } from '../types'
+import type { WebsiteDocumentV1, WebsiteTheme } from '../types'
+import { ColorPaletteField } from './ColorPaletteField'
 
 export const CONTAINER_SETTINGS_DIALOG_SIZE = {
   sizeWidth: 'medium' as const,
@@ -22,14 +23,18 @@ export const CONTAINER_SETTINGS_DIALOG_SIZE = {
 interface ContentContainerSettingsDialogProps {
   open: boolean
   container: WebsiteDocumentV1['container']
+  theme?: WebsiteTheme | null
+  colorPaletteId?: string | null
   minHeight?: number
   onOpenChange: (open: boolean) => void
-  onSave: (next: WebsiteDocumentV1['container']) => void
+  onSave: (next: WebsiteDocumentV1['container'], colorPaletteId: string | null) => void
 }
 
 export function ContentContainerSettingsDialog({
   open,
   container,
+  theme = null,
+  colorPaletteId = null,
   minHeight = MIN_PAGE_CONTAINER_HEIGHT,
   onOpenChange,
   onSave,
@@ -38,14 +43,16 @@ export function ContentContainerSettingsDialog({
   const { t: tc } = useTranslation('common')
   const [height, setHeight] = useState(String(container.height))
   const [backgroundColor, setBackgroundColor] = useState(container.backgroundColor ?? '#ffffff')
+  const [paletteId, setPaletteId] = useState<string | null>(colorPaletteId)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
 
   useEffect(() => {
     if (!open) return
     setHeight(String(container.height))
     setBackgroundColor(container.backgroundColor ?? '#ffffff')
+    setPaletteId(colorPaletteId ?? null)
     setFieldErrors({})
-  }, [container, open])
+  }, [colorPaletteId, container, open])
 
   function submit() {
     const parsed = createContainerSettingsSchema(minHeight).safeParse({ height, backgroundColor })
@@ -54,10 +61,13 @@ export function ContentContainerSettingsDialog({
       return
     }
     setFieldErrors({})
-    onSave({
-      height: parsed.data.height,
-      backgroundColor: parsed.data.backgroundColor || undefined,
-    })
+    onSave(
+      {
+        height: parsed.data.height,
+        backgroundColor: parsed.data.backgroundColor || undefined,
+      },
+      paletteId,
+    )
     onOpenChange(false)
   }
 
@@ -82,6 +92,12 @@ export function ContentContainerSettingsDialog({
       }
     >
       <Form className="space-y-4">
+        <ColorPaletteField
+          id="container-settings-palette"
+          theme={theme}
+          value={paletteId}
+          onChange={setPaletteId}
+        />
         <FormField label={t('containerHeight')} htmlFor="container-settings-height" required error={fieldErrors.height}>
           <Input
             id="container-settings-height"

@@ -55,6 +55,29 @@ export function snapRowSpan(heightPx: number, minRows: number): number {
   return Math.max(minRows, Math.round(heightPx / ROW_HEIGHT)) * ROW_HEIGHT
 }
 
+export function resolveContainerHeight(
+  container: WebsiteDocumentV1['container'],
+  breakpoint: WebsiteBreakpoint,
+): number {
+  const specific = container.heightByBreakpoint?.[breakpoint]
+  return specific != null && Number.isFinite(specific) ? specific : container.height
+}
+
+/** Stores height for one size. Other sizes keep the heights they already have. */
+export function writeContainerHeight(
+  container: WebsiteDocumentV1['container'],
+  breakpoint: WebsiteBreakpoint,
+  height: number,
+): WebsiteDocumentV1['container'] {
+  return {
+    ...container,
+    heightByBreakpoint: {
+      ...container.heightByBreakpoint,
+      [breakpoint]: height,
+    },
+  }
+}
+
 export function resolveLayoutRect(layout: LayoutByBreakpoint, breakpoint: WebsiteBreakpoint): LayoutRect {
   const start = WEBSITE_BREAKPOINTS.indexOf(breakpoint)
   for (let i = start; i < WEBSITE_BREAKPOINTS.length; i += 1) {

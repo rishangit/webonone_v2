@@ -14,6 +14,7 @@ import {
   remapColorIndex,
   removePaletteSlot,
   removeThemeColorPaletteGroup,
+  stylePaletteId,
   swatchesToColorTokens,
   themeSlotValue,
   WEBSITE_PALETTE_MAX,
@@ -28,7 +29,6 @@ function emptyTheme(): WebsiteTheme {
     bodyTextColor: '#111827',
     isActive: true,
     isDefault: false,
-    isLocked: false,
     sourceLibraryId: null,
     fonts: [],
     colorPaletteId: '',
@@ -161,7 +161,24 @@ describe('websitePalette', () => {
     assert.equal(second.colorPalettes[1]?.colors[0]?.value, '#AA0000')
     assert.equal(remapColorIndex({ ...theme, ...second }, second.colorPalettes[1]!.id, 2), 2)
     assert.equal(paletteOverrideForSave(second.colorPaletteId, second.colorPaletteId), null)
+    assert.equal(paletteOverrideForSave(second.colorPaletteId, ''), null)
     assert.equal(paletteOverrideForSave(second.colorPaletteId, second.colorPalettes[1]!.id), second.colorPalettes[1]!.id)
+  })
+
+  it('paints theme colors from the first palette when the theme palette is empty', () => {
+    const applied = applyLibraryPaletteGroupToTheme(emptyTheme(), {
+      name: 'Brand',
+      sourceLibraryPaletteId: 'lib-1',
+      entries: [
+        { name: 'Primary', value: '#111111' },
+        { name: 'Secondary', value: '#222222' },
+      ],
+    })
+    const theme = applyThemeChrome({ ...emptyTheme(), ...applied, colorPaletteId: '' })
+    assert.equal(theme.colorPaletteId, '')
+    assert.equal(theme.pageBackground, '#111111')
+    assert.equal(stylePaletteId(theme, null), applied.colorPalettes[0]?.id)
+    assert.equal(stylePaletteId(theme, 'missing'), applied.colorPalettes[0]?.id)
   })
 
   it('clears a style override when its palette is removed', () => {

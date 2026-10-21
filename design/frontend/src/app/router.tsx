@@ -682,7 +682,27 @@ export function App() {
               }
             />
             <Route
+              path="/embed/dialogs/website/headers/:id"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteChromeCreateEmbedPage kind="headers" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
               path="/embed/dialogs/website/footers/create"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteChromeCreateEmbedPage kind="footers" />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/footers/:id"
               element={
                 <RoleRoute roles={[...manageRoles]}>
                   <LazyRoute>

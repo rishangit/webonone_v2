@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { FormField, Input, Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
+import { FormField, Input, ReadOnlyField, Tabs, TabsList, TabsTrigger } from '@webonone/ui-kit'
 import { fallbackTextSize, resolveTextStyle } from '../../document/theme'
 import { WEBSITE_BREAKPOINTS, type WebsiteBreakpoint, type WebsiteTextStyle, type WebsiteTheme } from '../../types'
 import {
@@ -22,6 +22,8 @@ import {
 import { WebsiteElementCustomizationPreview } from '../WebsiteElementCustomizationPreview'
 import {
   WebsiteElementEditorTabs,
+  type WebsiteElementEditorLayout,
+  type WebsiteElementEditorMode,
   type WebsiteElementEditorTab,
 } from '../WebsiteElementEditorTabs'
 import { defaultSizeByBreakpoint, SIZE_LABEL_KEYS } from './textStyleDefaults'
@@ -35,6 +37,9 @@ type ThemeTextStyleEditPanelProps = {
   onElementTabChange: (tab: WebsiteElementEditorTab) => void
   previewBreakpoint: WebsiteBreakpoint
   onPreviewBreakpointChange: (breakpoint: WebsiteBreakpoint) => void
+  layout?: WebsiteElementEditorLayout
+  mode?: WebsiteElementEditorMode
+  onEdit?: (tab: WebsiteElementEditorTab) => void
 }
 
 export function ThemeTextStyleEditPanel({
@@ -46,6 +51,9 @@ export function ThemeTextStyleEditPanel({
   onElementTabChange,
   previewBreakpoint,
   onPreviewBreakpointChange,
+  layout = 'dialog',
+  mode = 'edit',
+  onEdit,
 }: ThemeTextStyleEditPanelProps) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
@@ -68,8 +76,14 @@ export function ThemeTextStyleEditPanel({
   )
   const defaultHtml = defaultElementHtml('text', values.id, elementVisual)
   const paletteOptions = themePaletteSelectOptions(theme)
-  const colorPaletteId = stylePaletteId(theme, values.colorPaletteId)
-  const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId)
+  const themePaletteId = stylePaletteId(theme, null)
+  const storedPaletteId = values.colorPaletteId?.trim() || ''
+  const colorPaletteId = !storedPaletteId || storedPaletteId === themePaletteId ? '' : storedPaletteId
+  const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId || themePaletteId)
+  const inheritedPaletteName = theme.colorPalettes.find((palette) => palette.id === themePaletteId)?.name
+  const paletteNoneLabel = inheritedPaletteName
+    ? t('inheritColorPaletteNamed', { name: inheritedPaletteName })
+    : t('inheritColorPalette')
   const missingTokenLabel = t('themeTokenMissing')
   const withTokenFallback = (options: TextStyleBasicSettingsOption[], id: string) =>
     id && !options.some((entry) => entry.id === id)
@@ -88,7 +102,7 @@ export function ThemeTextStyleEditPanel({
 
   const generalFields = (
     <TextStyleBasicSettingsFields
-      mode="edit"
+      mode={mode === 'view' ? 'view' : 'edit'}
       idPrefix="theme-text"
       values={{
         name: values.name,
@@ -98,14 +112,16 @@ export function ThemeTextStyleEditPanel({
         size: values.size,
       }}
       onChange={(next) => {
-        const paletteChanged = next.colorPaletteId !== colorPaletteId
+        const previousEffective = stylePaletteId(theme, values.colorPaletteId)
+        const nextEffective = stylePaletteId(theme, next.colorPaletteId)
+        const paletteChanged = nextEffective !== previousEffective
         onValuesChange({
           ...values,
           name: next.name,
           fontId: next.fontId,
-          colorPaletteId: paletteOverrideForSave(theme.colorPaletteId, next.colorPaletteId),
+          colorPaletteId: paletteOverrideForSave(themePaletteId, next.colorPaletteId),
           colorIndex: paletteChanged
-            ? remapColorIndex(theme, next.colorPaletteId, Number(next.colorId) || 1)
+            ? remapColorIndex(theme, nextEffective, Number(next.colorId) || 1)
             : Number(next.colorId) || 1,
         })
       }}
@@ -115,10 +131,23 @@ export function ThemeTextStyleEditPanel({
       colorOptions={colorOptionsWithFallback}
       allowNone
       noneLabel={tc('none')}
+      paletteNoneLabel={paletteNoneLabel}
       fontPlaceholder={t('pickFontRequired')}
       colorPlaceholder={t('pickColorRequired')}
       showSize={false}
     >
+      {mode === 'view' ? (
+        <div className="grid grid-cols-5 gap-2">
+          {WEBSITE_BREAKPOINTS.map((breakpoint) => (
+            <ReadOnlyField
+              key={breakpoint}
+              label={t(SIZE_LABEL_KEYS[breakpoint])}
+              value={String(values.sizeByBreakpoint?.[breakpoint] ?? values.size)}
+            />
+          ))}
+        </div>
+      ) : (
+        <>
       <div className="grid grid-cols-5 gap-2">
         {WEBSITE_BREAKPOINTS.map((breakpoint) => (
           <FormField
@@ -163,6 +192,8 @@ export function ThemeTextStyleEditPanel({
           </TabsList>
         </Tabs>
       </div>
+        </>
+      )}
     </TextStyleBasicSettingsFields>
   )
 
@@ -171,6 +202,9 @@ export function ThemeTextStyleEditPanel({
       tab={elementTab}
       onTabChange={onElementTabChange}
       kind="text"
+      layout={layout}
+      mode={mode}
+      onEdit={onEdit}
       scopeId={values.id}
       customization={customization}
       defaultHtml={defaultHtml}
@@ -190,6 +224,7 @@ export function ThemeTextStyleEditPanel({
         />
       }
       general={generalFields}
+      generalView={generalFields}
     />
   )
 }

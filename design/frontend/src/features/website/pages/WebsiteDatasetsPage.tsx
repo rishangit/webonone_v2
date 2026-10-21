@@ -14,7 +14,6 @@ import {
   ItemListItem,
   ItemListMenu,
   ListPageBody,
-  StatusTag,
   useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -112,10 +111,9 @@ export function WebsiteDatasetsPage() {
                     <button
                       type="button"
                       className="block w-full text-left"
-                      onClick={() => canManage && !item.isLocked && setDialog({ id: item.id, initial: item })}
+                      onClick={() => canManage && setDialog({ id: item.id, initial: item })}
                     >
                       <p className="font-medium">{item.name}</p>
-                      {item.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
                       <p className="text-sm text-muted-foreground">
                         {t(`datasetSource.${item.sourceType}`)} · {item.filters?.rules?.length ?? 0}{' '}
                         {t('datasetRules')} · {t(item.status === 'active' ? 'active' : 'inactive')}
@@ -144,20 +142,16 @@ export function WebsiteDatasetsPage() {
                       >
                         {t('duplicate')}
                       </DropdownMenuItem>
-                      {item.isLocked ? null : (
-                        <DropdownMenuItem onClick={() => setDialog({ id: item.id, initial: item })}>
-                          {t('editDetails')}
-                        </DropdownMenuItem>
-                      )}
-                      {item.isLocked ? null : <DropdownMenuSeparator />}
-                      {item.isLocked ? null : (
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => setPendingDelete({ id: item.id, name: item.name })}
-                        >
-                          {t('common:delete')}
-                        </DropdownMenuItem>
-                      )}
+                      <DropdownMenuItem onClick={() => setDialog({ id: item.id, initial: item })}>
+                        {t('editDetails')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setPendingDelete({ id: item.id, name: item.name })}
+                      >
+                        {t('common:delete')}
+                      </DropdownMenuItem>
                     </ItemListMenu>
                   ) : null}
                 </ItemListItem>

@@ -56,7 +56,6 @@ export function WebsitePagesList({
             >
               {page.name}
             </a>
-            {page.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
             <WebsiteLibrarySourceTag sourceLibraryId={page.sourceLibraryId} />
           </span>
         ),
@@ -87,7 +86,7 @@ export function WebsitePagesList({
           <DropdownMenuItem onClick={() => onBrowse(page)}>{t('browseLive')}</DropdownMenuItem>
         ) : null}
         <DropdownMenuItem onClick={() => onDuplicate(page)}>{t('duplicate')}</DropdownMenuItem>
-        {page.sourceLibraryId && !page.isLocked ? (
+        {page.sourceLibraryId ? (
           <DropdownMenuItem
             disabled={revert.reverting}
             onClick={() => revert.ask({ kind: 'pages', id: page.id, name: page.name })}
@@ -95,18 +94,14 @@ export function WebsitePagesList({
             {t('downloadUpdatedFromLibrary')}
           </DropdownMenuItem>
         ) : null}
-        {page.isLocked ? null : (
-          <DropdownMenuItem onClick={() => onEditDetails(page)}>{t('editDetails')}</DropdownMenuItem>
-        )}
-        {page.isLocked ? null : <DropdownMenuSeparator />}
-        {page.isLocked ? null : (
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
-            onClick={() => setPendingDelete({ id: page.id, name: page.name })}
-          >
-            {t('common:delete')}
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem onClick={() => onEditDetails(page)}>{t('editDetails')}</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={() => setPendingDelete({ id: page.id, name: page.name })}
+        >
+          {t('common:delete')}
+        </DropdownMenuItem>
       </ItemListMenu>
     )
   }
@@ -116,7 +111,6 @@ export function WebsitePagesList({
       <>
         <div className="flex items-center gap-2">
           <p className="font-medium">{page.name}</p>
-          {page.isLocked ? <StatusTag variant="pending">{t('lockedDefault')}</StatusTag> : null}
           <WebsiteLibrarySourceTag sourceLibraryId={page.sourceLibraryId} />
           <StatusTag variant={page.status === 'active' ? 'approved' : 'pending'}>
             {page.status === 'active' ? t('active') : t('inactive')}

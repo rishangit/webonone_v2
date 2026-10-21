@@ -11,7 +11,8 @@ import { Alert, AlertDescription, useToast } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
-import { websitePresetsActions } from '../store'
+import { websitePresetsActions, websiteThemesActions } from '../store'
+import { defaultWebsiteTheme } from '../document/palette'
 import { WebsitePresetDialog } from '../components/WebsiteEntityDialogs'
 
 export function WebsitePresetCreateEmbedPage() {
@@ -23,12 +24,14 @@ export function WebsitePresetCreateEmbedPage() {
   const { goToWebsiteEdit } = useNavigateDesign()
   const { toast } = useToast()
   const { detail, detailStatus, detailError } = useAppSelector((s) => s.websitePresets)
+  const themes = useAppSelector((s) => s.websiteThemes.items)
   const [awaiting, setAwaiting] = useState(false)
   const parentOrigin = getPlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const requestId = searchParams.get(PLATFORM_EMBED_QUERY.DIALOG_REQUEST_ID)?.trim() ?? ''
   const isValid = Boolean(parentOrigin && requestId)
 
   useEffect(() => {
+    dispatch(websiteThemesActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
     if (id) dispatch(websitePresetsActions.fetchDetailRequested({ id, force: true }))
   }, [dispatch, id])
 
@@ -53,7 +56,8 @@ export function WebsitePresetCreateEmbedPage() {
     )
   }
 
-  const initialName = isEdit && detail && detail.id === id ? detail.name : undefined
+  const editing = isEdit && detail?.id === id ? detail : null
+  const initialName = editing?.name
 
   if (isEdit && !initialName) {
     return (
@@ -73,14 +77,20 @@ export function WebsitePresetCreateEmbedPage() {
       chrome="embed-page"
       entityId={id}
       initialName={initialName}
+      initialColorPaletteId={editing?.colorPaletteId ?? null}
+      theme={defaultWebsiteTheme(themes)}
       isSaving={detailStatus === 'saving'}
       error={awaiting ? detailError : null}
       onOpenChange={(next) => {
         if (!next && parentOrigin && requestId) sendPlatformPeerDialogDismiss(parentOrigin, requestId)
       }}
-      onSubmit={(name) => {
+      onSubmit={(name, colorPaletteId) => {
         setAwaiting(true)
-        dispatch(websitePresetsActions.saveDetailRequested(id ? { id, body: { name } } : { body: { name } }))
+        dispatch(
+          websitePresetsActions.saveDetailRequested(
+            id ? { id, body: { name, colorPaletteId } } : { body: { name, colorPaletteId } },
+          ),
+        )
       }}
     />
   )

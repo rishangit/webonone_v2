@@ -6,6 +6,8 @@ import {
   CONTENT_BLOCK_LAYOUT_LIMITS,
   documentContentHeight,
   pinchScaleFromSpans,
+  resolveContainerHeight,
+  writeContainerHeight,
   pinchToRect,
   pointerToRect,
   ROW_HEIGHT,
@@ -13,6 +15,20 @@ import {
   snapToRow,
 } from './layout'
 import { emptyLayoutByBreakpoint, emptyWebsiteDocument } from '../types'
+
+describe('container height by size', () => {
+  it('keeps each screen size height when one size is resized', () => {
+    const document = emptyWebsiteDocument()
+    const sm = writeContainerHeight(document.container, 'sm', 320)
+    const both = writeContainerHeight(sm, 'lg', 960)
+    assert.equal(resolveContainerHeight(both, 'sm'), 320)
+    assert.equal(resolveContainerHeight(both, 'lg'), 960)
+    assert.equal(resolveContainerHeight(both, 'md'), document.container.height)
+    assert.equal(resolveContainerHeight(both, 'xl'), document.container.height)
+    assert.equal(resolveContainerHeight(both, '2xl'), document.container.height)
+    assert.equal(both.height, document.container.height)
+  })
+})
 
 describe('documentContentHeight', () => {
   it('is 0 when there are no blocks', () => {

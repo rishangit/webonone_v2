@@ -86,8 +86,14 @@ export function ThemeButtonStyleEditPanel({
     fontFamily: font.family,
   }))
   const paletteOptions = themePaletteSelectOptions(theme)
-  const colorPaletteId = stylePaletteId(theme, values.colorPaletteId)
-  const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId)
+  const themePaletteId = stylePaletteId(theme, null)
+  const storedPaletteId = values.colorPaletteId?.trim() || ''
+  const colorPaletteId = !storedPaletteId || storedPaletteId === themePaletteId ? '' : storedPaletteId
+  const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId || themePaletteId)
+  const inheritedPaletteName = theme.colorPalettes.find((palette) => palette.id === themePaletteId)?.name
+  const paletteNoneLabel = inheritedPaletteName
+    ? t('inheritColorPaletteNamed', { name: inheritedPaletteName })
+    : t('inheritColorPalette')
   const missingTokenLabel = t('themeTokenMissing')
   const withTokenFallback = (options: ButtonStyleBasicSettingsOption[], id: string) =>
     id && !options.some((entry) => entry.id === id)
@@ -115,16 +121,18 @@ export function ThemeButtonStyleEditPanel({
       mode={mode}
       values={basicValues}
       onChange={(next) => {
-        const paletteChanged = next.colorPaletteId !== colorPaletteId
+        const previousEffective = stylePaletteId(theme, values.colorPaletteId)
+        const nextEffective = stylePaletteId(theme, next.colorPaletteId)
+        const paletteChanged = nextEffective !== previousEffective
         const remapped = paletteChanged
           ? {
               ...next,
-              backgroundColorId: String(remapColorIndex(theme, next.colorPaletteId, Number(next.backgroundColorId) || 1)),
-              textColorId: String(remapColorIndex(theme, next.colorPaletteId, Number(next.textColorId) || 1)),
-              borderColorId: String(remapColorIndex(theme, next.colorPaletteId, Number(next.borderColorId) || 1)),
+              backgroundColorId: String(remapColorIndex(theme, nextEffective, Number(next.backgroundColorId) || 1)),
+              textColorId: String(remapColorIndex(theme, nextEffective, Number(next.textColorId) || 1)),
+              borderColorId: String(remapColorIndex(theme, nextEffective, Number(next.borderColorId) || 1)),
             }
           : next
-        const override = paletteOverrideForSave(theme.colorPaletteId, remapped.colorPaletteId)
+        const override = paletteOverrideForSave(themePaletteId, remapped.colorPaletteId)
         const draft = applyButtonBasicToDraft(values, labelStyle, {
           name: remapped.name,
           fontId: remapped.fontId,
@@ -143,6 +151,7 @@ export function ThemeButtonStyleEditPanel({
       paletteOptions={paletteOptions}
       colorOptions={colorOptionsWithFallback}
       idPrefix="theme-button"
+      paletteNoneLabel={paletteNoneLabel}
       fontPlaceholder={t('pickFontRequired')}
       colorPlaceholder={t('pickColorRequired')}
     />

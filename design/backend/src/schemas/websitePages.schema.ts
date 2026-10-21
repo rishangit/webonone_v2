@@ -19,6 +19,7 @@ export const createWebsitePageSchema = z.object({
   path: websitePagePathSchema.default(''),
   status: websitePageStatusSchema.optional().default('active'),
   layoutId: optionalLayoutIdSchema,
+  colorPaletteId: z.string().trim().max(64).nullable().optional(),
   document: websiteDocumentSchema.optional().default(emptyWebsiteDocument),
 })
 
@@ -28,6 +29,7 @@ export const updateWebsitePageSchema = z
     path: websitePagePathSchema.optional(),
     status: websitePageStatusSchema.optional(),
     layoutId: optionalLayoutIdSchema,
+    colorPaletteId: z.string().trim().max(64).nullable().optional(),
     sortOrder: z.number().int().min(0).max(10000).optional(),
     document: websiteDocumentSchema.optional(),
   })

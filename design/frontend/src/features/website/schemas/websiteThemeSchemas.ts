@@ -28,6 +28,7 @@ export const websiteFontTokenSchema = z
     name: z.string().trim().min(1, 'Style name is required').max(128),
     googleFontUrl: z.string().trim().min(1, 'Google Font URL is required').max(2048),
     family: z.string().trim().min(1, 'Font family is required').max(255),
+    sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
   })
   .superRefine((font, ctx) => {
     if (font.googleFontUrl && !parseGoogleFontFamily(font.googleFontUrl)) {

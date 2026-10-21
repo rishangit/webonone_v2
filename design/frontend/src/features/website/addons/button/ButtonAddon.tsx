@@ -2,8 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { FormField, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@webonone/ui-kit'
 import { nanoid } from 'nanoid'
 import { CustomWebsiteElementHost } from '../../components/CustomWebsiteElementHost'
-import { buttonLabelTypography, resolveButtonStyle } from '../../document/theme'
-import { themePaletteColorValues } from '../../utils/websitePalette'
+import { buttonLabelTypography, buttonStyleAtIndex, resolveButtonStyle } from '../../document/theme'
+import { paletteForColors, themePaletteColorValues } from '../../utils/websitePalette'
 import { emptyLayoutByBreakpoint } from '../../types'
 import type { WebsiteAddon } from '../../types'
 import type { AddonModule, AddonPropsFieldsProps, AddonRenderProps } from '../types'
@@ -12,6 +12,7 @@ import { publicPageHref } from '../../utils/companyPublicHost'
 function ButtonAddonRenderer({
   addon,
   theme,
+  paletteId,
   pages = [],
   companyId,
   publish,
@@ -19,8 +20,19 @@ function ButtonAddonRenderer({
   onNavigatePage,
 }: AddonRenderProps) {
   if (addon.type !== 'button') return null
-  const buttonStyle = theme?.buttonStyles.find((item) => item.id === addon.props.buttonStyleId)
-  const snap = buttonStyle ? resolveButtonStyle(theme ?? null, buttonStyle) : addon.props.snapshot
+  const buttonStyle = buttonStyleAtIndex(theme, addon.props.buttonStyleIndex, addon.props.buttonStyleId)
+  const paintId = paletteForColors(theme, buttonStyle?.colorPaletteId, paletteId)
+  const paintTheme =
+    theme && paintId && buttonStyle?.textStyleId
+      ? {
+          ...theme,
+          textStyles: theme.textStyles.map((style) =>
+            style.id === buttonStyle.textStyleId ? { ...style, colorPaletteId: paintId } : style,
+          ),
+        }
+      : theme
+  const paintButton = buttonStyle && paintId ? { ...buttonStyle, colorPaletteId: paintId } : buttonStyle
+  const snap = paintButton ? resolveButtonStyle(paintTheme ?? null, paintButton) : addon.props.snapshot
   const page = pages.find((item) => item.id === addon.props.linkPageId)
   const href = publish && page && companyId ? publicPageHref(companyId, page.path) : undefined
   const style = {
@@ -71,7 +83,7 @@ function ButtonAddonRenderer({
       customization={customization}
       placeholders={{ label }}
       baseStyle={style}
-      paletteColors={theme ? themePaletteColorValues(theme, buttonStyle?.colorPaletteId) : undefined}
+      paletteColors={theme ? themePaletteColorValues(theme, paintId) : undefined}
       className="inline-flex h-full w-full"
       scriptContext={{ publish, href }}
       fallback={fallback}
@@ -82,6 +94,9 @@ function ButtonAddonRenderer({
 function ButtonAddonPropsFields({ addon, theme, pages, onChange }: AddonPropsFieldsProps) {
   const { t } = useTranslation('website')
   if (addon.type !== 'button') return null
+
+  const styles = theme?.buttonStyles ?? []
+  const selected = buttonStyleAtIndex(theme, addon.props.buttonStyleIndex, addon.props.buttonStyleId)
 
   return (
     <>
@@ -99,20 +114,32 @@ function ButtonAddonPropsFields({ addon, theme, pages, onChange }: AddonPropsFie
       </FormField>
       <FormField label={t('buttonStyle')} htmlFor="button-style">
         <Select
-          value={addon.props.buttonStyleId || '__none'}
-          onValueChange={(value) =>
+          value={selected?.id || '__none'}
+          onValueChange={(value) => {
+            if (value === '__none') {
+              onChange({
+                ...addon,
+                props: { ...addon.props, buttonStyleId: '', buttonStyleIndex: null },
+              })
+              return
+            }
+            const buttonStyleIndex = styles.findIndex((style) => style.id === value)
             onChange({
               ...addon,
-              props: { ...addon.props, buttonStyleId: value === '__none' ? '' : value },
+              props: {
+                ...addon.props,
+                buttonStyleId: value,
+                buttonStyleIndex: buttonStyleIndex >= 0 ? buttonStyleIndex : null,
+              },
             })
-          }
+          }}
         >
           <SelectTrigger id="button-style">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="__none">{t('common:none')}</SelectItem>
-            {(theme?.buttonStyles ?? []).map((style) => (
+            {styles.map((style) => (
               <SelectItem key={style.id} value={style.id}>
                 {style.name}
               </SelectItem>

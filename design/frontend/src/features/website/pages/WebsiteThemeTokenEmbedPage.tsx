@@ -116,6 +116,7 @@ export function WebsiteThemeTokenEmbedPage({ kind }: { kind: ThemeTokenKind }) {
         chrome="embed-page"
         theme={theme}
         initial={initial}
+        initialTab={parseElementEditorTab(searchParams.get('tab'))}
         onOpenChange={onOpenChange}
         onSubmit={complete}
       />
