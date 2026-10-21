@@ -162,6 +162,20 @@ export async function listPendingCompanies(_req: SuperAdminRequest, res: Respons
   }
 }
 
+export async function requestCompanyApproval(req: AuthenticatedRequest, res: Response) {
+  if (!req.user) {
+    res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })
+    return
+  }
+
+  try {
+    const result = await companyService.requestCompanyApproval(req.user.id, String(req.params.id))
+    res.json(result)
+  } catch (err) {
+    handleServiceError(err, res)
+  }
+}
+
 export async function approveCompany(req: SuperAdminRequest, res: Response) {
   if (!req.superAdmin) {
     res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' })

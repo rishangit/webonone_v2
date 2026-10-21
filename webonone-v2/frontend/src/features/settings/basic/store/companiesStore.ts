@@ -34,6 +34,9 @@ interface CompaniesState {
   updatingId: string | null
   connectCompanyStatus: 'idle' | 'connecting' | 'error'
   connectCompanyError: string | null
+  requestApprovalStatus: 'idle' | 'saving' | 'success' | 'error'
+  requestApprovalCompanyId: string | null
+  requestApprovalError: string | null
 }
 
 const initialState: CompaniesState = {
@@ -55,6 +58,9 @@ const initialState: CompaniesState = {
   updatingId: null,
   connectCompanyStatus: 'idle',
   connectCompanyError: null,
+  requestApprovalStatus: 'idle',
+  requestApprovalCompanyId: null,
+  requestApprovalError: null,
 }
 
 const companiesSlice = createSlice({
@@ -160,6 +166,36 @@ const companiesSlice = createSlice({
     updateCompanyStatusFailed(state, action: PayloadAction<string>) {
       state.adminListError = action.payload
       state.updatingId = null
+    },
+    requestCompanyApprovalRequested(state, action: PayloadAction<{ id: string }>) {
+      state.requestApprovalStatus = 'saving'
+      state.requestApprovalCompanyId = action.payload.id
+      state.requestApprovalError = null
+    },
+    requestCompanyApprovalSucceeded(
+      state,
+      action: PayloadAction<{ id: string; status: CompanyStatus; approvedAt: string | null }>,
+    ) {
+      const { id, status, approvedAt } = action.payload
+      state.myCompanies = state.myCompanies.map((item) =>
+        item.id === id ? { ...item, status, approvedAt } : item,
+      )
+      if (state.detail?.id === id) {
+        state.detail = { ...state.detail, status, approvedAt }
+      }
+      state.requestApprovalStatus = 'success'
+      state.requestApprovalCompanyId = id
+      state.requestApprovalError = null
+    },
+    requestCompanyApprovalFailed(state, action: PayloadAction<{ id: string; message: string }>) {
+      state.requestApprovalStatus = 'error'
+      state.requestApprovalCompanyId = action.payload.id
+      state.requestApprovalError = action.payload.message
+    },
+    clearRequestApprovalNotice(state) {
+      state.requestApprovalStatus = 'idle'
+      state.requestApprovalCompanyId = null
+      state.requestApprovalError = null
     },
     loadCompanyDetailRequested(state, _action: PayloadAction<{ id: string }>) {
       state.detailStatus = 'loading'
@@ -324,6 +360,30 @@ const updateCompanyStatusEpic: CompaniesEpic = (action$) =>
     ),
   )
 
+const requestCompanyApprovalEpic: CompaniesEpic = (action$) =>
+  action$.pipe(
+    ofType(companiesActions.requestCompanyApprovalRequested.type),
+    exhaustMap((action: ReturnType<typeof companiesActions.requestCompanyApprovalRequested>) =>
+      from(companyApi.requestCompanyApproval(action.payload.id)).pipe(
+        map((result) =>
+          companiesActions.requestCompanyApprovalSucceeded({
+            id: result.company.id,
+            status: result.company.status,
+            approvedAt: result.company.approvedAt,
+          }),
+        ),
+        catchError((err: Error) =>
+          of(
+            companiesActions.requestCompanyApprovalFailed({
+              id: action.payload.id,
+              message: err.message,
+            }),
+          ),
+        ),
+      ),
+    ),
+  )
+
 const loadCompanyDetailEpic: CompaniesEpic = (action$) =>
   action$.pipe(
     ofType(companiesActions.loadCompanyDetailRequested.type),
@@ -363,6 +423,7 @@ export const companiesEpics = combineEpics(
   registerCompanyEpic,
   loadAdminCompaniesEpic,
   updateCompanyStatusEpic,
+  requestCompanyApprovalEpic,
   loadCompanyDetailEpic,
   updateCompanyDetailEpic,
   connectCompanyEpic,

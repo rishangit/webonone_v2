@@ -13,9 +13,10 @@ import {
   StatusTag,
   useToast,
 } from '@webonone/mobile-ui'
+import { useTranslation } from 'react-i18next'
 import { useSession } from '@/features/auth/SessionContext'
 import { findMatchingSessionRole } from '@/features/auth/sessionRoleApi'
-import type { MyCompanySummary } from '@/features/companies/services/companyApi'
+import { companyApi, type MyCompanySummary } from '@/features/companies/services/companyApi'
 import { MY_COMPANIES_PATH } from '@/features/companies/utils/companyPaths'
 import { formatCompanyDate } from '@/features/companies/utils/formatCompanyDate'
 
@@ -24,6 +25,7 @@ type MyCompaniesListProps = {
   emptyMessage?: string
   listPath?: string
   onOpenProfile: (companyId: string) => void
+  onRequestedApproval?: () => void
 }
 
 function canLoginAsOwner(item: MyCompanySummary): boolean {
@@ -35,10 +37,13 @@ export function MyCompaniesList({
   emptyMessage = 'No companies yet.',
   listPath = MY_COMPANIES_PATH,
   onOpenProfile,
+  onRequestedApproval,
 }: MyCompaniesListProps) {
+  const { t } = useTranslation('settings')
   const { roleOptions, selectRole } = useSession()
   const { toast } = useToast()
   const [loggingInId, setLoggingInId] = useState<string | null>(null)
+  const [requestingId, setRequestingId] = useState<string | null>(null)
 
   if (items.length === 0) {
     return <ItemListEmpty>{emptyMessage}</ItemListEmpty>
@@ -71,6 +76,24 @@ export function MyCompaniesList({
     }
   }
 
+  async function handleRequestApproval(item: MyCompanySummary) {
+    if (item.role !== 'company_admin' || item.status !== 'draft') return
+    setRequestingId(item.id)
+    try {
+      await companyApi.requestCompanyApproval(item.id)
+      toast({ title: t('myCompanies.requestApprovalSent') })
+      onRequestedApproval?.()
+    } catch (err) {
+      toast({
+        title: t('myCompanies.requestApprovalFailed'),
+        description: err instanceof Error ? err.message : undefined,
+        variant: 'destructive',
+      })
+    } finally {
+      setRequestingId(null)
+    }
+  }
+
   return (
     <ItemList>
       {items.map((item) => {
@@ -93,6 +116,16 @@ export function MyCompaniesList({
             </Pressable>
             <ItemListMenu ariaLabel={`Actions — ${item.name}`}>
               <ItemListMenuItem onPress={() => onOpenProfile(item.id)}>View details</ItemListMenuItem>
+              {isOwnerList && item.role === 'company_admin' && item.status === 'draft' ? (
+                <ItemListMenuItem
+                  disabled={requestingId === item.id}
+                  onPress={() => void handleRequestApproval(item)}
+                >
+                  {requestingId === item.id
+                    ? t('myCompanies.requestingApproval')
+                    : t('myCompanies.requestApproval')}
+                </ItemListMenuItem>
+              ) : null}
               {isOwnerList && item.role === 'company_admin' ? (
                 <ItemListMenuItem
                   disabled={!loginEnabled || loggingInId === item.id}

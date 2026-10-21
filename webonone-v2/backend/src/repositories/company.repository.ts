@@ -1,6 +1,6 @@
 import { db } from '../models/db.js'
 
-export type CompanyStatus = 'pending' | 'approved' | 'rejected'
+export type CompanyStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 
 export type CompanyDataEntity =
   | 'tags'

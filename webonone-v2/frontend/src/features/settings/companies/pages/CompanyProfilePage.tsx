@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Alert,
   AlertDescription,
+  Button,
   FeaturePage,
   Tabs,
   TabsContent,
@@ -11,6 +12,7 @@ import {
   TabsTrigger,
   tabsPageClassName,
   tabsPageContentClassName,
+  useToast,
 } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { WebononeCopyToAiButton } from '@/features/ai/components/WebononeCopyToAiButton'
@@ -67,6 +69,7 @@ export function CompanyProfilePage({
   variant = 'admin',
 }: CompanyProfilePageProps) {
   const { t } = useTranslation('settings')
+  const { toast } = useToast()
   const { companyId } = useParams<{ companyId: string }>()
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -74,6 +77,9 @@ export function CompanyProfilePage({
   const detail = useAppSelector((s) => s.companies.detail)
   const detailStatus = useAppSelector((s) => s.companies.detailStatus)
   const detailError = useAppSelector((s) => s.companies.detailError)
+  const requestApprovalStatus = useAppSelector((s) => s.companies.requestApprovalStatus)
+  const requestApprovalCompanyId = useAppSelector((s) => s.companies.requestApprovalCompanyId)
+  const requestApprovalError = useAppSelector((s) => s.companies.requestApprovalError)
   const activeRole = useAppSelector((s) => s.sessionRole.activeRole)
 
   const [adminTab, setAdminTab] = useDetailTabParam(ADMIN_TABS, 'overview')
@@ -99,6 +105,29 @@ export function CompanyProfilePage({
       dispatch(companiesActions.clearCompanyDetail())
     }
   }, [companyId, dispatch])
+
+  useEffect(() => {
+    if (!companyId || requestApprovalCompanyId !== companyId) return
+    if (requestApprovalStatus !== 'success' && requestApprovalStatus !== 'error') return
+    if (requestApprovalStatus === 'success') {
+      toast({ title: t('myCompanies.requestApprovalSent') })
+    } else {
+      toast({
+        title: t('myCompanies.requestApprovalFailed'),
+        description: requestApprovalError ?? undefined,
+        variant: 'destructive',
+      })
+    }
+    dispatch(companiesActions.clearRequestApprovalNotice())
+  }, [
+    companyId,
+    dispatch,
+    requestApprovalCompanyId,
+    requestApprovalError,
+    requestApprovalStatus,
+    t,
+    toast,
+  ])
 
   const canEdit =
     Boolean(detail) &&
@@ -226,6 +255,10 @@ export function CompanyProfilePage({
     <CompanyMemberProfileView companyId={companyId} />
   )
 
+  const canRequestApproval = detail.role === 'company_admin' && detail.status === 'draft'
+  const requestingApproval =
+    requestApprovalStatus === 'saving' && requestApprovalCompanyId === companyId
+
   return (
     <FeaturePage
       title={detail.name}
@@ -233,9 +266,23 @@ export function CompanyProfilePage({
       onBack={() => navigate(backTo)}
       backLabel={backLabel}
       actions={
-        companyId ? (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {canRequestApproval ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={requestingApproval}
+              onClick={() =>
+                dispatch(companiesActions.requestCompanyApprovalRequested({ id: companyId }))
+              }
+            >
+              {requestingApproval
+                ? t('myCompanies.requestingApproval')
+                : t('myCompanies.requestApproval')}
+            </Button>
+          ) : null}
           <WebononeCopyToAiButton kind="company" id={companyId} label={detail.name} />
-        ) : null
+        </div>
       }
     >
       <div className="flex flex-col gap-6">

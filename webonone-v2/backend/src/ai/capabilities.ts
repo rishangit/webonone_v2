@@ -706,7 +706,7 @@ export const webononeAiCapabilities: ToolDefinition[] = [
   webononeTool({
     name: 'register_company',
     description:
-      'Register a new company for the signed-in user. Required: name. Suggest complete values for every optional field (description, companySize, address, contactEmail, contactPhone) before asking the user to confirm. New companies start pending until a platform super admin approves; the registrant becomes company_admin after approval. Map pin, tags, gallery images, and data catalog entities can be completed later on the company profile page. Logo upload requires Edit on the company profile card (wizard step 1 Media picker) in Settings → My Companies — only set logoUrl when the user already has a media URL.',
+      'Register a new company for the signed-in user. Required: name. Suggest complete values for every optional field (description, companySize, address, contactEmail, contactPhone) before asking the user to confirm. New companies start as draft so the owner can finish setup. The owner requests approval with request_company_approval, which moves the company to pending until a platform super admin approves. Map pin, tags, gallery images, and data catalog entities can be completed on the company profile while it is draft. Logo upload requires Edit on the company profile card (wizard step 1 Media picker) in Settings → My Companies — only set logoUrl when the user already has a media URL.',
     jsonSchema: {
       type: 'object',
       additionalProperties: false,
@@ -755,6 +755,23 @@ export const webononeAiCapabilities: ToolDefinition[] = [
       ],
       pascalCaseKeys: ['name'],
     },
+  }),
+  webononeTool({
+    name: 'request_company_approval',
+    description:
+      'Request super-admin approval for a company the signed-in user owns. Only a draft company can be submitted. Moves status from draft to pending and notifies super admins. Company owner only.',
+    jsonSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id'],
+      properties: { id: stringId },
+    },
+    riskLevel: 'write',
+    requiredRoles: ['company_admin'],
+    requiredPermissions: ['ai:company:register'],
+    auth: 'user_jwt',
+    invoke: { method: 'POST', path: '/api/v1/company/:id/request-approval' },
+    viewPath: '/settings/companies/{id}',
   }),
   webononeTool({
     name: 'list_my_companies',
@@ -943,7 +960,8 @@ export const webononeAiCapabilities: ToolDefinition[] = [
   }),
   webononeTool({
     name: 'approve_company',
-    description: 'Approve a pending company. Super-admin only; requires confirmation.',
+    description:
+      'Approve a company that is pending review. Super-admin only; requires confirmation. Draft companies must request approval first and cannot be approved.',
     jsonSchema: {
       type: 'object',
       additionalProperties: false,

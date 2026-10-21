@@ -32,7 +32,7 @@ export type CompanyAnalytics = {
     checkInCount: number
   }
   companyProgress: {
-    status: 'pending' | 'approved' | 'rejected'
+    status: 'draft' | 'pending' | 'approved' | 'rejected'
     enabledDataEntities: string[]
     catalog: { products: number; services: number; spaces: number }
   }

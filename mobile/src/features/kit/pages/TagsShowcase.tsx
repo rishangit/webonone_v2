@@ -26,9 +26,10 @@ export function TagsShowcase() {
 
       <DemoSection
         title="Company status tags"
-        description="Pending, Approved, Rejected — colored text only, no pill background."
+        description="Draft, Pending, Approved, Rejected — colored text only, no pill background."
       >
         <View className="flex-row flex-wrap gap-2">
+          <StatusTag variant="draft" />
           <StatusTag variant="pending" />
           <StatusTag variant="approved" />
           <StatusTag variant="rejected" />

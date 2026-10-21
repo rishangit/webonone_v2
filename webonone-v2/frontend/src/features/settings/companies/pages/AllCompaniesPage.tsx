@@ -12,6 +12,7 @@ import {
   ListPageFooter,
   SearchInput,
   useClientListPage,
+  useToast,
 } from '@webonone/ui-kit'
 import { useListDisplayModeControl } from '@/shared/hooks/useListDisplayModeControl'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
@@ -23,12 +24,16 @@ import { MyCompaniesList } from '../components/MyCompaniesList'
 
 export function AllCompaniesPage() {
   const { t } = useTranslation('settings')
+  const { toast } = useToast()
   const dispatch = useAppDispatch()
   const {
     myCompanies,
     myCompaniesStatus,
     myCompaniesError,
     myCompaniesFetchedAt,
+    requestApprovalStatus,
+    requestApprovalCompanyId,
+    requestApprovalError,
   } = useAppSelector((s) => s.companies)
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -44,6 +49,20 @@ export function AllCompaniesPage() {
     myCompaniesFetchedAt === null && myCompanies.length === 0 && myCompaniesStatus !== 'error'
 
   usePlatformLoading(awaitingFirstLoad ? t('myCompanies.loading') : null)
+
+  useEffect(() => {
+    if (requestApprovalStatus !== 'success' && requestApprovalStatus !== 'error') return
+    if (requestApprovalStatus === 'success') {
+      toast({ title: t('myCompanies.requestApprovalSent') })
+    } else {
+      toast({
+        title: t('myCompanies.requestApprovalFailed'),
+        description: requestApprovalError ?? undefined,
+        variant: 'destructive',
+      })
+    }
+    dispatch(companiesActions.clearRequestApprovalNotice())
+  }, [dispatch, requestApprovalError, requestApprovalStatus, t, toast])
 
   useEffect(() => {
     if (!isFresh(myCompaniesFetchedAt)) {
@@ -95,7 +114,14 @@ export function AllCompaniesPage() {
 
       <ListPageBody>
         <div className="flex-1">
-          <MyCompaniesList items={visibleItems} emptyMessage={t('myCompanies.empty')} />
+          <MyCompaniesList
+            items={visibleItems}
+            emptyMessage={t('myCompanies.empty')}
+            requestingId={requestApprovalStatus === 'saving' ? requestApprovalCompanyId : null}
+            onRequestApproval={(id) =>
+              dispatch(companiesActions.requestCompanyApprovalRequested({ id }))
+            }
+          />
         </div>
         <ListPageFooter
           className="mt-auto"

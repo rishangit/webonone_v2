@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useFocusEffect, useRouter } from 'expo-router'
 import {
   Body,
+  Button,
   FeatureScreen,
   Spinner,
   Tabs,
@@ -67,6 +68,7 @@ export function CompanyDetailScreen({
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<CompanyDetailTab>('overview')
   const [editDialog, setEditDialog] = useState<{ initialStep: CompanyWizardStep } | null>(null)
+  const [requestingApproval, setRequestingApproval] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -129,11 +131,38 @@ export function CompanyDetailScreen({
     })
   }
 
+  const canRequestApproval = detail.role === 'company_admin' && detail.status === 'draft'
+
+  async function handleRequestApproval() {
+    if (!canRequestApproval || requestingApproval) return
+    setRequestingApproval(true)
+    try {
+      await companyApi.requestCompanyApproval(companyId)
+      toast({ title: 'Approval requested. The company is now Pending.' })
+      await load()
+    } catch (err) {
+      toast({
+        title: 'Could not request approval',
+        description: err instanceof Error ? err.message : undefined,
+        variant: 'destructive',
+      })
+    } finally {
+      setRequestingApproval(false)
+    }
+  }
+
   return (
     <FeatureScreen
       title={detail.name}
       description={screenDescription}
       onBack={() => router.back()}
+      actions={
+        canRequestApproval ? (
+          <Button size="sm" loading={requestingApproval} onPress={() => void handleRequestApproval()}>
+            Request approval
+          </Button>
+        ) : null
+      }
     >
       {showOwnerTabs ? (
         <Tabs

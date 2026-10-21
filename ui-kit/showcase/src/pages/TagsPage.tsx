@@ -27,9 +27,10 @@ export function TagsPage() {
       <DemoSection
         id="company-status-tags"
         title="Company status tags"
-        description="Approval workflow labels for company registration (Pending, Approved, Rejected). Colored text only — no background or border. Consumers map companies.status to StatusTag variant."
+        description="Approval workflow labels for company registration (Draft, Pending, Approved, Rejected). Colored text only — no background or border. Consumers map companies.status to StatusTag variant."
       >
         <div className="flex flex-wrap items-center gap-3">
+          <StatusTag variant="draft" />
           <StatusTag variant="pending" />
           <StatusTag variant="approved" />
           <StatusTag variant="rejected" />

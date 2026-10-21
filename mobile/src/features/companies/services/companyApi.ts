@@ -3,7 +3,7 @@ import { env } from '@/shared/config/env'
 import { createApiClient } from '@/shared/services/apiClient'
 import type { RegisterCompanyFormValues } from '@/features/companies/schemas/companySchemas'
 
-export type CompanyStatus = 'pending' | 'approved' | 'rejected'
+export type CompanyStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 
 export type CompanyDataEntity = DataEntityKey
 
@@ -154,6 +154,12 @@ export const companyApi = {
     return client(`/company/admin/${id}/status`, {
       method: 'PATCH',
       body: { status },
+    })
+  },
+
+  async requestCompanyApproval(id: string) {
+    return client(`/company/${id}/request-approval`, {
+      method: 'POST',
     })
   },
 

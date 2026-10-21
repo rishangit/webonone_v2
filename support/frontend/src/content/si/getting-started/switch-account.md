@@ -19,4 +19,4 @@ Sign out නොකර account මාරු කළ හැකිය.
 
 User menu හි **Change account** පෙන්වන විට එය භාවිතා කර, එම තේරීම් තෝරන්න.
 
-දැන් ලියාපදිංචි කළ සමාගමක්, තවම [pending approval](/docs/companies/pending-approval) වුවද, **Choose account** තුළ වහාම පෙන්වයි.
+දැන් ලියාපදිංචි කළ සමාගමක්, තවම **Draft** හෝ [pending approval](/docs/companies/pending-approval) වුවද, **Choose account** තුළ වහාම පෙන්වයි.

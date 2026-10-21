@@ -443,7 +443,7 @@ export function AppAssistant({ open, onClose }: AppAssistantProps) {
         if (/^(approve_company|set_company_status)$/.test(pendingName)) {
           dispatch(companiesActions.loadAdminCompaniesRequested({ force: true }))
         }
-        if (/^(register_company|update_company)$/.test(pendingName)) {
+        if (/^(register_company|update_company|request_company_approval)$/.test(pendingName)) {
           dispatch(companiesActions.loadMyCompaniesRequested({ force: true }))
         }
       }

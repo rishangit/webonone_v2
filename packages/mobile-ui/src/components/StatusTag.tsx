@@ -2,6 +2,7 @@ import { Text } from 'react-native'
 import { cn } from '../lib/cn'
 
 export type StatusTagVariant =
+  | 'draft'
   | 'pending'
   | 'approved'
   | 'rejected'
@@ -13,6 +14,7 @@ export type StatusTagVariant =
   | 'staff'
 
 const VARIANT_CLASS: Record<StatusTagVariant, string> = {
+  draft: 'text-slate-500',
   pending: 'text-amber-700',
   approved: 'text-green-700',
   rejected: 'text-red-700',
@@ -25,6 +27,7 @@ const VARIANT_CLASS: Record<StatusTagVariant, string> = {
 }
 
 const DEFAULT_LABELS: Record<StatusTagVariant, string> = {
+  draft: 'Draft',
   pending: 'Pending',
   approved: 'Approved',
   rejected: 'Rejected',

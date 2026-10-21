@@ -28,6 +28,8 @@ type MyCompaniesListProps = {
   items: MyCompanySummary[]
   emptyMessage?: string
   listPath?: string
+  requestingId?: string | null
+  onRequestApproval?: (id: string) => void
 }
 
 function canLoginAsOwner(item: MyCompanySummary): boolean {
@@ -38,6 +40,8 @@ export function MyCompaniesList({
   items,
   emptyMessage,
   listPath = MY_COMPANIES_PATH,
+  requestingId = null,
+  onRequestApproval,
 }: MyCompaniesListProps) {
   const { t, i18n } = useTranslation('settings')
   const { t: tc } = useTranslation('common')
@@ -130,6 +134,16 @@ export function MyCompaniesList({
     return (
       <ItemListMenu ariaLabel={`${tc('actions')} — ${item.name}`}>
         {baseItems}
+        {onRequestApproval && item.status === 'draft' ? (
+          <DropdownMenuItem
+            disabled={requestingId === item.id}
+            onClick={() => onRequestApproval(item.id)}
+          >
+            {requestingId === item.id
+              ? t('myCompanies.requestingApproval')
+              : t('myCompanies.requestApproval')}
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem
           disabled={!loginEnabled || loggingInId === item.id}
           title={item.status === 'rejected' ? t('myCompanies.loginUnavailableRejected') : undefined}

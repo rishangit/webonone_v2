@@ -1,6 +1,6 @@
 import { apiClient } from '@/shared/services/apiClient'
 
-export type DashboardCompanyStatus = 'pending' | 'approved' | 'rejected'
+export type DashboardCompanyStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 
 export type DashboardCompany = {
   id: string

@@ -13,5 +13,6 @@ summary: "token, session, connected company සහ unverified catalog items ස�
 - **Session** — දිනයක event එකක එක් සිදුවීමක් (start, serve, end).
 - **Connected company** — ඔබේ **member** ගිණුම සම්බන්ධ කළ ව්‍යාපාරයක්; owner හෝ staff නොවී browse සහ book කිරීමට.
 - **Unverified** — Super Admin සත්‍යාපනය සඳහා බලා සිටින catalog library වාර්තාවක් (උදා: tag).
-- **Pending company** — ලියාපදිංචි වූ නමුත් තවම අනුමත නොවූ. Wizard අවසන් වූ පසු Choose account විවෘත වන බැවින් බලා සිටින අතර එම company account භාවිතා කළ හැක.
+- **Draft company** — දැන් ලියාපදිංචි වූ. හිමිකරු සැකසීම අවසන් කර අනුමැතිය ඉල්ලයි. Draft අතරතුර company account භාවිතා කිරීමට Choose account විවෘත වේ.
+- **Pending company** — හිමිකරු අනුමැතිය ඉල්ලා ඇති අතර Super Admin තවම අනුමත කර නැත. බලා සිටින අතර company account භාවිතා කළ හැක.
 - **Gateway** — SMS ඇත්තටම යවන දුරකථනය හෝ provider.

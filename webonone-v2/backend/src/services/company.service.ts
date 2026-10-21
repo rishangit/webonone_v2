@@ -539,7 +539,7 @@ export async function registerCompany(
     longitude: null,
     map_place_id: null,
     map_formatted_address: null,
-    status: 'pending',
+    status: 'draft',
     created_by_user_id: userId,
   })
 
@@ -563,14 +563,6 @@ export async function registerCompany(
     }
     throw new Error('Failed to create company')
   }
-
-  sendCompanyEmail('company_registered', company)
-  void notifyCompanyPendingReview({
-    companyId: company.id,
-    companyName: company.name,
-  }).catch((err) => {
-    console.error('[company] in-app pending review notify failed:', err)
-  })
 
   // Soft-fail: registration succeeds even if Email/SMS are down.
   void ensureEmailWelcomeTemplate(companyId, company.name).catch((err) => {
@@ -742,6 +734,40 @@ export async function listPendingCompanies() {
   return rows.map(toAdminCompanySummary)
 }
 
+export async function requestCompanyApproval(
+  userId: string,
+  companyId: string,
+): Promise<CompanyWithMembership> {
+  const company = await repo.findCompanyById(companyId)
+  if (!company) {
+    throw httpError('Company not found', 404)
+  }
+
+  const membership = await roleRepo.findCompanyRole(userId, companyId)
+  if (membership?.role !== 'company_admin') {
+    throw httpError('Company not found', 404)
+  }
+
+  if (company.status !== 'draft') {
+    throw httpError('Only a draft company can request approval', 409)
+  }
+
+  const updated = await repo.updateCompanyStatus(companyId, 'pending', null)
+  if (!updated) {
+    throw httpError('Company not found', 404)
+  }
+
+  sendCompanyEmail('company_registered', updated)
+  void notifyCompanyPendingReview({
+    companyId: updated.id,
+    companyName: updated.name,
+  }).catch((err) => {
+    console.error('[company] in-app pending review notify failed:', err)
+  })
+
+  return toCompanyWithMembership(updated, membership)
+}
+
 export async function approveCompany(companyId: string, superAdminUserId: string) {
   return updateCompanyStatus(companyId, { status: 'approved' }, superAdminUserId)
 }
@@ -756,6 +782,10 @@ export async function updateCompanyStatus(
     const err = new Error('Company not found')
     ;(err as Error & { statusCode: number }).statusCode = 404
     throw err
+  }
+
+  if (input.status === 'approved' && existing.status === 'draft') {
+    throw httpError('Only a company that requested approval can be approved', 409)
   }
 
   const company = await repo.updateCompanyStatus(
@@ -837,7 +867,7 @@ export type AssumableRolesResponse = {
   roles: AssumableRoleOption[]
   /** True when Super Admin, owned companies, and/or staff companies — client shows Choose account dialog */
   requiresAccountSelection: boolean
-  /** True when user owns ≥1 pending/approved company */
+  /** True when user owns ≥1 draft, pending, or approved company */
   hasCompanyMembership: boolean
 }
 
@@ -848,7 +878,7 @@ const defaultUserOption: AssumableRoleOption = {
 }
 
 function isSelectableCompanyStatus(status: repo.CompanyStatus): boolean {
-  return status === 'pending' || status === 'approved'
+  return status === 'draft' || status === 'pending' || status === 'approved'
 }
 
 export async function getAssumableRoles(userId: string): Promise<AssumableRolesResponse> {

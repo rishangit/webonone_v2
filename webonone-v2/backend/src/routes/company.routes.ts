@@ -36,6 +36,11 @@ router.get('/company/discover', requireAuth, companyController.discoverCompanies
 router.get('/company/discover/:companyId', requireAuth, companyController.getDiscoverableCompany)
 router.get('/company/:id', requireAuth, companyController.getCompanyById)
 router.post('/company/:id/connect', requireAuth, companyController.connectCompany)
+router.post(
+  '/company/:id/request-approval',
+  requireAuth,
+  companyController.requestCompanyApproval,
+)
 router.patch(
   '/company/:id',
   requireAuth,

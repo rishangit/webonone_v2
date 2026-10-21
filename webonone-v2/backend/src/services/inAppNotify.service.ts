@@ -28,7 +28,7 @@ export async function notifyCompanyPendingReview(input: {
     companyId: input.companyId,
     type: 'company.pending_review',
     title: `Company pending approval: ${input.companyName}`,
-    body: `${input.companyName} was registered and needs review.`,
+    body: `${input.companyName} requested approval and needs review.`,
     href: '/companies',
     sourceService: SOURCE,
     sourceEventIdPrefix: `company.pending_review:${input.companyId}`,

@@ -3,13 +3,14 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../lib/utils'
 
 /**
- * Status chip for company approval (`pending` | `approved` | `rejected`),
+ * Status chip for company approval (`draft` | `pending` | `approved` | `rejected`),
  * catalog verification (`unverified` | `verified`), and platform user roles
  * (`super_admin` | `company_admin` | `member` | `staff`).
  */
 const statusTagVariants = cva('ui-tag inline-flex items-center text-xs font-medium', {
     variants: {
       variant: {
+        draft: 'text-muted-foreground',
         pending: 'text-warning',
         rejected: 'text-error',
         approved: 'text-success',
@@ -28,6 +29,7 @@ const statusTagVariants = cva('ui-tag inline-flex items-center text-xs font-medi
 )
 
 const DEFAULT_LABELS: Record<NonNullable<VariantProps<typeof statusTagVariants>['variant']>, string> = {
+  draft: 'Draft',
   pending: 'Pending',
   rejected: 'Rejected',
   approved: 'Approved',

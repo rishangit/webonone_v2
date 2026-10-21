@@ -2,7 +2,7 @@ import { apiClient } from '@/shared/services/apiClient'
 import type { RegisterCompanyFormValues } from '../schemas/companySchemas'
 import type { DataEntityKey } from '@webonone/platform-nav'
 
-export type CompanyStatus = 'pending' | 'approved' | 'rejected'
+export type CompanyStatus = 'draft' | 'pending' | 'approved' | 'rejected'
 
 export type CompanyDataEntity = DataEntityKey
 
@@ -220,6 +220,12 @@ export const companyApi = {
     return apiClient<CompanySummary>(`/company/admin/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    })
+  },
+
+  async requestCompanyApproval(id: string) {
+    return apiClient<CompanySummary>(`/company/${id}/request-approval`, {
+      method: 'POST',
     })
   },
 

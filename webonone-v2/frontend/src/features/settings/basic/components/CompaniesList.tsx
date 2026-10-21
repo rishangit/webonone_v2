@@ -77,7 +77,7 @@ export function CompaniesList({ items, updatingId, onStatusChange }: CompaniesLi
         <DropdownMenuItem onClick={() => openProfile(item.id)}>View details</DropdownMenuItem>
         <WebononeCopyToAiMenuItem kind="company" id={item.id} label={item.name} />
         <DropdownMenuItem
-          disabled={updatingId === item.id || item.status === 'approved'}
+          disabled={updatingId === item.id || item.status === 'approved' || item.status === 'draft'}
           onClick={() => onStatusChange(item.id, 'approved')}
         >
           Approve

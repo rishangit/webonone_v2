@@ -89,6 +89,7 @@ export function MyCompaniesScreen() {
             emptyMessage={emptyMessage}
             listPath={MY_COMPANIES_PATH}
             onOpenProfile={(id) => router.push(`${MY_COMPANIES_PATH}/${id}` as Href)}
+            onRequestedApproval={() => void load()}
           />
           <TranslatedListPageFooter
             loadedCount={pagination.loadedCount}

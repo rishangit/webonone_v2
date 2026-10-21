@@ -53,7 +53,7 @@ export function AdminCompaniesList({
             <ItemListMenu ariaLabel={`Actions — ${item.name}`}>
               <ItemListMenuItem onPress={() => onOpenProfile(item.id)}>View details</ItemListMenuItem>
               <ItemListMenuItem
-                disabled={updatingId === item.id || item.status === 'approved'}
+                disabled={updatingId === item.id || item.status === 'approved' || item.status === 'draft'}
                 onPress={() => onStatusChange(item.id, 'approved')}
               >
                 Approve
