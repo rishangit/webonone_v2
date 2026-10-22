@@ -36,6 +36,12 @@ type PendingToolCall = {
   status: PendingCallStatus
 }
 
+type DesignerTaskView = {
+  id: string
+  title: string
+  status: PendingCallStatus | 'queued'
+}
+
 type PendingTool = {
   toolCallId: string
   name: string
@@ -46,6 +52,7 @@ type PendingTool = {
   displayArguments?: Record<string, unknown>
   status: PendingCallStatus
   calls?: PendingToolCall[]
+  designerTasks?: DesignerTaskView[]
 }
 
 type ChatLine = {
@@ -122,9 +129,18 @@ function pendingRows(pending: PendingTool): PendingToolCall[] {
   ]
 }
 
-function callItemName(call: PendingToolCall): string {
+function callItemName(call: PendingToolCall, tasks?: DesignerTaskView[]): string {
+  const task = tasks?.find((item) => item.id === call.toolCallId)
+  if (task?.title.trim()) return task.title.trim()
   const name = call.arguments?.name
   return typeof name === 'string' && name.trim() ? name.trim() : call.summary || 'Change'
+}
+
+function taskStatusLabel(status: DesignerTaskView['status'], t: (key: string) => string): string {
+  if (status === 'pending_confirmation') return t('designerAssistant.taskCurrent')
+  if (status === 'queued') return t('designerAssistant.taskWaiting')
+  if (status === 'confirmed') return t('designerAssistant.taskApplied')
+  return t('designerAssistant.taskCanceled')
 }
 
 function toolNameForCall(pending: PendingTool, toolCallId: string): string | null {
@@ -376,6 +392,7 @@ export function DesignerAssistantPanel({
             const pending = message.pendingTool
             const rows = pending ? pendingRows(pending) : []
             const hasPending = rows.some((call) => call.status === 'pending_confirmation')
+            const designerTasks = pending?.designerTasks && pending.designerTasks.length > 1 ? pending.designerTasks : []
             const text =
               message.role === 'user' ? visibleDesignerChatText(message.content) : message.content.trim()
             return (
@@ -390,6 +407,22 @@ export function DesignerAssistantPanel({
                   {message.role === 'user' ? t('designerAssistant.you') : t('designerAssistant.name')}
                 </p>
                 {text ? <p className="whitespace-pre-wrap">{text}</p> : null}
+                {designerTasks.length > 0 ? (
+                  <ol className="list-decimal space-y-1 pl-4 text-xs">
+                    {designerTasks.map((task) => (
+                      <li
+                        key={task.id}
+                        className={cn(
+                          task.status === 'queued' && 'text-muted-foreground',
+                          task.status === 'pending_confirmation' && 'font-medium',
+                        )}
+                      >
+                        <span>{task.title}</span>
+                        <span className="ml-1 text-muted-foreground">({taskStatusLabel(task.status, t)})</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : null}
                 {rows.length > 0 ? (
                   <ConfirmItemList
                     items={rows.map((call) => ({
@@ -402,8 +435,8 @@ export function DesignerAssistantPanel({
                           : call.arguments && Object.keys(call.arguments).length > 0
                             ? call.arguments
                             : { summary: call.summary },
-                      confirmedLabel: t('designerAssistant.itemAdded', { name: callItemName(call) }),
-                      canceledLabel: t('designerAssistant.itemCanceled', { name: callItemName(call) }),
+                      confirmedLabel: t('designerAssistant.itemAdded', { name: callItemName(call, pending?.designerTasks) }),
+                      canceledLabel: t('designerAssistant.itemCanceled', { name: callItemName(call, pending?.designerTasks) }),
                     }))}
                     pendingHint={hasPending ? t('designerAssistant.pendingChange') : undefined}
                     confirmLabel={t('designerAssistant.confirm')}

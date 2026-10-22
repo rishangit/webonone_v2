@@ -38,6 +38,18 @@ import {
 import type { AiConversationRow, AiMessageRow, MessageRole } from '../models/db.js'
 import { keepLatestDesignerCanvas } from './designerCanvasHistory.js'
 import { designerTurnTools, headerRowCanvasArguments, heroImageCanvasArguments, pickCanvasTool } from './designerHeaderLayout.js'
+import {
+  advanceDesignerTaskRecords,
+  designerTaskIntro,
+  designerTaskPlanPrompt,
+  parseDesignerTaskPlan,
+  parseDesignerTaskRecords,
+  planFromCanvasCalls,
+  rejectRemainingDesignerTasks,
+  splitCanvasArguments,
+  stageDesignerTasks,
+  type DesignerTaskRecord,
+} from './designerTaskPlan.js'
 import { HttpError } from './httpError.js'
 import type { ConversationRepository } from './conversation.repository.js'
 import {
@@ -59,6 +71,12 @@ const MAX_TOOL_ROUNDS = 6
 const MAX_EXISTING_NAME_REFILLS = 2
 
 export type PendingCallStatus = 'pending_confirmation' | 'confirmed' | 'rejected'
+
+export type DesignerTaskView = {
+  id: string
+  title: string
+  status: DesignerTaskRecord['status']
+}
 
 export type PendingToolCall = {
   toolCallId: string
@@ -85,6 +103,7 @@ export type PendingTool = {
   relatedTree?: RelatedNode[]
   status: PendingCallStatus
   calls?: PendingToolCall[]
+  designerTasks?: DesignerTaskView[]
 }
 
 export type ConversationDto = {
@@ -295,15 +314,23 @@ function pendingFromPayload(row: AiMessageRow): PendingTool | null {
   }
   const calls = storedCallsFromPayload(payload, pending)
   const remaining = remainingPendingCalls(calls)
+  const designerTasks = designerTaskViews(payload.designerTasks)
   return {
     ...pending,
     status: remaining.length > 0 ? 'pending_confirmation' : pending.status,
     calls,
+    designerTasks,
     summary: remaining.map((call) => call.summary).join('\n') || pending.summary,
     arguments: remaining[0]?.arguments ?? pending.arguments,
     name: remaining[0]?.name ?? pending.name,
     displayKind: remaining[0]?.displayKind ?? pending.displayKind,
   }
+}
+
+function designerTaskViews(raw: unknown): DesignerTaskView[] | undefined {
+  const tasks = parseDesignerTaskRecords(raw)
+  if (!tasks || tasks.length <= 1) return undefined
+  return tasks.map((task) => ({ id: task.id, title: task.title, status: task.status }))
 }
 
 function toConversationDto(row: AiConversationRow): ConversationDto {
@@ -526,10 +553,11 @@ function payloadHasToolCallId(row: AiMessageRow, toolCallId: string): boolean {
   if (payload.toolCallId === toolCallId) {
     return true
   }
-  if (!Array.isArray(payload.calls)) {
-    return false
+  if (Array.isArray(payload.calls) && payload.calls.some((entry) => isRecord(entry) && entry.toolCallId === toolCallId)) {
+    return true
   }
-  return payload.calls.some((entry) => isRecord(entry) && entry.toolCallId === toolCallId)
+  const tasks = parseDesignerTaskRecords(payload.designerTasks)
+  return tasks?.some((task) => task.id === toolCallId) ?? false
 }
 
 export type ConversationService = ReturnType<typeof createConversationService>
@@ -602,20 +630,57 @@ export function createConversationService(deps: {
         turnTools,
       )
       const headerLayout = round === 0 ? headerRowCanvasArguments(userMessage) ?? heroImageCanvasArguments(userMessage) : null
-      const canvasTool = headerLayout ? pickCanvasTool(turnTools, ctx.role) : undefined
-      const completion =
-        headerLayout && canvasTool
-          ? {
-              content: '',
-              toolCalls: [
-                { id: nanoid(), name: canvasTool.name, arguments: headerLayout as unknown as Record<string, unknown> },
-              ],
-            }
-          : await provider.complete({
-              systemPrompt,
-              messages: historyToProviderMessages(history),
-              tools: providerTools.length ? providerTools : undefined,
-            })
+      const openDesigner = userMessage.includes('[designer-canvas]')
+      const canvasTool = openDesigner ? pickCanvasTool(turnTools, ctx.role) : undefined
+      let designerPlan: DesignerTaskRecord[] | null = null
+      const stagePlan = (toolName: string, drafts: { title: string; arguments: { name: string; operations: Record<string, unknown>[] } }[]) => {
+        const records = stageDesignerTasks(toolName, drafts, drafts.map(() => nanoid()))
+        if (!records) return null
+        designerPlan = records
+        const first = records[0]
+        return {
+          content: '',
+          toolCalls: [{ id: first.id, name: toolName, arguments: first.arguments }],
+        }
+      }
+      let completion: { content: string; toolCalls?: ToolCall[] }
+      if (headerLayout && canvasTool) {
+        completion = stagePlan(canvasTool.name, splitCanvasArguments(headerLayout)) ?? {
+          content: '',
+          toolCalls: [{ id: nanoid(), name: canvasTool.name, arguments: headerLayout as unknown as Record<string, unknown> }],
+        }
+      } else if (round === 0 && openDesigner && canvasTool) {
+        const planReply = await provider.complete({
+          systemPrompt: designerTaskPlanPrompt(canvasTool),
+          messages: historyToProviderMessages(history),
+        })
+        const planned = parseDesignerTaskPlan(planReply.content ?? '')
+        const staged = planned ? stagePlan(canvasTool.name, planned) : null
+        completion = staged ?? {
+          content: '',
+          toolCalls: planned?.length === 1
+            ? [{ id: nanoid(), name: canvasTool.name, arguments: planned[0].arguments }]
+            : undefined,
+        }
+        if (!staged && planned?.length !== 1) {
+          completion = await provider.complete({
+            systemPrompt: openDesigner
+              ? withAvailableToolsPrompt(
+                  `${promptBase} The user is editing the open designer canvas. Read the whole request and cover every requirement. Call the canvas tool for layout changes.`,
+                  turnTools,
+                )
+              : systemPrompt,
+            messages: historyToProviderMessages(history),
+            tools: providerTools.length ? providerTools : undefined,
+          })
+        }
+      } else {
+        completion = await provider.complete({
+          systemPrompt,
+          messages: historyToProviderMessages(history),
+          tools: providerTools.length ? providerTools : undefined,
+        })
+      }
 
       let toolCalls: ToolCall[] = completion.toolCalls ?? []
       let leadContent = completion.content
@@ -837,6 +902,22 @@ export function createConversationService(deps: {
           }
         }
       }
+      if (!designerPlan && openDesigner) {
+        const fromCalls = planFromCanvasCalls(toolCalls)
+        if (fromCalls) {
+          const records = stageDesignerTasks(
+            fromCalls.toolName,
+            fromCalls.drafts,
+            fromCalls.drafts.map(() => nanoid()),
+          )
+          const first = records?.[0]
+          if (records && first) {
+            designerPlan = records
+            toolCalls = [{ id: first.id, name: fromCalls.toolName, arguments: first.arguments }]
+            leadContent = ''
+          }
+        }
+      }
       if (toolCalls.length === 0) {
         return insertRow({
           conversation_id: conversation.id,
@@ -973,7 +1054,7 @@ export function createConversationService(deps: {
               output.displayFields ??
               (tool ? buildConfirmDisplayFields(tool, output.arguments, { role: ctx.role }) : undefined),
             relatedTree: output.relatedTree ?? [],
-            summary: output.summary,
+            summary: designerPlan?.find((task) => task.id === call.id)?.title ?? output.summary,
             status: 'pending_confirmation' as const,
           }
         })
@@ -983,7 +1064,9 @@ export function createConversationService(deps: {
           skippedExisting.length > 0
             ? `Already in the library (skipped): ${skippedExisting.join(', ')}.`
             : ''
-        const confirmLine = `I can ${destructive ? 'delete' : 'change'} this after you confirm each item.`
+        const confirmLine = designerPlan
+          ? designerTaskIntro(designerPlan)
+          : `I can ${destructive ? 'delete' : 'change'} this after you confirm each item.`
         return insertRow({
           conversation_id: conversation.id,
           company_id: conversation.company_id,
@@ -1003,6 +1086,7 @@ export function createConversationService(deps: {
             relatedTree: firstWrite.output.relatedTree ?? [],
             summary,
             calls,
+            ...(designerPlan ? { designerTasks: designerPlan } : {}),
           },
         })
       }
@@ -1031,6 +1115,88 @@ export function createConversationService(deps: {
       tool_call_id: null,
       tool_payload: null,
     })
+  }
+
+  const continueDesignerTasks = async (
+    conversation: AiConversationRow,
+    ctx: AiRequestContext,
+    basePayload: Record<string, unknown>,
+    stored: PendingToolCall[],
+    completedId: string,
+    status: 'confirmed' | 'rejected',
+  ): Promise<{ payload: Record<string, unknown>; stored: PendingToolCall[]; content?: string }> => {
+    const existing = parseDesignerTaskRecords(basePayload.designerTasks)
+    if (!existing) return { payload: basePayload, stored }
+    const advanced = advanceDesignerTaskRecords(existing, completedId, status)
+    if (!advanced.next || !deps.executor) {
+      return {
+        payload: { ...basePayload, designerTasks: advanced.tasks },
+        stored,
+        content: designerTaskIntro(advanced.tasks),
+      }
+    }
+    const next = advanced.next
+    await insertRow({
+      conversation_id: conversation.id,
+      company_id: conversation.company_id,
+      role: 'tool',
+      content: '',
+      tool_name: next.toolName,
+      tool_call_id: next.id,
+      tool_payload: { arguments: next.arguments },
+    })
+    const result = await deps.executor.execute(
+      { id: next.id, name: next.toolName, arguments: next.arguments },
+      ctx,
+    )
+    const output = result.output && isRecord(result.output) ? result.output : { output: result.output }
+    await insertRow({
+      conversation_id: conversation.id,
+      company_id: conversation.company_id,
+      role: 'tool_result',
+      content: JSON.stringify(output),
+      tool_name: next.toolName,
+      tool_call_id: next.id,
+      tool_payload: output,
+    })
+    if (!isPendingOutput(result.output)) {
+      const reverted = advanced.tasks.map((task) =>
+        task.id === next.id ? { ...task, status: 'queued' as const } : task,
+      )
+      return {
+        payload: { ...basePayload, designerTasks: reverted },
+        stored,
+        content: designerTaskIntro(reverted),
+      }
+    }
+    const args = isRecord(output.arguments) ? output.arguments : next.arguments
+    const nextStored: PendingToolCall[] = [
+      ...stored,
+      {
+        toolCallId: next.id,
+        name: next.toolName,
+        displayKind: displayKindFromToolName(next.toolName),
+        riskLevel: typeof output.riskLevel === 'string' ? output.riskLevel : 'write',
+        summary: next.title,
+        arguments: args,
+        status: 'pending_confirmation',
+      },
+    ]
+    const pendingCall = nextStored.find((item) => item.status === 'pending_confirmation')
+    return {
+      stored: nextStored,
+      content: designerTaskIntro(advanced.tasks),
+      payload: {
+        ...basePayload,
+        status: 'pending_confirmation',
+        name: pendingCall?.name ?? next.toolName,
+        riskLevel: pendingCall?.riskLevel ?? 'write',
+        arguments: pendingCall?.arguments ?? next.arguments,
+        summary: pendingCall?.summary ?? next.title,
+        calls: nextStored,
+        designerTasks: advanced.tasks,
+      },
+    }
   }
 
   return {
@@ -1216,7 +1382,7 @@ export function createConversationService(deps: {
       }
       const remaining = remainingPendingCalls(stored)
       const anyOk = stored.some((item) => item.status === 'confirmed')
-      const nextPayload = {
+      let nextPayload: Record<string, unknown> = {
         ...(parsePayload(assistant.tool_payload) ?? pending),
         status: remaining.length > 0 ? 'pending_confirmation' : anyOk ? 'confirmed' : 'rejected',
         toolCallId: pending.toolCallId,
@@ -1226,8 +1392,22 @@ export function createConversationService(deps: {
         summary: remaining.map((item) => item.summary).join('\n') || pending.summary,
         calls: stored,
       }
-      await deps.repository.updateMessageToolPayload(assistant.id, nextPayload)
+      let nextContent: string | undefined
+      if (parseDesignerTaskRecords(nextPayload.designerTasks)) {
+        const continued = await continueDesignerTasks(
+          conversation,
+          ctx,
+          nextPayload,
+          stored,
+          target.toolCallId,
+          'confirmed',
+        )
+        nextPayload = continued.payload
+        nextContent = continued.content
+      }
+      await deps.repository.updateMessageToolPayload(assistant.id, nextPayload, nextContent)
       assistant.tool_payload = nextPayload
+      if (nextContent) assistant.content = nextContent
       return { assistantMessage: await dtoFor(assistant) }
     },
 
@@ -1279,7 +1459,7 @@ export function createConversationService(deps: {
         }
       }
       const remaining = remainingPendingCalls(stored)
-      const nextPayload = {
+      let nextPayload: Record<string, unknown> = {
         ...(parsePayload(assistant.tool_payload) ?? pending),
         status: remaining.length > 0 ? 'pending_confirmation' : 'rejected',
         toolCallId: pending.toolCallId,
@@ -1289,8 +1469,25 @@ export function createConversationService(deps: {
         summary: remaining.map((item) => item.summary).join('\n') || pending.summary,
         calls: stored,
       }
-      await deps.repository.updateMessageToolPayload(assistant.id, nextPayload)
+      let nextContent: string | undefined
+      const queuedTasks = parseDesignerTaskRecords(nextPayload.designerTasks)
+      if (queuedTasks && options?.remaining) {
+        nextPayload = { ...nextPayload, designerTasks: rejectRemainingDesignerTasks(queuedTasks) }
+      } else if (queuedTasks) {
+        const continued = await continueDesignerTasks(
+          conversation,
+          ctx,
+          nextPayload,
+          stored,
+          toolCallId,
+          'rejected',
+        )
+        nextPayload = continued.payload
+        nextContent = continued.content
+      }
+      await deps.repository.updateMessageToolPayload(assistant.id, nextPayload, nextContent)
       assistant.tool_payload = nextPayload
+      if (nextContent) assistant.content = nextContent
       return { assistantMessage: await dtoFor(assistant) }
     },
   }
