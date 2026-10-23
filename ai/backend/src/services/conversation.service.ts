@@ -40,14 +40,20 @@ import { keepLatestDesignerCanvas } from './designerCanvasHistory.js'
 import { designerTurnTools, headerRowCanvasArguments, heroImageCanvasArguments, pickCanvasTool } from './designerHeaderLayout.js'
 import {
   advanceDesignerTaskRecords,
+  canvasSectionBriefs,
+  designerSectionRetryPrompt,
   designerTaskIntro,
   designerTaskPlanPrompt,
+  expandPlannerDrafts,
   parseDesignerTaskPlan,
   parseDesignerTaskRecords,
   planFromCanvasCalls,
   rejectRemainingDesignerTasks,
+  sectionCoverage,
   splitCanvasArguments,
   stageDesignerTasks,
+  uncoveredCanvasSections,
+  type DesignerTaskDraft,
   type DesignerTaskRecord,
 } from './designerTaskPlan.js'
 import { HttpError } from './httpError.js'
@@ -629,8 +635,12 @@ export function createConversationService(deps: {
           : promptBase,
         turnTools,
       )
-      const headerLayout = round === 0 ? headerRowCanvasArguments(userMessage) ?? heroImageCanvasArguments(userMessage) : null
       const openDesigner = userMessage.includes('[designer-canvas]')
+      const canvasSections = round === 0 && openDesigner ? canvasSectionBriefs(userMessage) : []
+      const headerLayout =
+        round === 0 && canvasSections.length < 2
+          ? headerRowCanvasArguments(userMessage) ?? heroImageCanvasArguments(userMessage)
+          : null
       const canvasTool = openDesigner ? pickCanvasTool(turnTools, ctx.role) : undefined
       let designerPlan: DesignerTaskRecord[] | null = null
       const stagePlan = (toolName: string, drafts: { title: string; arguments: { name: string; operations: Record<string, unknown>[] } }[]) => {
@@ -650,19 +660,37 @@ export function createConversationService(deps: {
           toolCalls: [{ id: nanoid(), name: canvasTool.name, arguments: headerLayout as unknown as Record<string, unknown> }],
         }
       } else if (round === 0 && openDesigner && canvasTool) {
+        const historyMessages = historyToProviderMessages(history)
         const planReply = await provider.complete({
-          systemPrompt: designerTaskPlanPrompt(canvasTool),
-          messages: historyToProviderMessages(history),
+          systemPrompt: designerTaskPlanPrompt(canvasTool, canvasSections),
+          messages: historyMessages,
         })
-        const planned = parseDesignerTaskPlan(planReply.content ?? '')
-        const staged = planned ? stagePlan(canvasTool.name, planned) : null
+        let planned: DesignerTaskDraft[] = expandPlannerDrafts(
+          parseDesignerTaskPlan(planReply.content ?? '') ?? [],
+          canvasSections,
+        )
+        if (canvasSections.length >= 2 && uncoveredCanvasSections(planned, canvasSections).length > 0) {
+          const retry = await provider.complete({
+            systemPrompt: designerTaskPlanPrompt(canvasTool, canvasSections),
+            messages: [
+              ...historyMessages,
+              { role: 'assistant', content: planReply.content || 'Partial plan.' },
+              { role: 'user', content: designerSectionRetryPrompt(canvasSections) },
+            ],
+          })
+          const retried = expandPlannerDrafts(parseDesignerTaskPlan(retry.content ?? '') ?? [], canvasSections)
+          if (retried.length > 0 && sectionCoverage(retried, canvasSections) >= sectionCoverage(planned, canvasSections)) {
+            planned = retried
+          }
+        }
+        const staged = planned.length > 0 ? stagePlan(canvasTool.name, planned) : null
         completion = staged ?? {
           content: '',
-          toolCalls: planned?.length === 1
+          toolCalls: planned.length === 1
             ? [{ id: nanoid(), name: canvasTool.name, arguments: planned[0].arguments }]
             : undefined,
         }
-        if (!staged && planned?.length !== 1) {
+        if (!staged && planned.length !== 1) {
           completion = await provider.complete({
             systemPrompt: openDesigner
               ? withAvailableToolsPrompt(

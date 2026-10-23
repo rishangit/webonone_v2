@@ -3,9 +3,13 @@ import { describe, it } from 'node:test'
 import { headerRowCanvasArguments, heroImageCanvasArguments } from './designerHeaderLayout.js'
 import {
   advanceDesignerTaskRecords,
+  canvasSectionBriefs,
+  designerTaskIntro,
+  expandPlannerDrafts,
   parseDesignerTaskPlan,
   splitCanvasArguments,
   stageDesignerTasks,
+  uncoveredCanvasSections,
 } from './designerTaskPlan.js'
 
 const HEADER = `[designer-canvas]
@@ -45,6 +49,103 @@ need to add the home page full width large image`)
     const tasks = splitCanvasArguments(args)
     assert.equal(tasks.length, 1)
     assert.equal(tasks[0]?.title, 'Add hero image section')
+  })
+})
+
+const HOMEPAGE = `[designer-canvas]
+kind: pages
+id: page1
+name: Home
+blocks:
+(empty canvas)
+[/designer-canvas]
+
+# Design a homepage
+
+## 1. Hero Section — Top of the Homepage
+Full-width hero image, headline, and a primary call to action.
+
+## 2. About the Company — Introduction Section
+A short introduction and three strengths.
+
+## 3. Full-Width Image Banner with Text
+A banner image with a headline and supporting text.
+
+## 4. Company Details — Image Left, Text Right
+Image on the left and text on the right.
+
+## 5. General Design Requirements
+Use the existing theme and keep the page responsive.
+
+## 6. Implementation Requirements
+Use the existing canvas tools. Do not modify unrelated pages.
+
+## Expected Result
+Four sections in that order.`
+
+describe('canvasSectionBriefs', () => {
+  it('lists each homepage section and skips design rules', () => {
+    const sections = canvasSectionBriefs(HOMEPAGE)
+    assert.deepEqual(
+      sections.map((section) => section.title),
+      [
+        'Hero Section — Top of the Homepage',
+        'About the Company — Introduction Section',
+        'Full-Width Image Banner with Text',
+        'Company Details — Image Left, Text Right',
+      ],
+    )
+  })
+
+  it('treats a hero-only plan as missing the later sections', () => {
+    const sections = canvasSectionBriefs(HOMEPAGE)
+    const missing = uncoveredCanvasSections([{ title: 'Add Hero image section' }], sections)
+    assert.equal(missing.length, 3)
+    assert.match(missing[0]?.title ?? '', /About/)
+  })
+
+  it('keeps a planned section whole instead of splitting its columns', () => {
+    const sections = canvasSectionBriefs(HOMEPAGE)
+    const drafts = expandPlannerDrafts(
+      [
+        {
+          title: 'Hero Section — Top of the Homepage',
+          arguments: {
+            name: 'Hero',
+            operations: [
+              { op: 'add_block', name: 'Hero' },
+              { op: 'add_addon', type: 'image', name: 'Hero image' },
+            ],
+          },
+        },
+        {
+          title: 'About the Company — Introduction Section',
+          arguments: {
+            name: 'About',
+            operations: [
+              { op: 'add_block', name: 'About' },
+              { op: 'add_block', group: true, name: 'Strength' },
+              { op: 'add_addon', type: 'text', name: 'Experience' },
+              { op: 'add_addon', type: 'text', name: 'Years in the field' },
+            ],
+          },
+        },
+      ],
+      sections,
+    )
+    assert.equal(drafts.length, 2)
+    assert.equal(drafts[1]?.arguments.operations.length, 4)
+  })
+})
+
+describe('designerTaskIntro', () => {
+  it('tells the user the next task is prepared after the current one', () => {
+    const text = designerTaskIntro([
+      { status: 'pending_confirmation' },
+      { status: 'queued' },
+    ])
+    assert.match(text, /implementation list/)
+    assert.match(text, /prepared automatically/)
   })
 })
 

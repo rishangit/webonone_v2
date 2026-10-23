@@ -1,4 +1,5 @@
 import type { ToolDefinition } from '../ai/tools/registry.js'
+import { canvasSectionBriefs } from './designerTaskPlan.js'
 
 const CANVAS_BLOCK = /\[designer-canvas\][\s\S]*?\[\/designer-canvas\]/g
 const CANVAS_TOOLS = ['apply_design_library_canvas', 'apply_design_canvas'] as const
@@ -45,6 +46,7 @@ export function headerRowCanvasArguments(content: string): { name: string; opera
 /** One full-width banner image on the open page. */
 export function heroImageCanvasArguments(content: string): { name: string; operations: Record<string, unknown>[] } | null {
   if (!isOpenDesigner(content)) return null
+  if (canvasSectionBriefs(content).length >= 2) return null
   const text = visibleDesignerRequest(content).toLowerCase()
   const image = /\b(image|photo|picture|banner|hero)\b/.test(text)
   const large = /\b(hero|banner|large)\b/.test(text) || /full[\s-]?width/.test(text)

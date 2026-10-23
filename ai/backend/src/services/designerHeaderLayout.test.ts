@@ -44,6 +44,37 @@ need to add the home page full width large image`)
     assert.ok(headerRowCanvasArguments(REQUEST.replace('kind: headers', 'kind: presets')))
   })
 
+  it('leaves a multi-section homepage to the task planner', () => {
+    const args = heroImageCanvasArguments(`[designer-canvas]
+kind: pages
+id: page1
+name: Home
+blocks:
+(empty canvas)
+[/designer-canvas]
+
+# Design a homepage
+
+## 1. Hero Section
+Full-width hero image, headline, and a call to action.
+
+## 2. About the Company
+Introduction and three strengths.
+
+## 3. Full-Width Image Banner
+Headline over a banner image.
+
+## 4. Company Details
+Image on the left and text on the right.
+
+## 5. General Design Requirements
+Use the existing theme.
+
+## Expected Result
+Four sections in that order.`)
+    assert.equal(args, null)
+  })
+
   it('ignores a designer canvas when the request is not a header or hero', () => {
     const note = REQUEST.replace(/i need to desing[\s\S]*$/, 'Change the phone number')
     assert.equal(headerRowCanvasArguments(note), null)
