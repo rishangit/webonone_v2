@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+/** Canvas outline is sent with the user prompt, so this must fit both. */
+export const CHAT_MESSAGE_MAX_CHARS = 200_000
+
 export const nanoidIdSchema = z.string().length(21)
 
 /** Platform Design library ids (seeded `lib-button-primary` plus nanoid creates). */
@@ -72,7 +75,7 @@ export const entityContextRefSchema = z.discriminatedUnion('service', [
 
 export const sendMessageSchema = z
   .object({
-    content: z.string().trim().min(1).max(8000),
+    content: z.string().trim().min(1).max(CHAT_MESSAGE_MAX_CHARS),
     context: z.array(entityContextRefSchema).max(8).optional(),
     companyId: z.unknown().optional(),
     userId: z.unknown().optional(),

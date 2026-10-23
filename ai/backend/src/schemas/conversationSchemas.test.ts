@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { sendMessageSchema } from './conversationSchemas.js'
+import { CHAT_MESSAGE_MAX_CHARS, sendMessageSchema } from './conversationSchemas.js'
 
 describe('sendMessageSchema design context', () => {
   it('accepts seeded button library ids that are not 21 characters', () => {
@@ -31,6 +31,17 @@ describe('sendMessageSchema design context', () => {
       ],
     })
     assert.equal(parsed.context?.[0]?.id, 'lib-text-heading')
+  })
+
+  it('accepts a prompt longer than 8000 characters', () => {
+    const content = 'a'.repeat(8001)
+    const parsed = sendMessageSchema.parse({ content })
+    assert.equal(parsed.content.length, 8001)
+  })
+
+  it('rejects a prompt over the message cap', () => {
+    const result = sendMessageSchema.safeParse({ content: 'a'.repeat(CHAT_MESSAGE_MAX_CHARS + 1) })
+    assert.equal(result.success, false)
   })
 
   it('rejects design ids that are too short', () => {
