@@ -80,7 +80,7 @@ export function WebsiteSettingsPage() {
   if (user?.role === 'super_admin') return <Navigate to="/website/pages" replace />
   if (!companyId) {
     return (
-      <FeaturePage title={t('title')} description={t('settingsDescription')}>
+      <FeaturePage title={t('settings')} description={t('settingsDescription')}>
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -94,7 +94,7 @@ export function WebsiteSettingsPage() {
   const isSaving = status === 'saving'
 
   return (
-    <FeaturePage title={t('title')} description={t('settingsDescription')}>
+    <FeaturePage title={t('settings')} description={t('settingsDescription')}>
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

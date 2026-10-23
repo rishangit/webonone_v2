@@ -9,8 +9,10 @@ export type ThemeEditorTabProps = {
 
 export type ThemeBasicSettingsTabProps = {
   theme: WebsiteTheme
-  onChange: (theme: WebsiteTheme) => void
+  onPersist: (theme: WebsiteTheme) => boolean | void
   fieldErrors?: Record<string, string>
+  canManage?: boolean
+  saving?: boolean
 }
 
 export const THEME_TOKEN_NONE = '__none'

@@ -77,7 +77,7 @@ export function WebsitePresetsPage() {
   if (!accessToken) return <Navigate to="/login" replace />
   if (!companyId && user?.role !== 'super_admin') {
     return (
-      <FeaturePage title={t('title')} description={t('description')}>
+      <FeaturePage title={t('presets')} description={t('presetsDescription')}>
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -98,7 +98,7 @@ export function WebsitePresetsPage() {
   }
 
   return (
-    <FeaturePage title={t('title')} description={t('presetsDescription')}>
+    <FeaturePage title={t('presets')} description={t('presetsDescription')}>
       <WebsiteHubTabs
         actions={
           <WebsiteHubListToolbar

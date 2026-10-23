@@ -6,12 +6,12 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { usePlatformLoading } from '@/features/auth/context/PlatformLoadingContext'
 import { useNavigateDesign } from '@/features/shell/utils/navigateDesign'
 import { fallbackTextSize } from '../document/theme'
-import { useDebouncedCallback, useThemePersistence } from '../hooks/useThemePersistence'
+import { useThemePersistence } from '../hooks/useThemePersistence'
 import { websiteThemesActions } from '../store'
 import { WEBSITE_BREAKPOINTS } from '../types'
 import type { WebsiteTextStyle, WebsiteTheme } from '../types'
 import { parseGoogleFontFamily } from '../utils/parseGoogleFontFamily'
-import { normalizeWebsiteTheme } from '../utils/websitePalette'
+import { migrateLegacyTextStylePalette, normalizeWebsiteTheme } from '../utils/websitePalette'
 import { ThemeBasicSettingsTab } from '../components/theme-editor/ThemeBasicSettingsTab'
 import { ThemeButtonsTab } from '../components/theme-editor/ThemeButtonsTab'
 import { ThemeColorsTab } from '../components/theme-editor/ThemeColorsTab'
@@ -32,24 +32,25 @@ const THEME_TABS = [
 ] as const
 type ThemeTabId = (typeof THEME_TABS)[number]['id']
 
-function hydrateTextStyle(style: WebsiteTextStyle): WebsiteTextStyle {
+function hydrateTextStyle(theme: WebsiteTheme, style: WebsiteTextStyle): WebsiteTextStyle {
   const sizeByBreakpoint = Object.fromEntries(
     WEBSITE_BREAKPOINTS.map((breakpoint) => [
       breakpoint,
       style.sizeByBreakpoint?.[breakpoint] ?? style.size ?? 16,
     ]),
   ) as NonNullable<WebsiteTextStyle['sizeByBreakpoint']>
-  return {
+  return migrateLegacyTextStylePalette(theme, {
     ...style,
     sizeByBreakpoint,
     size: fallbackTextSize(sizeByBreakpoint),
-  }
+  })
 }
 
 function hydrateThemeDraft(theme: WebsiteTheme): WebsiteTheme {
+  const normalized = normalizeWebsiteTheme(theme)
   return {
-    ...normalizeWebsiteTheme(theme),
-    textStyles: theme.textStyles.map(hydrateTextStyle),
+    ...normalized,
+    textStyles: normalized.textStyles.map((style) => hydrateTextStyle(normalized, style)),
   }
 }
 
@@ -72,11 +73,6 @@ export function WebsiteThemeEditorPage() {
   }, [])
 
   const { persistTheme, saving, fieldErrors } = useThemePersistence(theme, syncTheme)
-
-  const debouncedPersistBasic = useDebouncedCallback(
-    (next: WebsiteTheme) => persistTheme(next),
-    400,
-  )
 
   usePlatformLoading(detailStatus === 'loading' && !detail ? t('loading') : null)
 
@@ -150,10 +146,12 @@ export function WebsiteThemeEditorPage() {
         <TabsContent value="basic" className="mt-0 outline-none">
           <ThemeBasicSettingsTab
             theme={theme}
+            canManage={canManage}
+            saving={saving}
             fieldErrors={fieldErrors}
-            onChange={(next) => {
-              setTheme(next)
-              debouncedPersistBasic(next)
+            onPersist={(next) => {
+              setTheme(hydrateThemeDraft(next))
+              return persistTheme(next)
             }}
           />
         </TabsContent>

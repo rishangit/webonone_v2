@@ -110,6 +110,21 @@ const WebsiteTextLibraryDialogEmbedPage = lazy(() =>
     default: m.WebsiteTextLibraryDialogEmbedPage,
   })),
 )
+const WebsiteColorLibraryDialogEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteColorPaletteDialogEmbedPage').then((m) => ({
+    default: m.WebsiteColorLibraryDialogEmbedPage,
+  })),
+)
+const WebsiteThemeColorPaletteAddEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteColorPaletteDialogEmbedPage').then((m) => ({
+    default: m.WebsiteThemeColorPaletteAddEmbedPage,
+  })),
+)
+const WebsiteThemeColorPaletteEditEmbedPage = lazy(() =>
+  import('@/features/website/pages/WebsiteColorPaletteDialogEmbedPage').then((m) => ({
+    default: m.WebsiteThemeColorPaletteEditEmbedPage,
+  })),
+)
 const WebsiteThemeTextStyleDetailPage = lazy(() =>
   import('@/features/website/pages/WebsiteThemeTextStyleDetailPage').then((m) => ({
     default: m.WebsiteThemeTextStyleDetailPage,
@@ -617,6 +632,46 @@ export function App() {
                 <RoleRoute roles={['super_admin']}>
                   <LazyRoute>
                     <WebsiteTextLibraryDialogEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/color-library/create"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteColorLibraryDialogEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/color-library/:itemId"
+              element={
+                <RoleRoute roles={['super_admin']}>
+                  <LazyRoute>
+                    <WebsiteColorLibraryDialogEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/palettes/add"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeColorPaletteAddEmbedPage />
+                  </LazyRoute>
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/embed/dialogs/website/themes/:themeId/palettes/:paletteId/edit"
+              element={
+                <RoleRoute roles={[...manageRoles]}>
+                  <LazyRoute>
+                    <WebsiteThemeColorPaletteEditEmbedPage />
                   </LazyRoute>
                 </RoleRoute>
               }

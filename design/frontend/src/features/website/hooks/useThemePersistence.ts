@@ -43,6 +43,11 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
       const parsed = websiteThemeEditorSchema.safeParse({
         name: next.name,
         colorPaletteId: next.colorPaletteId,
+        pageBackgroundPaletteIndex: next.pageBackgroundPaletteIndex ?? null,
+        surfacePaletteIndex: next.surfacePaletteIndex ?? null,
+        bodyTextPaletteIndex: next.bodyTextPaletteIndex ?? null,
+        accent1PaletteIndex: next.accent1PaletteIndex ?? null,
+        accent2PaletteIndex: next.accent2PaletteIndex ?? null,
         pageBackgroundIndex: next.pageBackgroundIndex,
         surfaceIndex: next.surfaceIndex,
         bodyTextIndex: next.bodyTextIndex,
@@ -74,6 +79,11 @@ export function useThemePersistence(theme: WebsiteTheme | null, onSynced: (theme
           body: {
             name: parsed.data.name,
             colorPaletteId: parsed.data.colorPaletteId,
+            pageBackgroundPaletteIndex: parsed.data.pageBackgroundPaletteIndex ?? null,
+            surfacePaletteIndex: parsed.data.surfacePaletteIndex ?? null,
+            bodyTextPaletteIndex: parsed.data.bodyTextPaletteIndex ?? null,
+            accent1PaletteIndex: parsed.data.accent1PaletteIndex ?? null,
+            accent2PaletteIndex: parsed.data.accent2PaletteIndex ?? null,
             pageBackgroundIndex: parsed.data.pageBackgroundIndex,
             surfaceIndex: parsed.data.surfaceIndex,
             bodyTextIndex: parsed.data.bodyTextIndex,

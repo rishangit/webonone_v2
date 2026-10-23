@@ -123,9 +123,9 @@ export function useEpicCatalogList<T, S = unknown>(
     extraFilters,
     setExtraFilters,
     loading:
-      listState.lastFetchedAt === null
-        ? listState.listStatus !== 'error'
-        : listState.listStatus === 'loading' && listState.items.length === 0,
+      listState.items.length === 0 &&
+      (listState.listStatus === 'loading' ||
+        (listState.lastFetchedAt === null && listState.listStatus !== 'error')),
     loadingMore: listState.listStatus === 'loading' && listState.items.length > 0,
     hasMore: listState.items.length < listState.total,
     error: listState.listError,

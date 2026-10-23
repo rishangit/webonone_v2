@@ -150,15 +150,55 @@ const themeProperties = {
     title: 'Basic color palette',
     description: 'Palette id from the theme color palettes. Text and button styles use this palette unless they set their own.',
   },
+  pageBackgroundPaletteIndex: {
+    type: 'integer',
+    title: 'Page background palette',
+    description: '1-based palette on this theme. Omit to use the theme color palette.',
+  },
   pageBackgroundIndex: {
     type: 'integer',
     title: 'Page background color',
-    description: 'Color slot on the basic palette, from 1 to 6.',
+    description: 'Color slot, from 1 to 6, on the page background palette or the theme palette when that palette is omitted.',
+  },
+  surfacePaletteIndex: {
+    type: 'integer',
+    title: 'Surface palette',
+    description: '1-based palette on this theme. Omit to use the theme color palette.',
+  },
+  surfaceIndex: {
+    type: 'integer',
+    title: 'Surface color',
+    description: 'Color slot, from 1 to 6, on the surface palette or the theme palette when that palette is omitted.',
+  },
+  bodyTextPaletteIndex: {
+    type: 'integer',
+    title: 'Main text palette',
+    description: '1-based palette on this theme. Omit to use the theme color palette.',
   },
   bodyTextIndex: {
     type: 'integer',
     title: 'Main text color',
-    description: 'Color slot on the basic palette, from 1 to 6.',
+    description: 'Color slot, from 1 to 6, on the main text palette or the theme palette when that palette is omitted.',
+  },
+  accent1PaletteIndex: {
+    type: 'integer',
+    title: 'Accent 1 palette',
+    description: '1-based palette on this theme. Omit to use the theme color palette.',
+  },
+  accent1Index: {
+    type: 'integer',
+    title: 'Accent color 1',
+    description: 'Color slot, from 1 to 6, on the accent 1 palette or the theme palette when that palette is omitted.',
+  },
+  accent2PaletteIndex: {
+    type: 'integer',
+    title: 'Accent 2 palette',
+    description: '1-based palette on this theme. Omit to use the theme color palette.',
+  },
+  accent2Index: {
+    type: 'integer',
+    title: 'Accent color 2',
+    description: 'Color slot, from 1 to 6, on the accent 2 palette or the theme palette when that palette is omitted.',
   },
   isActive: {
     type: 'boolean',
@@ -488,9 +528,39 @@ const themeUpdateProperties = {
   name: nameProperty,
   pageBackground: themeProperties.pageBackground,
   bodyTextColor: themeProperties.bodyTextColor,
+  colorPaletteId: themeProperties.colorPaletteId,
+  pageBackgroundPaletteIndex: themeProperties.pageBackgroundPaletteIndex,
+  pageBackgroundIndex: themeProperties.pageBackgroundIndex,
+  surfacePaletteIndex: themeProperties.surfacePaletteIndex,
+  surfaceIndex: themeProperties.surfaceIndex,
+  bodyTextPaletteIndex: themeProperties.bodyTextPaletteIndex,
+  bodyTextIndex: themeProperties.bodyTextIndex,
+  accent1PaletteIndex: themeProperties.accent1PaletteIndex,
+  accent1Index: themeProperties.accent1Index,
+  accent2PaletteIndex: themeProperties.accent2PaletteIndex,
+  accent2Index: themeProperties.accent2Index,
   isActive: themeProperties.isActive,
   isDefault: themeProperties.isDefault,
 }
+
+const themeUpdateKeys = [
+  'name',
+  'pageBackground',
+  'bodyTextColor',
+  'colorPaletteId',
+  'pageBackgroundPaletteIndex',
+  'pageBackgroundIndex',
+  'surfacePaletteIndex',
+  'surfaceIndex',
+  'bodyTextPaletteIndex',
+  'bodyTextIndex',
+  'accent1PaletteIndex',
+  'accent1Index',
+  'accent2PaletteIndex',
+  'accent2Index',
+  'isActive',
+  'isDefault',
+]
 
 export const websiteAiCapabilities: ToolDefinition[] = [
   ...listAndCreate({
@@ -930,7 +1000,7 @@ export const websiteAiCapabilities: ToolDefinition[] = [
     writePermission: 'ai:design:write',
     noun: 'company website theme',
     updateProperties: themeUpdateProperties,
-    updateKeys: ['name', 'pageBackground', 'bodyTextColor', 'isActive', 'isDefault'],
+    updateKeys: themeUpdateKeys,
   }),
   ...recordTools({
     name: 'design_library_theme',
@@ -942,7 +1012,7 @@ export const websiteAiCapabilities: ToolDefinition[] = [
     writePermission: 'ai:design:platform:write',
     noun: 'platform library theme',
     updateProperties: themeUpdateProperties,
-    updateKeys: ['name', 'pageBackground', 'bodyTextColor', 'isActive', 'isDefault'],
+    updateKeys: themeUpdateKeys,
   }),
   ...recordTools({
     name: 'design_website_header',

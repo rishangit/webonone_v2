@@ -12,6 +12,11 @@ type PaletteColor = { name: string; value: string }
 
 export type ThemeColorWrite = {
   color_palette_id: string | null
+  page_background_palette_index: number | null
+  surface_palette_index: number | null
+  body_text_palette_index: number | null
+  accent_1_palette_index: number | null
+  accent_2_palette_index: number | null
   page_background_index: number | null
   surface_index: number | null
   body_text_index: number | null
@@ -22,6 +27,11 @@ export type ThemeColorWrite = {
 
 export type ThemeColorRead = {
   colorPaletteId: string
+  pageBackgroundPaletteIndex: number | null
+  surfacePaletteIndex: number | null
+  bodyTextPaletteIndex: number | null
+  accent1PaletteIndex: number | null
+  accent2PaletteIndex: number | null
   pageBackgroundIndex: number | null
   surfaceIndex: number | null
   bodyTextIndex: number | null
@@ -93,8 +103,30 @@ function readOptionalIndex(value: number | null | undefined, length: number): nu
   return clampIndex(value, length)
 }
 
+/** 1-based position in the theme palette list. Null follows the theme palette. */
+function readPaletteIndex(value: number | null | undefined, paletteCount: number): number | null {
+  if (value == null || paletteCount < 1) return null
+  const index = Math.floor(Number(value))
+  if (!Number.isFinite(index) || index < 1 || index > paletteCount) return null
+  return index
+}
+
+function paletteForRole(
+  palettes: WebsiteThemeColorPalette[],
+  themePalette: WebsiteThemeColorPalette | undefined,
+  paletteIndex: number | null,
+): WebsiteThemeColorPalette | undefined {
+  if (paletteIndex != null) return palettes[paletteIndex - 1]
+  return themePalette
+}
+
 export function readThemeColorFields(row: {
   color_palette_id?: string | null
+  page_background_palette_index?: number | null
+  surface_palette_index?: number | null
+  body_text_palette_index?: number | null
+  accent_1_palette_index?: number | null
+  accent_2_palette_index?: number | null
   page_background_index?: number | null
   surface_index?: number | null
   body_text_index?: number | null
@@ -124,24 +156,39 @@ export function readThemeColorFields(row: {
     (row.color_palette_id && colorPalettes.some((palette) => palette.id === row.color_palette_id)
       ? row.color_palette_id
       : colorPalettes[0]?.id) ?? ''
-  const palette = colorPalettes.find((item) => item.id === colorPaletteId) ?? colorPalettes[0]
-  const pageBackgroundIndex = readOptionalIndex(row.page_background_index, palette?.colors.length ?? 1)
-  const surfaceIndex = readOptionalIndex(row.surface_index, palette?.colors.length ?? 1)
-  const bodyTextIndex = readOptionalIndex(row.body_text_index, palette?.colors.length ?? 1)
-  const accent1Index = readOptionalIndex(row.accent_1_index, palette?.colors.length ?? 1)
-  const accent2Index = readOptionalIndex(row.accent_2_index, palette?.colors.length ?? 1)
+  const themePalette = colorPalettes.find((item) => item.id === colorPaletteId) ?? colorPalettes[0]
+  const pageBackgroundPaletteIndex = readPaletteIndex(row.page_background_palette_index, colorPalettes.length)
+  const surfacePaletteIndex = readPaletteIndex(row.surface_palette_index, colorPalettes.length)
+  const bodyTextPaletteIndex = readPaletteIndex(row.body_text_palette_index, colorPalettes.length)
+  const accent1PaletteIndex = readPaletteIndex(row.accent_1_palette_index, colorPalettes.length)
+  const accent2PaletteIndex = readPaletteIndex(row.accent_2_palette_index, colorPalettes.length)
+  const pagePalette = paletteForRole(colorPalettes, themePalette, pageBackgroundPaletteIndex)
+  const surfacePalette = paletteForRole(colorPalettes, themePalette, surfacePaletteIndex)
+  const textPalette = paletteForRole(colorPalettes, themePalette, bodyTextPaletteIndex)
+  const accent1Palette = paletteForRole(colorPalettes, themePalette, accent1PaletteIndex)
+  const accent2Palette = paletteForRole(colorPalettes, themePalette, accent2PaletteIndex)
+  const pageBackgroundIndex = readOptionalIndex(row.page_background_index, pagePalette?.colors.length ?? 1)
+  const surfaceIndex = readOptionalIndex(row.surface_index, surfacePalette?.colors.length ?? 1)
+  const bodyTextIndex = readOptionalIndex(row.body_text_index, textPalette?.colors.length ?? 1)
+  const accent1Index = readOptionalIndex(row.accent_1_index, accent1Palette?.colors.length ?? 1)
+  const accent2Index = readOptionalIndex(row.accent_2_index, accent2Palette?.colors.length ?? 1)
   return {
     colorPaletteId,
+    pageBackgroundPaletteIndex,
+    surfacePaletteIndex,
+    bodyTextPaletteIndex,
+    accent1PaletteIndex,
+    accent2PaletteIndex,
     pageBackgroundIndex,
     surfaceIndex,
     bodyTextIndex,
     accent1Index,
     accent2Index,
-    pageBackground: paletteSlots(palette, pageBackgroundIndex, 'transparent'),
-    bodyTextColor: paletteSlots(palette, bodyTextIndex, 'transparent'),
-    surfaceColor: paletteSlots(palette, surfaceIndex, 'transparent'),
-    accentColor1: paletteSlots(palette, accent1Index, 'transparent'),
-    accentColor2: paletteSlots(palette, accent2Index, 'transparent'),
+    pageBackground: paletteSlots(pagePalette, pageBackgroundIndex, 'transparent'),
+    bodyTextColor: paletteSlots(textPalette, bodyTextIndex, 'transparent'),
+    surfaceColor: paletteSlots(surfacePalette, surfaceIndex, 'transparent'),
+    accentColor1: paletteSlots(accent1Palette, accent1Index, 'transparent'),
+    accentColor2: paletteSlots(accent2Palette, accent2Index, 'transparent'),
     colorPalettes,
   }
 }
@@ -385,8 +432,14 @@ export function writeThemeColorFields(body: CreateWebsiteThemeBody): ThemeColorW
     bodyTextIndex = 2
   }
   if (!colorPaletteId) colorPaletteId = colorPalettes[0]?.id ?? ''
+  const paletteCount = colorPalettes.length
   return {
     color_palette_id: colorPaletteId || null,
+    page_background_palette_index: readPaletteIndex(body.pageBackgroundPaletteIndex, paletteCount),
+    surface_palette_index: readPaletteIndex(body.surfacePaletteIndex, paletteCount),
+    body_text_palette_index: readPaletteIndex(body.bodyTextPaletteIndex, paletteCount),
+    accent_1_palette_index: readPaletteIndex(body.accent1PaletteIndex, paletteCount),
+    accent_2_palette_index: readPaletteIndex(body.accent2PaletteIndex, paletteCount),
     page_background_index: pageBackgroundIndex,
     surface_index: body.surfaceIndex,
     body_text_index: bodyTextIndex,
@@ -402,6 +455,22 @@ export function patchThemeColorFields(existingRow: Parameters<typeof readThemeCo
   let palettes = body.colorPalettes ?? existing.colorPalettes
   if (body.colorPalettes != null) updates.color_palettes = JSON.stringify(palettes)
   if (body.colorPaletteId != null) updates.color_palette_id = body.colorPaletteId || null
+  const paletteCount = palettes.length
+  if (body.pageBackgroundPaletteIndex !== undefined) {
+    updates.page_background_palette_index = readPaletteIndex(body.pageBackgroundPaletteIndex, paletteCount)
+  }
+  if (body.surfacePaletteIndex !== undefined) {
+    updates.surface_palette_index = readPaletteIndex(body.surfacePaletteIndex, paletteCount)
+  }
+  if (body.bodyTextPaletteIndex !== undefined) {
+    updates.body_text_palette_index = readPaletteIndex(body.bodyTextPaletteIndex, paletteCount)
+  }
+  if (body.accent1PaletteIndex !== undefined) {
+    updates.accent_1_palette_index = readPaletteIndex(body.accent1PaletteIndex, paletteCount)
+  }
+  if (body.accent2PaletteIndex !== undefined) {
+    updates.accent_2_palette_index = readPaletteIndex(body.accent2PaletteIndex, paletteCount)
+  }
   if (body.pageBackgroundIndex !== undefined) updates.page_background_index = body.pageBackgroundIndex
   if (body.surfaceIndex !== undefined) updates.surface_index = body.surfaceIndex
   if (body.bodyTextIndex !== undefined) updates.body_text_index = body.bodyTextIndex
@@ -411,13 +480,23 @@ export function patchThemeColorFields(existingRow: Parameters<typeof readThemeCo
   const paletteId = (typeof updates.color_palette_id === 'string' ? updates.color_palette_id : existing.colorPaletteId) || palettes[0]?.id
   const pageIndex = updates.page_background_index !== undefined ? updates.page_background_index : existing.pageBackgroundIndex
   const textIndex = updates.body_text_index !== undefined ? updates.body_text_index : existing.bodyTextIndex
+  const pagePaletteIndex =
+    updates.page_background_palette_index !== undefined
+      ? (updates.page_background_palette_index as number | null)
+      : existing.pageBackgroundPaletteIndex
+  const textPaletteIndex =
+    updates.body_text_palette_index !== undefined
+      ? (updates.body_text_palette_index as number | null)
+      : existing.bodyTextPaletteIndex
+  const pagePaletteId = paletteForRole(palettes, palettes.find((item) => item.id === paletteId) ?? palettes[0], pagePaletteIndex)?.id
+  const textPaletteId = paletteForRole(palettes, palettes.find((item) => item.id === paletteId) ?? palettes[0], textPaletteIndex)?.id
   let changed = false
   if (body.pageBackground && typeof pageIndex === 'number') {
-    palettes = paintSlot(palettes, paletteId, pageIndex, body.pageBackground)
+    palettes = paintSlot(palettes, pagePaletteId, pageIndex, body.pageBackground)
     changed = true
   }
   if (body.bodyTextColor && typeof textIndex === 'number') {
-    palettes = paintSlot(palettes, paletteId, textIndex, body.bodyTextColor)
+    palettes = paintSlot(palettes, textPaletteId, textIndex, body.bodyTextColor)
     changed = true
   }
   if (changed) updates.color_palettes = JSON.stringify(palettes)

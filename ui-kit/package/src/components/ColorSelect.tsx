@@ -18,6 +18,8 @@ export type ColorSelectProps = {
   placeholder?: string
   onChange: (id: string) => void
   disabled?: boolean
+  /** Render inside {@link PaletteColorSelect} or {@link InputGroup} — no outer trigger border. */
+  inGroup?: boolean
   'aria-required'?: boolean
   'aria-invalid'?: boolean | 'true' | 'false'
   'aria-describedby'?: string
@@ -31,6 +33,7 @@ export function ColorSelect({
   placeholder,
   onChange,
   disabled,
+  inGroup = false,
   ...triggerProps
 }: ColorSelectProps) {
   return (
@@ -39,7 +42,12 @@ export function ColorSelect({
       onValueChange={(next) => onChange(next === COLOR_SELECT_NONE ? '' : next)}
       disabled={disabled}
     >
-      <SelectTrigger id={id} {...triggerProps}>
+      <SelectTrigger
+        id={id}
+        inGroup={inGroup}
+        className={inGroup ? 'w-full' : undefined}
+        {...triggerProps}
+      >
         <SelectValue placeholder={placeholder ?? noneLabel} />
       </SelectTrigger>
       <SelectContent>

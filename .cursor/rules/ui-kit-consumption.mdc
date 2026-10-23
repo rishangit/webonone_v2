@@ -49,6 +49,7 @@ See [microservice-architecture.mdc](microservice-architecture.mdc) for productio
 | Tag select (multi) | `SelectTag` (+ Data `TagSelectTrigger` / `TagPickerPanel`; consumers: `DataTagPickerFrame` + `DataTagCreateFrame`) | [dialog-windows.mdc](dialog-windows.mdc) SelectTag — **do not fork** |
 | Theme color | **`ColorSelect`** — **None** is always the first item; `onChange('')` clears it | This rule |
 | Theme color palette | **`ColorPaletteSelect`** — first item clears the palette (`noneLabel` may say Inherit) | This rule |
+| Palette + color slot (paired) | **`PaletteColorSelect`** — one bordered control with palette + color dropdowns; pass filtered `colorOptions` for the active palette | This rule |
 | Page/section loading | `Spinner` (`size="lg"` for full section; `size="sm"` inside `Button`) | This rule |
 | Errors (page/list load, form banner) | `Alert`, `AlertDescription` | This rule |
 | Mutation success / fail | `useToast` / `ToastProvider` | [toast-notifications skill](../skills/toast-notifications/SKILL.md) · [toast-notifications.mdc](toast-notifications.mdc) |

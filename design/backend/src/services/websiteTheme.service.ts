@@ -27,6 +27,11 @@ export type WebsiteThemeDto = {
   sourceLibraryId: string | null
   fonts: WebsiteFontToken[]
   colorPaletteId: string
+  pageBackgroundPaletteIndex: number | null
+  surfacePaletteIndex: number | null
+  bodyTextPaletteIndex: number | null
+  accent1PaletteIndex: number | null
+  accent2PaletteIndex: number | null
   pageBackgroundIndex: number | null
   surfaceIndex: number | null
   bodyTextIndex: number | null
@@ -172,6 +177,11 @@ export async function createWebsiteTheme(input: {
       company_id: input.companyId,
       name: input.body.name,
       color_palette_id: tokens.colorPaletteId,
+      page_background_palette_index: colorFields.page_background_palette_index,
+      surface_palette_index: colorFields.surface_palette_index,
+      body_text_palette_index: colorFields.body_text_palette_index,
+      accent_1_palette_index: colorFields.accent_1_palette_index,
+      accent_2_palette_index: colorFields.accent_2_palette_index,
       page_background_index: colorFields.page_background_index,
       surface_index: colorFields.surface_index,
       body_text_index: colorFields.body_text_index,
@@ -218,6 +228,15 @@ export async function updateWebsiteTheme(input: {
     if (input.body.name != null) updates.name = input.body.name
     if (input.body.isActive != null) updates.is_active = input.body.isActive
     if (input.body.isDefault != null) updates.is_default = input.body.isDefault
+    if (colorUpdates.page_background_palette_index !== undefined) {
+      updates.page_background_palette_index = colorUpdates.page_background_palette_index
+    }
+    if (colorUpdates.surface_palette_index !== undefined) updates.surface_palette_index = colorUpdates.surface_palette_index
+    if (colorUpdates.body_text_palette_index !== undefined) {
+      updates.body_text_palette_index = colorUpdates.body_text_palette_index
+    }
+    if (colorUpdates.accent_1_palette_index !== undefined) updates.accent_1_palette_index = colorUpdates.accent_1_palette_index
+    if (colorUpdates.accent_2_palette_index !== undefined) updates.accent_2_palette_index = colorUpdates.accent_2_palette_index
     if (colorUpdates.page_background_index !== undefined) updates.page_background_index = colorUpdates.page_background_index
     if (colorUpdates.surface_index !== undefined) updates.surface_index = colorUpdates.surface_index
     if (colorUpdates.body_text_index !== undefined) updates.body_text_index = colorUpdates.body_text_index

@@ -81,6 +81,29 @@ describe('migrateThemeColorRecord', () => {
     assert.equal(read.accent2Index, null)
     assert.equal(read.pageBackground, 'transparent')
     assert.equal(read.surfaceColor, '#111111')
+    assert.equal(read.pageBackgroundPaletteIndex, null)
+  })
+
+  it('resolves a basic color from its own palette index', () => {
+    const read = readThemeColorFields({
+      color_palette_id: 'one',
+      page_background_palette_index: 2,
+      page_background_index: 2,
+      surface_palette_index: null,
+      surface_index: 1,
+      body_text_index: 1,
+      accent_1_index: 1,
+      accent_2_index: null,
+      color_palettes: [
+        { id: 'one', name: 'One', colors: [{ name: 'A', value: '#111111' }] },
+        { id: 'two', name: 'Two', colors: [{ name: 'B', value: '#222222' }, { name: 'C', value: '#333333' }] },
+      ],
+    })
+    assert.equal(read.pageBackgroundPaletteIndex, 2)
+    assert.equal(read.pageBackground, '#333333')
+    assert.equal(read.surfacePaletteIndex, null)
+    assert.equal(read.surfaceColor, '#111111')
+    assert.equal(read.bodyTextColor, '#111111')
   })
 
   it('keeps a text style palette when it is not the basic palette', () => {

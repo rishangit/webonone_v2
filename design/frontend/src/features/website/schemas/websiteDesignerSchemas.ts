@@ -20,6 +20,8 @@ export const elementChromeSchema = z.object({
   borderColor: z.string().max(32).optional(),
   backgroundColorIndex: themeColorSlotSchema,
   borderColorIndex: themeColorSlotSchema,
+  backgroundColorPaletteId: z.string().trim().max(64).nullable().optional(),
+  borderColorPaletteId: z.string().trim().max(64).nullable().optional(),
   borderRadius: z.enum(['sm', 'md', 'lg', 'xl', 'full']).optional(),
   boxShadow: z.enum(['sm', 'md', 'lg']).optional(),
   padding: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),

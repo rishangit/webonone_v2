@@ -172,11 +172,15 @@ export type ElementChrome = {
   backgroundColorIndex?: number
   /** Theme palette slot (1-based). Omitted means no border color. */
   borderColorIndex?: number
+  /** Palette for background slot colors. Omitted uses {@link colorPaletteId} / parent inherit. */
+  backgroundColorPaletteId?: string | null
+  /** Palette for border slot colors. Omitted uses {@link colorPaletteId} / parent inherit. */
+  borderColorPaletteId?: string | null
   borderRadius?: ElementBorderRadius
   boxShadow?: ElementBoxShadow
   padding?: ElementPadding
   margin?: ElementMargin
-  /** Theme palette for this element. Omitted means inherit from the parent. */
+  /** Theme palette for child elements. Omitted means inherit from the parent. */
   colorPaletteId?: string | null
 }
 
@@ -378,7 +382,9 @@ export type WebsiteTextStyle = {
   size: number
   sizeByBreakpoint?: Partial<Record<WebsiteBreakpoint, number>>
   colorIndex: number | null
+  /** Style default palette; per-color overrides inherit when empty. */
   colorPaletteId?: string | null
+  fontColorPaletteId?: string | null
   sourceLibraryId?: string | null
   customization?: WebsiteElementCustomization
 }
@@ -386,7 +392,11 @@ export type WebsiteTextStyle = {
 export type WebsiteButtonStyle = {
   id: string
   name: string
+  /** Fallback palette when per-color palette overrides are omitted. */
   colorPaletteId?: string | null
+  backgroundColorPaletteId?: string | null
+  textColorPaletteId?: string | null
+  borderColorPaletteId?: string | null
   backgroundColorIndex: number | null
   textColorIndex: number | null
   textStyleId: string
@@ -453,6 +463,12 @@ export type WebsiteTheme = {
   accentColor1?: string
   accentColor2?: string
   colorPaletteId: string
+  /** 1-based palette on this theme. Empty follows the theme palette. */
+  pageBackgroundPaletteIndex?: number | null
+  surfacePaletteIndex?: number | null
+  bodyTextPaletteIndex?: number | null
+  accent1PaletteIndex?: number | null
+  accent2PaletteIndex?: number | null
   pageBackgroundIndex: number | null
   surfaceIndex: number | null
   bodyTextIndex: number | null

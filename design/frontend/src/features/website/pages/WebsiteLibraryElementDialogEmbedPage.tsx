@@ -5,7 +5,7 @@ import {
   PLATFORM_EMBED_QUERY,
   sendPlatformPeerDialogDismiss,
 } from '@webonone/platform-embed'
-import { Alert, AlertDescription } from '@webonone/ui-kit'
+import { Alert, AlertDescription, LoadingState } from '@webonone/ui-kit'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { websiteApi } from '../api'
 import { ButtonLibraryAddDialog } from '../components/ButtonLibraryAddDialog'
@@ -60,7 +60,9 @@ export function WebsiteButtonLibraryDialogEmbedPage() {
           <Alert variant="destructive" className="max-w-sm">
             <AlertDescription>{loadError}</AlertDescription>
           </Alert>
-        ) : null}
+        ) : (
+          <LoadingState label="Loading…" />
+        )}
       </div>
     )
   }
@@ -115,7 +117,9 @@ export function WebsiteTextLibraryDialogEmbedPage() {
           <Alert variant="destructive" className="max-w-sm">
             <AlertDescription>{loadError}</AlertDescription>
           </Alert>
-        ) : null}
+        ) : (
+          <LoadingState label="Loading…" />
+        )}
       </div>
     )
   }

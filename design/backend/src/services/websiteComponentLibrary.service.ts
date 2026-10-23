@@ -499,6 +499,11 @@ export type LibraryThemeDto = {
   publishStatus: WebsitePublishStatus
   fonts: WebsiteFontToken[]
   colorPaletteId: string
+  pageBackgroundPaletteIndex: number | null
+  surfacePaletteIndex: number | null
+  bodyTextPaletteIndex: number | null
+  accent1PaletteIndex: number | null
+  accent2PaletteIndex: number | null
   pageBackgroundIndex: number | null
   surfaceIndex: number | null
   bodyTextIndex: number | null
@@ -519,6 +524,11 @@ type ThemeRow = {
   id: string
   name: string
   color_palette_id: string | null
+  page_background_palette_index: number | null
+  surface_palette_index: number | null
+  body_text_palette_index: number | null
+  accent_1_palette_index: number | null
+  accent_2_palette_index: number | null
   page_background_index: number | null
   surface_index: number | null
   body_text_index: number | null
@@ -840,6 +850,11 @@ async function copyThemeRow(conn: Sql, input: { companyId: string; userId: strin
     company_id: input.companyId,
     name: await availableName(conn, COMPANY.themes, input.companyId, source.name),
     color_palette_id: stored.colorPaletteId,
+    page_background_palette_index: source.page_background_palette_index,
+    surface_palette_index: source.surface_palette_index,
+    body_text_palette_index: source.body_text_palette_index,
+    accent_1_palette_index: source.accent_1_palette_index,
+    accent_2_palette_index: source.accent_2_palette_index,
     page_background_index: source.page_background_index,
     surface_index: source.surface_index,
     body_text_index: source.body_text_index,
@@ -946,6 +961,11 @@ async function replaceCompanyThemeTokens(conn: Sql, input: { companyId: string; 
   })
   await conn(COMPANY.themes).where({ id: input.themeId, company_id: input.companyId }).update({
     color_palette_id: stored.colorPaletteId,
+    page_background_palette_index: input.source.page_background_palette_index,
+    surface_palette_index: input.source.surface_palette_index,
+    body_text_palette_index: input.source.body_text_palette_index,
+    accent_1_palette_index: input.source.accent_1_palette_index,
+    accent_2_palette_index: input.source.accent_2_palette_index,
     page_background_index: input.source.page_background_index,
     surface_index: input.source.surface_index,
     body_text_index: input.source.body_text_index,

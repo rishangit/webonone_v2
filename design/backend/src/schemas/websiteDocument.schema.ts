@@ -167,6 +167,8 @@ export const elementChromeFields = {
   borderColor: z.string().max(32).optional(),
   backgroundColorIndex: themeColorSlotSchema,
   borderColorIndex: themeColorSlotSchema,
+  backgroundColorPaletteId: z.string().trim().max(64).nullable().optional(),
+  borderColorPaletteId: z.string().trim().max(64).nullable().optional(),
   borderRadius: elementBorderRadiusSchema.optional(),
   boxShadow: elementBoxShadowSchema.optional(),
   padding: elementPaddingSchema.optional(),
@@ -179,6 +181,8 @@ export type ElementChrome = {
   borderColor?: string
   backgroundColorIndex?: number
   borderColorIndex?: number
+  backgroundColorPaletteId?: string | null
+  borderColorPaletteId?: string | null
   borderRadius?: z.infer<typeof elementBorderRadiusSchema>
   boxShadow?: z.infer<typeof elementBoxShadowSchema>
   padding?: z.infer<typeof elementPaddingSchema>

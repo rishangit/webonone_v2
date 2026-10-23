@@ -17,4 +17,4 @@ Exact buttons depend on the service time mode. Window-mode sessions use [queue t
 
 About **5 minutes before** start, the staff assigned to that session get a **Session due to start** alert (in-app bell, and on the mobile app the phone notification tray even if the app is closed).
 
-In window mode, call next follows **call order** (not only the printed token number). Late check-ins keep their number; call order may place them earlier or later in the waiting line so waits stay roughly equal — see [queue tokens](/docs/calendar/queue-token).
+In window mode, call next follows **call order** (not only the printed token number). Late check-ins keep their number; call order may move them only within the last five checked-in waiters so waits stay roughly equal — see [queue tokens](/docs/calendar/queue-token).

@@ -105,6 +105,11 @@ export interface DesignWebsiteThemeRow {
   company_id: string
   name: string
   color_palette_id: string | null
+  page_background_palette_index: number | null
+  surface_palette_index: number | null
+  body_text_palette_index: number | null
+  accent_1_palette_index: number | null
+  accent_2_palette_index: number | null
   page_background_index: number | null
   surface_index: number | null
   body_text_index: number | null

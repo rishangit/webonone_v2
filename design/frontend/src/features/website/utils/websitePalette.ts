@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import type {
   WebsiteColorLibraryPalette,
   WebsiteColorToken,
+  WebsiteTextStyle,
   WebsiteTheme,
   WebsiteThemeColorPalette,
 } from '../types'
@@ -98,6 +99,62 @@ function clampColorIndex(index: number, length: number): number {
   return Math.min(Math.floor(index), length, THEME_COLOR_SLOT_MAX)
 }
 
+/** 1-based position in `colorPalettes`. Null follows the theme palette. */
+export function normalizePaletteIndex(index: number | null | undefined, paletteCount: number): number | null {
+  if (index == null || paletteCount < 1) return null
+  if (!Number.isFinite(index) || index < 1) return null
+  const slot = Math.floor(index)
+  if (slot > paletteCount) return null
+  return slot
+}
+
+export function paletteIdAtIndex(theme: WebsiteTheme, paletteIndex: number | null | undefined): string {
+  const palettes = theme.colorPalettes ?? []
+  const normalized = normalizePaletteIndex(paletteIndex, palettes.length)
+  if (normalized != null) return palettes[normalized - 1]?.id ?? ''
+  return theme.colorPaletteId?.trim() || palettes[0]?.id || ''
+}
+
+const CHROME_ROLES = [
+  {
+    paletteKey: 'pageBackgroundPaletteIndex',
+    indexKey: 'pageBackgroundIndex',
+    colorKey: 'pageBackground',
+    fallback: '#ffffff',
+  },
+  {
+    paletteKey: 'surfacePaletteIndex',
+    indexKey: 'surfaceIndex',
+    colorKey: 'surfaceColor',
+    fallback: '#ffffff',
+  },
+  {
+    paletteKey: 'bodyTextPaletteIndex',
+    indexKey: 'bodyTextIndex',
+    colorKey: 'bodyTextColor',
+    fallback: '#111827',
+  },
+  {
+    paletteKey: 'accent1PaletteIndex',
+    indexKey: 'accent1Index',
+    colorKey: 'accentColor1',
+    fallback: '#111827',
+  },
+  {
+    paletteKey: 'accent2PaletteIndex',
+    indexKey: 'accent2Index',
+    colorKey: 'accentColor2',
+    fallback: '#111827',
+  },
+] as const
+
+function shiftPaletteIndex(index: number | null | undefined, removedPosition: number): number | null {
+  if (index == null) return null
+  if (index === removedPosition) return null
+  if (index > removedPosition) return index - 1
+  return index
+}
+
 export function themePaletteById(theme: WebsiteTheme, paletteId?: string | null): WebsiteThemeColorPalette | undefined {
   const palettes = theme.colorPalettes ?? []
   if (paletteId) {
@@ -142,39 +199,19 @@ export function themeSlotValue(
 
 export function applyThemeChrome(theme: WebsiteTheme): WebsiteTheme {
   const colorPaletteId = theme.colorPaletteId?.trim() || ''
-  const effectivePaletteId = colorPaletteId || theme.colorPalettes[0]?.id || ''
-  const palette = themePaletteById({ ...theme, colorPaletteId: effectivePaletteId }, effectivePaletteId)
-  const length = palette?.colors.length ?? 1
-  const pageBackgroundIndex = theme.pageBackgroundIndex == null ? null : clampColorIndex(theme.pageBackgroundIndex, length)
-  const surfaceIndex = theme.surfaceIndex == null ? null : clampColorIndex(theme.surfaceIndex, length)
-  const bodyTextIndex = theme.bodyTextIndex == null ? null : clampColorIndex(theme.bodyTextIndex, length)
-  const accent1Index = theme.accent1Index == null ? null : clampColorIndex(theme.accent1Index, length)
-  const accent2Index = theme.accent2Index == null ? null : clampColorIndex(theme.accent2Index, length)
-  const next = {
-    ...theme,
-    colorPaletteId,
-    colorPalettes: theme.colorPalettes ?? [],
-    pageBackgroundIndex,
-    surfaceIndex,
-    bodyTextIndex,
-    accent1Index,
-    accent2Index,
+  const colorPalettes = theme.colorPalettes ?? []
+  const next: WebsiteTheme = { ...theme, colorPaletteId, colorPalettes }
+  for (const role of CHROME_ROLES) {
+    const paletteIndex = normalizePaletteIndex(theme[role.paletteKey], colorPalettes.length)
+    const paletteId = paletteIdAtIndex({ ...next, [role.paletteKey]: paletteIndex }, paletteIndex)
+    const length = themePaletteById(next, paletteId)?.colors.length ?? 1
+    const rawIndex = theme[role.indexKey]
+    const colorIndex = rawIndex == null ? null : clampColorIndex(rawIndex, length)
+    next[role.paletteKey] = paletteIndex
+    next[role.indexKey] = colorIndex
+    next[role.colorKey] = colorIndex == null ? 'transparent' : themeSlotValue(next, paletteId, colorIndex, role.fallback)
   }
-  return {
-    ...next,
-    pageBackground:
-      pageBackgroundIndex == null
-        ? 'transparent'
-        : themeSlotValue(next, effectivePaletteId, pageBackgroundIndex, '#ffffff'),
-    bodyTextColor:
-      bodyTextIndex == null ? 'transparent' : themeSlotValue(next, effectivePaletteId, bodyTextIndex, '#111827'),
-    surfaceColor:
-      surfaceIndex == null ? 'transparent' : themeSlotValue(next, effectivePaletteId, surfaceIndex, '#ffffff'),
-    accentColor1:
-      accent1Index == null ? 'transparent' : themeSlotValue(next, effectivePaletteId, accent1Index, '#111827'),
-    accentColor2:
-      accent2Index == null ? 'transparent' : themeSlotValue(next, effectivePaletteId, accent2Index, '#111827'),
-  }
+  return next
 }
 
 export function themeChromeCssVars(theme: WebsiteTheme | null): CSSProperties {
@@ -248,6 +285,21 @@ export function remapColorIndex(theme: WebsiteTheme, toPaletteId: string, index:
   return clampColorIndex(index, palette?.colors.length ?? 1)
 }
 
+/** Older text styles stored font palette override in `colorPaletteId` only. */
+export function migrateLegacyTextStylePalette(theme: WebsiteTheme, style: WebsiteTextStyle): WebsiteTextStyle {
+  if (style.fontColorPaletteId !== undefined) return style
+  const themePaletteId = stylePaletteId(theme, null)
+  const stored = style.colorPaletteId?.trim()
+  if (!stored || stored === themePaletteId) {
+    return { ...style, fontColorPaletteId: null }
+  }
+  return {
+    ...style,
+    colorPaletteId: null,
+    fontColorPaletteId: stored,
+  }
+}
+
 function basicIndexesForPalette(colorCount: number) {
   const length = Math.max(1, Math.min(colorCount, THEME_COLOR_SLOT_MAX))
   return {
@@ -308,18 +360,53 @@ export function applyLibraryPaletteGroupToTheme(
 export function removeThemeColorPaletteGroup(
   theme: WebsiteTheme,
   paletteInstanceId: string,
-): Pick<WebsiteTheme, 'colorPalettes' | 'colorPaletteId' | 'textStyles' | 'buttonStyles'> {
-  const colorPalettes = (theme.colorPalettes ?? []).filter((item) => item.id !== paletteInstanceId)
+): Pick<
+  WebsiteTheme,
+  | 'colorPalettes'
+  | 'colorPaletteId'
+  | 'textStyles'
+  | 'buttonStyles'
+  | 'pageBackgroundPaletteIndex'
+  | 'surfacePaletteIndex'
+  | 'bodyTextPaletteIndex'
+  | 'accent1PaletteIndex'
+  | 'accent2PaletteIndex'
+> {
+  const source = theme.colorPalettes ?? []
+  const removedIndex = source.findIndex((item) => item.id === paletteInstanceId)
+  const removedPosition = removedIndex >= 0 ? removedIndex + 1 : null
+  const colorPalettes = source.filter((item) => item.id !== paletteInstanceId)
   const colorPaletteId = theme.colorPaletteId === paletteInstanceId ? (colorPalettes[0]?.id ?? '') : theme.colorPaletteId
+  const shift = (index: number | null | undefined) =>
+    removedPosition == null ? (index ?? null) : shiftPaletteIndex(index, removedPosition)
   return {
     colorPalettes,
     colorPaletteId,
+    pageBackgroundPaletteIndex: shift(theme.pageBackgroundPaletteIndex),
+    surfacePaletteIndex: shift(theme.surfacePaletteIndex),
+    bodyTextPaletteIndex: shift(theme.bodyTextPaletteIndex),
+    accent1PaletteIndex: shift(theme.accent1PaletteIndex),
+    accent2PaletteIndex: shift(theme.accent2PaletteIndex),
     textStyles: theme.textStyles.map((style) =>
       style.colorPaletteId === paletteInstanceId ? { ...style, colorPaletteId: null } : style,
     ),
-    buttonStyles: theme.buttonStyles.map((style) =>
-      style.colorPaletteId === paletteInstanceId ? { ...style, colorPaletteId: null } : style,
-    ),
+    buttonStyles: theme.buttonStyles.map((style) => {
+      if (style.colorPaletteId !== paletteInstanceId &&
+          style.backgroundColorPaletteId !== paletteInstanceId &&
+          style.textColorPaletteId !== paletteInstanceId &&
+          style.borderColorPaletteId !== paletteInstanceId) {
+        return style
+      }
+      return {
+        ...style,
+        colorPaletteId: style.colorPaletteId === paletteInstanceId ? null : style.colorPaletteId,
+        backgroundColorPaletteId:
+          style.backgroundColorPaletteId === paletteInstanceId ? null : style.backgroundColorPaletteId,
+        textColorPaletteId: style.textColorPaletteId === paletteInstanceId ? null : style.textColorPaletteId,
+        borderColorPaletteId:
+          style.borderColorPaletteId === paletteInstanceId ? null : style.borderColorPaletteId,
+      }
+    }),
   }
 }
 

@@ -127,6 +127,7 @@ export const websiteColorTokenSchema = z.object({
 })
 
 const themeColorIndexSchema = z.number().int().min(1).max(6)
+const themePaletteIndexSchema = z.number().int().min(1).max(24)
 
 const themePaletteColorSchema = z.object({
   name: z.string().trim().min(1, 'Color name is required').max(128),
@@ -156,6 +157,7 @@ export const websiteTextStyleSchema = z.object({
     .optional(),
   colorIndex: themeColorIndexSchema.nullable().default(1),
   colorPaletteId: z.string().min(1).max(64).nullable().optional(),
+  fontColorPaletteId: z.string().min(1).max(64).nullable().optional(),
   sourceLibraryId: z.string().min(1).max(64).nullable().optional(),
   customization: websiteElementCustomizationSchema.optional(),
 })
@@ -164,6 +166,9 @@ export const websiteButtonStyleSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1, 'Button name is required').max(128),
   colorPaletteId: z.string().min(1).max(64).nullable().optional(),
+  backgroundColorPaletteId: z.string().min(1).max(64).nullable().optional(),
+  textColorPaletteId: z.string().min(1).max(64).nullable().optional(),
+  borderColorPaletteId: z.string().min(1).max(64).nullable().optional(),
   backgroundColorIndex: themeColorIndexSchema.nullable().default(1),
   textColorIndex: themeColorIndexSchema.nullable().default(1),
   textStyleId: z.string().max(64).default(''),
@@ -177,6 +182,11 @@ export const websiteButtonStyleSchema = z.object({
 export const websiteThemeEditorSchema = z.object({
   name: z.string().trim().min(1, 'Theme name is required').max(255),
   colorPaletteId: z.string().max(64),
+  pageBackgroundPaletteIndex: themePaletteIndexSchema.nullable().optional(),
+  surfacePaletteIndex: themePaletteIndexSchema.nullable().optional(),
+  bodyTextPaletteIndex: themePaletteIndexSchema.nullable().optional(),
+  accent1PaletteIndex: themePaletteIndexSchema.nullable().optional(),
+  accent2PaletteIndex: themePaletteIndexSchema.nullable().optional(),
   pageBackgroundIndex: themeColorIndexSchema.nullable(),
   surfaceIndex: themeColorIndexSchema.nullable(),
   bodyTextIndex: themeColorIndexSchema.nullable(),

@@ -4,6 +4,7 @@ import { fallbackTextSize, resolveTextStyle } from '../../document/theme'
 import { WEBSITE_BREAKPOINTS, type WebsiteBreakpoint, type WebsiteTextStyle, type WebsiteTheme } from '../../types'
 import { colorSlotId, colorSlotIndex } from '../../utils/colorSelect'
 import {
+  migrateLegacyTextStylePalette,
   paletteOverrideForSave,
   remapColorIndex,
   stylePaletteId,
@@ -58,7 +59,8 @@ export function ThemeTextStyleEditPanel({
 }: ThemeTextStyleEditPanelProps) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
-  const snap = resolveTextStyle(theme, values, previewBreakpoint)
+  const styleValues = migrateLegacyTextStylePalette(theme, values)
+  const snap = resolveTextStyle(theme, styleValues, previewBreakpoint)
   const previewSample = t('textPreviewSample')
   const customization = normalizeWebsiteElementCustomization(values.customization)
   const previewBaseStyle = {
@@ -67,23 +69,31 @@ export function ThemeTextStyleEditPanel({
     color: snap.color,
     backgroundColor: theme.pageBackground,
   }
+  const themePaletteId = stylePaletteId(theme, null)
+  const stylePaletteEffective = stylePaletteId(theme, styleValues.colorPaletteId)
+  const stylePaletteName = theme.colorPalettes.find((palette) => palette.id === stylePaletteEffective)?.name
+  const previewPaletteId =
+    stylePaletteId(theme, styleValues.fontColorPaletteId) || stylePaletteEffective
   const elementVisual = withPaletteColors(
     {
       color: snap.color,
       fontFamily: snap.fontFamily,
       fontSize: snap.size,
     },
-    themePaletteColorValues(theme, values.colorPaletteId),
+    themePaletteColorValues(theme, previewPaletteId),
   )
   const defaultHtml = defaultElementHtml('text', values.id, elementVisual)
   const paletteOptions = themePaletteSelectOptions(theme)
-  const themePaletteId = stylePaletteId(theme, null)
-  const storedPaletteId = values.colorPaletteId?.trim() || ''
-  const colorPaletteId = !storedPaletteId || storedPaletteId === themePaletteId ? '' : storedPaletteId
-  const colorOptions = themeColorOptionsForPalette(theme, colorPaletteId || themePaletteId)
-  const inheritedPaletteName = theme.colorPalettes.find((palette) => palette.id === themePaletteId)?.name
-  const paletteNoneLabel = inheritedPaletteName
-    ? t('inheritColorPaletteNamed', { name: inheritedPaletteName })
+  function uiPaletteOverride(stored: string | null | undefined, inheritFromPaletteId: string): string {
+    const trimmed = stored?.trim() || ''
+    if (!trimmed || trimmed === inheritFromPaletteId) return ''
+    return trimmed
+  }
+
+  const styleColorPaletteUi = uiPaletteOverride(styleValues.colorPaletteId, themePaletteId)
+  const fontColorPaletteUi = uiPaletteOverride(styleValues.fontColorPaletteId, stylePaletteEffective)
+  const perColorPaletteNoneLabel = stylePaletteName
+    ? t('inheritColorPaletteNamed', { name: stylePaletteName })
     : t('inheritColorPalette')
   const missingTokenLabel = t('themeTokenMissing')
   const withTokenFallback = (options: TextStyleBasicSettingsOption[], id: string) =>
@@ -97,58 +107,96 @@ export function ThemeTextStyleEditPanel({
       fontFamily: font.family,
       previewText: previewSample,
     })),
-    values.fontId,
+    styleValues.fontId,
   )
-  const colorOptionsWithFallback = withTokenFallback(colorOptions, colorSlotId(values.colorIndex))
+  const colorSlot = colorSlotId(styleValues.colorIndex)
+
+  function remapSingleColor(paletteId: string, colorId: string) {
+    return colorSlotId(
+      remapColorIndex(theme, paletteId || stylePaletteEffective, colorSlotIndex(colorId)),
+    )
+  }
+
+  function storedPaletteOverride(inheritFromPaletteId: string, perColorUi: string): string | null {
+    const trimmed = perColorUi.trim()
+    if (!trimmed) return null
+    return paletteOverrideForSave(inheritFromPaletteId, trimmed)
+  }
+
+  const textBasicValues = {
+    name: styleValues.name,
+    fontId: styleValues.fontId,
+    styleColorPaletteId: styleColorPaletteUi,
+    fontColorPaletteId: fontColorPaletteUi,
+    colorId: colorSlot,
+    size: styleValues.size,
+  }
+
+  const textBasicProps = {
+    idPrefix: 'theme-text' as const,
+    values: textBasicValues,
+    styleDefaultPaletteId: themePaletteId,
+    stylePaletteNoneLabel: tc('none'),
+    perColorPaletteNoneLabel,
+    getColorOptionsForPalette: (paletteId: string) =>
+      withTokenFallback(themeColorOptionsForPalette(theme, paletteId || stylePaletteEffective), colorSlot),
+    onRemapColorForPalette: ({ toPaletteId, colorId }: { toPaletteId: string; colorId: string }) =>
+      remapSingleColor(toPaletteId, colorId),
+    fieldErrors,
+    fontOptions,
+    paletteOptions,
+    colorOptions: themeColorOptionsForPalette(theme, themePaletteId),
+    allowNone: true as const,
+    noneLabel: tc('none'),
+    fontPlaceholder: t('pickFontRequired'),
+    colorPlaceholder: t('pickColorRequired'),
+    showSize: false as const,
+  }
+
+  const breakpointSizesView = (
+    <div className="grid grid-cols-5 gap-2">
+      {WEBSITE_BREAKPOINTS.map((breakpoint) => (
+        <ReadOnlyField
+          key={breakpoint}
+          label={t(SIZE_LABEL_KEYS[breakpoint])}
+          value={String(values.sizeByBreakpoint?.[breakpoint] ?? values.size)}
+        />
+      ))}
+    </div>
+  )
+
+  const generalView = (
+    <TextStyleBasicSettingsFields mode="view" {...textBasicProps}>
+      {breakpointSizesView}
+    </TextStyleBasicSettingsFields>
+  )
 
   const generalFields = (
     <TextStyleBasicSettingsFields
-      mode={mode === 'view' ? 'view' : 'edit'}
-      idPrefix="theme-text"
-      values={{
-        name: values.name,
-        fontId: values.fontId,
-        colorPaletteId,
-        colorId: colorSlotId(values.colorIndex),
-        size: values.size,
-      }}
+      mode="edit"
+      {...textBasicProps}
       onChange={(next) => {
-        const previousEffective = stylePaletteId(theme, values.colorPaletteId)
-        const nextEffective = stylePaletteId(theme, next.colorPaletteId)
-        const paletteChanged = nextEffective !== previousEffective
-        onValuesChange({
-          ...values,
-          name: next.name,
-          fontId: next.fontId,
-          colorPaletteId: paletteOverrideForSave(themePaletteId, next.colorPaletteId),
-          colorIndex: paletteChanged
-            ? remapColorIndex(theme, nextEffective, colorSlotIndex(next.colorId))
-            : colorSlotIndex(next.colorId),
-        })
+        const nextStylePaletteId = storedPaletteOverride(themePaletteId, next.styleColorPaletteId)
+        const nextStyleEffective = stylePaletteId(theme, nextStylePaletteId)
+        const previousStyleEffective = stylePaletteEffective
+        const stylePaletteChanged = nextStyleEffective !== previousStyleEffective
+        let colorIndex = colorSlotIndex(next.colorId)
+        if (stylePaletteChanged && !storedPaletteOverride(previousStyleEffective, next.fontColorPaletteId)) {
+          colorIndex = remapColorIndex(theme, nextStyleEffective, colorIndex)
+        }
+        onValuesChange(
+          migrateLegacyTextStylePalette(theme, {
+            ...styleValues,
+            name: next.name,
+            fontId: next.fontId,
+            colorPaletteId: nextStylePaletteId,
+            fontColorPaletteId: storedPaletteOverride(nextStyleEffective, next.fontColorPaletteId),
+            colorIndex,
+          }),
+        )
       }}
-      fieldErrors={fieldErrors}
-      fontOptions={fontOptions}
-      paletteOptions={paletteOptions}
-      colorOptions={colorOptionsWithFallback}
-      allowNone
-      noneLabel={tc('none')}
-      paletteNoneLabel={paletteNoneLabel}
-      fontPlaceholder={t('pickFontRequired')}
-      colorPlaceholder={t('pickColorRequired')}
-      showSize={false}
     >
-      {mode === 'view' ? (
-        <div className="grid grid-cols-5 gap-2">
-          {WEBSITE_BREAKPOINTS.map((breakpoint) => (
-            <ReadOnlyField
-              key={breakpoint}
-              label={t(SIZE_LABEL_KEYS[breakpoint])}
-              value={String(values.sizeByBreakpoint?.[breakpoint] ?? values.size)}
-            />
-          ))}
-        </div>
-      ) : (
-        <>
+      <>
       <div className="grid grid-cols-5 gap-2">
         {WEBSITE_BREAKPOINTS.map((breakpoint) => (
           <FormField
@@ -193,8 +241,7 @@ export function ThemeTextStyleEditPanel({
           </TabsList>
         </Tabs>
       </div>
-        </>
-      )}
+      </>
     </TextStyleBasicSettingsFields>
   )
 
@@ -225,7 +272,7 @@ export function ThemeTextStyleEditPanel({
         />
       }
       general={generalFields}
-      generalView={generalFields}
+      generalView={generalView}
     />
   )
 }

@@ -36,6 +36,7 @@ import { ThemeStyleLibraryChoice, ThemeStyleLibraryList } from './ThemeStyleLibr
 import { ThemeTextStyleEditPanel } from './ThemeTextStyleEditPanel'
 import type { WebsiteElementEditorTab } from '../WebsiteElementEditorTabs'
 import { themeFontFamilyStyle } from '../../utils/themeFontPreview'
+import { migrateLegacyTextStylePalette } from '../../utils/websitePalette'
 type TextSource = 'library' | 'custom'
 
 const TEXT_LIBRARY_DIALOG_SIZE = {
@@ -336,14 +337,14 @@ export function ThemeTextStyleDialog({
 
 function emptyTextStyle(theme: WebsiteTheme, initial?: WebsiteTextStyle): WebsiteTextStyle {
   if (initial) {
-    return {
+    return migrateLegacyTextStylePalette(theme, {
       ...initial,
       sizeByBreakpoint: {
         ...defaultSizeByBreakpoint(initial.size),
         ...initial.sizeByBreakpoint,
       },
       customization: normalizeWebsiteElementCustomization(initial.customization),
-    }
+    })
   }
   const sizeByBreakpoint = defaultSizeByBreakpoint(16)
   return {

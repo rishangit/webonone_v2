@@ -1,24 +1,61 @@
 import { useTranslation } from 'react-i18next'
-import { ColorPaletteSelect, ColorSelect, Form, FormField, Input, ReadOnlyField } from '@webonone/ui-kit'
+import {
+  ColorPaletteSelect,
+  Form,
+  FormField,
+  Input,
+  PaletteColorSelect,
+  ReadOnlyField,
+} from '@webonone/ui-kit'
 import { toColorPaletteSelectOptions } from '../utils/colorSelect'
+import { paletteDisplayName } from '../utils/paletteDisplay'
 import type { ThemePaletteSelectOption } from '../utils/websitePalette'
-import { ColorPaletteSwatchStrip } from './ColorPaletteSwatchStrip'
 import { ThemeTokenSelect, type ThemeTokenOption } from './theme-editor/ThemeTokenSelect'
 
 export type ButtonStyleBasicSettingsValues = {
   name: string
   fontId: string
-  colorPaletteId: string
+  /** Style default palette (theme button `colorPaletteId`). Empty inherits theme palette. */
+  styleColorPaletteId: string
+  backgroundColorPaletteId: string
   backgroundColorId: string
+  textColorPaletteId: string
   textColorId: string
+  borderColorPaletteId: string
   borderColorId: string
   textSize: number
   borderWidth: number
   radius: number
 }
 
-export type ButtonStyleBasicSettingsOption = ThemeTokenOption
+export type ButtonStyleBasicSettingsOption = ThemeTokenOption & { paletteId?: string }
 export type ButtonStylePaletteOption = ThemePaletteSelectOption
+
+const COLOR_ROLES: Array<{
+  labelKey: 'backgroundColor' | 'textColor' | 'borderColor'
+  idSuffix: string
+  paletteKey: 'backgroundColorPaletteId' | 'textColorPaletteId' | 'borderColorPaletteId'
+  colorKey: 'backgroundColorId' | 'textColorId' | 'borderColorId'
+}> = [
+  {
+    labelKey: 'backgroundColor',
+    idSuffix: 'bg',
+    paletteKey: 'backgroundColorPaletteId',
+    colorKey: 'backgroundColorId',
+  },
+  {
+    labelKey: 'textColor',
+    idSuffix: 'text',
+    paletteKey: 'textColorPaletteId',
+    colorKey: 'textColorId',
+  },
+  {
+    labelKey: 'borderColor',
+    idSuffix: 'border',
+    paletteKey: 'borderColorPaletteId',
+    colorKey: 'borderColorId',
+  },
+]
 
 function colorReadout(options: ButtonStyleBasicSettingsOption[], id: string) {
   const color = options.find((entry) => entry.id === id)
@@ -44,12 +81,16 @@ export function ButtonStyleBasicSettingsFields({
   fontOptions,
   paletteOptions = [],
   colorOptions,
+  styleDefaultPaletteId = '',
   idPrefix,
   allowNone = false,
   noneLabel,
-  paletteNoneLabel,
+  stylePaletteNoneLabel,
+  perColorPaletteNoneLabel,
   fontPlaceholder,
   colorPlaceholder,
+  getColorOptionsForPalette,
+  onRemapColorForPalette,
 }: {
   mode: 'edit' | 'view'
   values: ButtonStyleBasicSettingsValues
@@ -59,47 +100,153 @@ export function ButtonStyleBasicSettingsFields({
   fontOptions: ButtonStyleBasicSettingsOption[]
   paletteOptions?: ButtonStylePaletteOption[]
   colorOptions: ButtonStyleBasicSettingsOption[]
+  /** Effective palette when style default is empty (theme palette). */
+  styleDefaultPaletteId?: string
   idPrefix: string
   allowNone?: boolean
   noneLabel?: string
-  /** When set, the palette list includes Inherit. An empty palette id selects the theme palette. */
-  paletteNoneLabel?: string
+  /** Top style palette select (theme basic uses common “none”). */
+  stylePaletteNoneLabel?: string
+  /** Per-color grouped control when palette override is empty. */
+  perColorPaletteNoneLabel?: string
   fontPlaceholder?: string
   colorPlaceholder?: string
+  getColorOptionsForPalette?: (paletteId: string) => ButtonStyleBasicSettingsOption[]
+  onRemapColorForPalette?: (args: {
+    fromPaletteId: string
+    toPaletteId: string
+    colorId: string
+  }) => string
 }) {
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const none = noneLabel ?? tc('none')
+  const paletteSelectOptions = toColorPaletteSelectOptions(paletteOptions)
+  const hasPaletteList = paletteOptions.length > 0
+  const styleEffectivePaletteId = values.styleColorPaletteId.trim() || styleDefaultPaletteId
 
   function patch(partial: Partial<ButtonStyleBasicSettingsValues>) {
     onChange?.({ ...values, ...partial })
   }
 
+  function optionsForField(storedPaletteId: string) {
+    const effective = storedPaletteId.trim() || styleEffectivePaletteId
+    if (getColorOptionsForPalette) return getColorOptionsForPalette(effective)
+    return colorOptions.filter((entry) => !entry.paletteId || entry.paletteId === effective)
+  }
+
+  function effectivePaletteForRole(storedPaletteId: string) {
+    return storedPaletteId.trim() || styleEffectivePaletteId
+  }
+
+  function onStyleColorPaletteChange(nextPaletteId: string) {
+    const previousStyleEffective = styleEffectivePaletteId
+    const nextStyleEffective = nextPaletteId.trim() || styleDefaultPaletteId
+    const stylePaletteChanged = nextStyleEffective !== previousStyleEffective
+
+    const normalizeRolePalette = (uiPalette: string) => {
+      if (!uiPalette.trim() || uiPalette === previousStyleEffective) return ''
+      if (stylePaletteChanged && uiPalette === nextStyleEffective) return ''
+      return uiPalette
+    }
+
+    let nextValues: ButtonStyleBasicSettingsValues = {
+      ...values,
+      styleColorPaletteId: nextPaletteId,
+      backgroundColorPaletteId: normalizeRolePalette(values.backgroundColorPaletteId),
+      textColorPaletteId: normalizeRolePalette(values.textColorPaletteId),
+      borderColorPaletteId: normalizeRolePalette(values.borderColorPaletteId),
+    }
+
+    if (stylePaletteChanged && onRemapColorForPalette) {
+      const remap = (colorId: string) =>
+        onRemapColorForPalette({
+          fromPaletteId: previousStyleEffective,
+          toPaletteId: nextStyleEffective,
+          colorId,
+        })
+      if (
+        !values.backgroundColorPaletteId.trim() ||
+        values.backgroundColorPaletteId === previousStyleEffective
+      ) {
+        nextValues = { ...nextValues, backgroundColorId: remap(values.backgroundColorId) }
+      }
+      if (!values.textColorPaletteId.trim() || values.textColorPaletteId === previousStyleEffective) {
+        nextValues = { ...nextValues, textColorId: remap(values.textColorId) }
+      }
+      if (!values.borderColorPaletteId.trim() || values.borderColorPaletteId === previousStyleEffective) {
+        nextValues = { ...nextValues, borderColorId: remap(values.borderColorId) }
+      }
+    }
+
+    onChange?.(nextValues)
+  }
+
+  function onRolePaletteChange(
+    paletteKey: ButtonStyleBasicSettingsValues['backgroundColorPaletteId'] extends string
+      ? 'backgroundColorPaletteId' | 'textColorPaletteId' | 'borderColorPaletteId'
+      : never,
+    colorKey: 'backgroundColorId' | 'textColorId' | 'borderColorId',
+    selectedPaletteId: string,
+    nextPaletteId: string,
+    colorId: string,
+  ) {
+    if (nextPaletteId === selectedPaletteId) return
+    const previousEffective = effectivePaletteForRole(selectedPaletteId)
+    const nextEffective = nextPaletteId.trim() || styleEffectivePaletteId
+    const remapped =
+      onRemapColorForPalette?.({
+        fromPaletteId: previousEffective,
+        toPaletteId: nextEffective,
+        colorId,
+      }) ?? colorId
+    patch({
+      [paletteKey]: nextPaletteId,
+      [colorKey]: remapped,
+    })
+  }
+
   if (mode === 'view') {
     const fontLabel = fontOptions.find((entry) => entry.id === values.fontId)?.label ?? '—'
-    const selectedPalette = paletteOptions.find((entry) => entry.id === values.colorPaletteId)
+    const stylePaletteLabel = paletteDisplayName(
+      paletteOptions,
+      values.styleColorPaletteId,
+      stylePaletteNoneLabel ?? none,
+    )
     return (
       <div className="space-y-4">
         <ReadOnlyField label={t('styleName')} value={values.name} />
         <ReadOnlyField label={t('fontType')} value={fontLabel} />
-        {paletteOptions.length > 0 ? (
+        {hasPaletteList ? (
+          <ReadOnlyField label={t('buttonColorPalette')} value={stylePaletteLabel} />
+        ) : null}
+        {COLOR_ROLES.map((role) => (
           <ReadOnlyField
-            label={t('buttonColorPalette')}
+            key={role.colorKey}
+            label={t(role.labelKey)}
             value={
-              selectedPalette ? (
-                <span className="flex min-w-0 items-center gap-2">
-                  <ColorPaletteSwatchStrip palette={selectedPalette.palette} sizeClassName="h-5 w-5" />
-                  <span className="truncate">{selectedPalette.name}</span>
+              hasPaletteList ? (
+                <span className="flex flex-col gap-1">
+                  <span>
+                    {paletteDisplayName(
+                      paletteOptions,
+                      values[role.paletteKey],
+                      perColorPaletteNoneLabel ?? stylePaletteNoneLabel ?? none,
+                    )}
+                  </span>
+                  <span>
+                    {colorReadout(
+                      optionsForField(values[role.paletteKey]),
+                      values[role.colorKey],
+                    )}
+                  </span>
                 </span>
               ) : (
-                paletteNoneLabel || '—'
+                colorReadout(optionsForField(values[role.paletteKey]), values[role.colorKey])
               )
             }
           />
-        ) : null}
-        <ReadOnlyField label={t('backgroundColor')} value={colorReadout(colorOptions, values.backgroundColorId)} />
-        <ReadOnlyField label={t('textColor')} value={colorReadout(colorOptions, values.textColorId)} />
-        <ReadOnlyField label={t('borderColor')} value={colorReadout(colorOptions, values.borderColorId)} />
+        ))}
         <div className="grid grid-cols-3 gap-3">
           <ReadOnlyField label={t('textSize')} value={String(values.textSize)} />
           <ReadOnlyField label={t('borderWidth')} value={String(values.borderWidth)} />
@@ -136,55 +283,79 @@ export function ButtonStyleBasicSettingsFields({
           aria-invalid={Boolean(fieldErrors.fontId)}
         />
       </FormField>
-      {paletteOptions.length > 0 ? (
+
+      {hasPaletteList ? (
         <FormField
           label={t('buttonColorPalette')}
-          htmlFor={`${idPrefix}-palette`}
+          htmlFor={`${idPrefix}-style-palette`}
           error={fieldErrors.colorPaletteId}
         >
           <ColorPaletteSelect
-            id={`${idPrefix}-palette`}
-            value={values.colorPaletteId}
-            options={toColorPaletteSelectOptions(paletteOptions)}
+            id={`${idPrefix}-style-palette`}
+            value={values.styleColorPaletteId}
+            options={paletteSelectOptions}
+            noneLabel={stylePaletteNoneLabel ?? tc('none')}
             placeholder={t('pickColorPaletteRequired')}
-            noneLabel={paletteNoneLabel || undefined}
-            onChange={(colorPaletteId) => patch({ colorPaletteId })}
+            onChange={onStyleColorPaletteChange}
           />
         </FormField>
       ) : null}
-      <FormField label={t('backgroundColor')} htmlFor={`${idPrefix}-bg`} error={fieldErrors.backgroundColorId}>
-        <ColorSelect
-          id={`${idPrefix}-bg`}
-          value={values.backgroundColorId}
-          options={colorOptions}
-          noneLabel={none}
-          placeholder={colorPlaceholder}
-          onChange={(backgroundColorId) => patch({ backgroundColorId })}
-          aria-invalid={Boolean(fieldErrors.backgroundColorId)}
-        />
-      </FormField>
-      <FormField label={t('textColor')} htmlFor={`${idPrefix}-text`} error={fieldErrors.textColorId}>
-        <ColorSelect
-          id={`${idPrefix}-text`}
-          value={values.textColorId}
-          options={colorOptions}
-          noneLabel={none}
-          placeholder={colorPlaceholder}
-          onChange={(textColorId) => patch({ textColorId })}
-          aria-invalid={Boolean(fieldErrors.textColorId)}
-        />
-      </FormField>
-      <FormField label={t('borderColor')} htmlFor={`${idPrefix}-border`} error={fieldErrors.borderColorId}>
-        <ColorSelect
-          id={`${idPrefix}-border`}
-          value={values.borderColorId}
-          options={colorOptions}
-          noneLabel={none}
-          placeholder={colorPlaceholder}
-          onChange={(borderColorId) => patch({ borderColorId })}
-          aria-invalid={Boolean(fieldErrors.borderColorId)}
-        />
-      </FormField>
+
+      {COLOR_ROLES.map((role) => {
+        const selectedPaletteId = values[role.paletteKey]
+        const fieldOptions = optionsForField(selectedPaletteId)
+        const colorId = values[role.colorKey]
+        return (
+          <FormField
+            key={role.colorKey}
+            label={t(role.labelKey)}
+            htmlFor={`${idPrefix}-${role.idSuffix}-color`}
+            error={fieldErrors[role.colorKey] || fieldErrors[role.paletteKey]}
+          >
+            {hasPaletteList ? (
+                <PaletteColorSelect
+                  idPrefix={`${idPrefix}-${role.idSuffix}`}
+                  paletteId={selectedPaletteId}
+                  colorId={colorId}
+                  paletteOptions={paletteSelectOptions}
+                  colorOptions={fieldOptions}
+                  paletteNoneLabel={perColorPaletteNoneLabel ?? stylePaletteNoneLabel}
+                  palettePlaceholder={t('pickColorPaletteRequired')}
+                  colorNoneLabel={none}
+                  colorPlaceholder={colorPlaceholder ?? t('pickColorRequired')}
+                  onChange={({ paletteId: nextPaletteId, colorId: nextColorId }) => {
+                    if (nextPaletteId !== selectedPaletteId) {
+                      onRolePaletteChange(
+                        role.paletteKey,
+                        role.colorKey,
+                        selectedPaletteId,
+                        nextPaletteId,
+                        colorId,
+                      )
+                      return
+                    }
+                    patch({ [role.colorKey]: nextColorId })
+                  }}
+                  aria-invalid={Boolean(fieldErrors[role.colorKey] || fieldErrors[role.paletteKey])}
+                />
+            ) : (
+                <PaletteColorSelect
+                  idPrefix={`${idPrefix}-${role.idSuffix}`}
+                  paletteId=""
+                  colorId={colorId}
+                  paletteOptions={[]}
+                  colorOptions={fieldOptions}
+                  hidePalette
+                  colorNoneLabel={none}
+                  colorPlaceholder={colorPlaceholder ?? t('pickColorRequired')}
+                  onChange={({ colorId: nextColorId }) => patch({ [role.colorKey]: nextColorId })}
+                  aria-invalid={Boolean(fieldErrors[role.colorKey])}
+                />
+            )}
+          </FormField>
+        )
+      })}
+
       <div className="grid grid-cols-3 gap-3">
         <FormField label={t('textSize')} htmlFor={`${idPrefix}-size`} error={fieldErrors.textSize}>
           <Input

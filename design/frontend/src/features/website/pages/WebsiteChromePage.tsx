@@ -86,9 +86,13 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   }, [awaitingCreate, detailStatus, t, toast])
 
   if (!accessToken) return <Navigate to="/login" replace />
+  const pageTitle = kind === 'headers' ? t('headers') : t('footers')
+  const pageDescription =
+    kind === 'headers' ? t('headersDescription') : t('footersDescription')
+
   if (!companyId && user?.role !== 'super_admin') {
     return (
-      <FeaturePage title={t('title')} description={t('description')}>
+      <FeaturePage title={pageTitle} description={pageDescription}>
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -97,10 +101,7 @@ export function WebsiteChromePage({ kind }: { kind: 'headers' | 'footers' }) {
   }
 
   return (
-    <FeaturePage
-      title={t('title')}
-      description={kind === 'headers' ? t('headersDescription') : t('footersDescription')}
-    >
+    <FeaturePage title={pageTitle} description={pageDescription}>
       <WebsiteHubTabs
         actions={
           <WebsiteHubListToolbar

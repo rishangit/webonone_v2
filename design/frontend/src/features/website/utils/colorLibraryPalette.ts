@@ -1,4 +1,4 @@
-import type { WebsiteColorLibraryColor, WebsiteColorLibraryPalette } from '../types'
+import type { WebsiteColorLibraryColor, WebsiteColorLibraryPalette, WebsitePublishStatus } from '../types'
 
 const HEX = /^#[0-9A-Fa-f]{6}$/
 
@@ -112,6 +112,53 @@ export function inferLibraryPaletteId(options: FlattenedLibraryColor[], colorOpt
   const ids = new Set(colorOptionIds.filter(Boolean))
   const match = options.find((option) => ids.has(option.optionId))
   return match?.paletteId ?? options[0]?.paletteId ?? ''
+}
+
+export function libraryPaletteIdFromOptionId(options: FlattenedLibraryColor[], optionId: string): string {
+  return options.find((option) => option.optionId === optionId)?.paletteId ?? ''
+}
+
+/** UI value for per-color palette override (empty = inherit element style palette). */
+export function libraryPerColorPaletteUi(
+  storedPaletteId: string,
+  elementStylePaletteId: string,
+  libraryDefaultPaletteId: string,
+): string {
+  const elementEffective = elementStylePaletteId.trim() || libraryDefaultPaletteId
+  const trimmed = storedPaletteId.trim()
+  if (!trimmed || trimmed === elementEffective) return ''
+  return trimmed
+}
+
+export function colorLibraryPaletteSelectOptions(
+  items: Array<{
+    id: string
+    name: string
+    palette: WebsiteColorLibraryPalette
+    publishStatus?: WebsitePublishStatus | null
+  }>,
+  keepDraftIds: string[] = [],
+): Array<{ id: string; name: string; palette: WebsiteColorLibraryPalette }> {
+  const keep = new Set(keepDraftIds.filter(Boolean))
+  return items
+    .filter((item) => item.publishStatus !== 'draft' || keep.has(item.id))
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      palette: item.palette,
+    }))
+}
+
+export function libraryPreviewPaletteValues(
+  items: Array<{ id: string; palette: WebsiteColorLibraryPalette }>,
+  options: FlattenedLibraryColor[],
+  colorOptionIds: string[],
+): string[] {
+  const paletteId =
+    colorOptionIds.map((id) => libraryPaletteIdFromOptionId(options, id)).find(Boolean) ??
+    options[0]?.paletteId ??
+    ''
+  return libraryPaletteColorValues(items, paletteId)
 }
 
 export function remapLibraryColorOptionId(

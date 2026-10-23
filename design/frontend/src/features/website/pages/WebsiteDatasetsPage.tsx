@@ -60,7 +60,7 @@ export function WebsiteDatasetsPage() {
   if (user?.role === 'super_admin') return <Navigate to="/website/pages" replace />
   if (!companyId) {
     return (
-      <FeaturePage title={t('title')} description={t('description')}>
+      <FeaturePage title={t('datasets')} description={t('datasetsDescription')}>
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -78,7 +78,7 @@ export function WebsiteDatasetsPage() {
   }
 
   return (
-    <FeaturePage title={t('title')} description={t('datasetsDescription')}>
+    <FeaturePage title={t('datasets')} description={t('datasetsDescription')}>
       <WebsiteHubTabs
         actions={
           <WebsiteHubListToolbar

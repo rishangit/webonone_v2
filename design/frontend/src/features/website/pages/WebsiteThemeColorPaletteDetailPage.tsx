@@ -33,12 +33,13 @@ export function WebsiteThemeColorPaletteDetailPage() {
   }, [dispatch, themeId])
 
   useEffect(() => {
+    if (editSection !== null) return
     if (detail?.id === themeId) {
       const next = { ...detail, colorPalettes: detail.colorPalettes ?? [] }
       setTheme(next)
       writeThemeDraft(next)
     }
-  }, [detail, themeId])
+  }, [detail, editSection, themeId])
 
   const paletteRef = useMemo(
     () => theme?.colorPalettes.find((entry) => entry.id === paletteId) ?? null,
@@ -77,26 +78,30 @@ export function WebsiteThemeColorPaletteDetailPage() {
 
   function saveOverview(name: string) {
     if (!theme) return
-    persistTheme({
+    const next = {
       ...theme,
       colorPalettes: theme.colorPalettes.map((entry) =>
         entry.id === paletteId ? { ...entry, name } : entry,
       ),
-    })
+    }
+    setTheme(next)
+    writeThemeDraft(next)
+    persistTheme(next)
   }
 
   function saveColors(nextColors: WebsiteColorToken[]) {
     if (!theme) return
-    persistTheme(
-      applyThemeChrome({
-        ...theme,
-        colorPalettes: theme.colorPalettes.map((entry) =>
-          entry.id === paletteId
-            ? { ...entry, colors: nextColors.map((color) => ({ name: color.name, value: color.value })) }
-            : entry,
-        ),
-      }),
-    )
+    const next = applyThemeChrome({
+      ...theme,
+      colorPalettes: theme.colorPalettes.map((entry) =>
+        entry.id === paletteId
+          ? { ...entry, colors: nextColors.map((color) => ({ name: color.name, value: color.value })) }
+          : entry,
+      ),
+    })
+    setTheme(next)
+    writeThemeDraft(next)
+    persistTheme(next)
   }
 
   return (
@@ -109,6 +114,8 @@ export function WebsiteThemeColorPaletteDetailPage() {
       <ThemeColorPaletteItemEditor name={paletteRef.name} palette={palette} onEdit={setEditSection} />
       <ThemeColorPaletteEditDialog
         open={editSection !== null}
+        themeId={theme.id}
+        paletteId={paletteRef.id}
         section={editSection}
         paletteName={paletteRef.name}
         colors={paletteColorDrafts}

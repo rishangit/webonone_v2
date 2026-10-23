@@ -136,6 +136,11 @@ export type CreateThemeBody = {
   pageBackground?: string
   bodyTextColor?: string
   colorPaletteId?: string
+  pageBackgroundPaletteIndex?: number | null
+  surfacePaletteIndex?: number | null
+  bodyTextPaletteIndex?: number | null
+  accent1PaletteIndex?: number | null
+  accent2PaletteIndex?: number | null
   pageBackgroundIndex?: number | null
   surfaceIndex?: number | null
   bodyTextIndex?: number | null

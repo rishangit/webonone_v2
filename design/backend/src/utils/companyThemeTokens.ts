@@ -266,6 +266,21 @@ function textWrite(
   })
 }
 
+function remapButtonStylePaletteIds(
+  style: WebsiteButtonStyle,
+  paletteMap: Record<string, string>,
+): Pick<
+  WebsiteButtonStyle,
+  'colorPaletteId' | 'backgroundColorPaletteId' | 'textColorPaletteId' | 'borderColorPaletteId'
+> {
+  return {
+    colorPaletteId: remapId(style.colorPaletteId, paletteMap),
+    backgroundColorPaletteId: remapId(style.backgroundColorPaletteId, paletteMap),
+    textColorPaletteId: remapId(style.textColorPaletteId, paletteMap),
+    borderColorPaletteId: remapId(style.borderColorPaletteId, paletteMap),
+  }
+}
+
 function buttonWrite(
   item: { source: WebsiteButtonStyle; id: string; mode: 'insert' | 'update' },
   index: number,
@@ -280,7 +295,7 @@ function buttonWrite(
     definition: {
       ...definition,
       textStyleId: remapId(item.source.textStyleId, textMap) ?? '',
-      colorPaletteId: remapId(item.source.colorPaletteId, paletteMap),
+      ...remapButtonStylePaletteIds(item.source, paletteMap),
     },
   })
 }

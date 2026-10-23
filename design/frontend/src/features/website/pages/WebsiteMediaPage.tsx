@@ -51,7 +51,7 @@ export function WebsiteMediaPage() {
   if (!accessToken) return <Navigate to="/login" replace />
   if (!libraryMedia && !companyId) {
     return (
-      <FeaturePage title={t('title')} description={description}>
+      <FeaturePage title={t('media')} description={description}>
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -63,7 +63,7 @@ export function WebsiteMediaPage() {
 
   return (
     <FeaturePage
-      title={t('title')}
+      title={t('media')}
       description={description}
       className="min-h-full !flex-none [&_.feature-page-body]:!h-auto [&_.feature-page-body]:!min-h-0 [&_.feature-page-body]:!flex-none"
     >

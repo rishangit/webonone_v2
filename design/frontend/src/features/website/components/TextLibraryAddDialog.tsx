@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { nanoid } from 'nanoid'
@@ -11,7 +11,7 @@ import {
   usePlatformPeerDialogSubmit,
   useRequestPlatformPeerDialog,
 } from '@webonone/platform-embed'
-import { Button, CustomDialog, mapZodIssuesToFieldErrors, useToast } from '@webonone/ui-kit'
+import { Button, CustomDialog, LoadingState, mapZodIssuesToFieldErrors, useToast } from '@webonone/ui-kit'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { createTextLibrarySchema } from '../schemas/websiteThemeSchemas'
@@ -24,13 +24,16 @@ import {
 } from '../store'
 import type { WebsiteTextLibraryItem } from '../types'
 import {
-  findColorOptionId,
   flattenColorLibraryPalettes,
   formatPaletteScopedColorLabel,
-  inferLibraryPaletteId,
-  libraryPaletteColorValues,
+  colorLibraryPaletteSelectOptions,
+  libraryPreviewPaletteValues,
   remapLibraryColorOptionId,
 } from '../utils/colorLibraryPalette'
+import {
+  buildTextLibraryFormFromItem,
+  isTextLibraryFormHydrated,
+} from '../utils/libraryElementDialogForm'
 import { themeFontFamilyStyle } from '../utils/themeFontPreview'
 import {
   defaultElementHtml,
@@ -86,8 +89,31 @@ export function TextLibraryAddDialog({
   const [name, setName] = useState('')
   const [publishStatus, setPublishStatus] = useState<'draft' | 'published'>('draft')
   const [fontId, setFontId] = useState('')
-  const [colorPaletteId, setColorPaletteId] = useState('')
+  const [elementStyleColorPaletteId, setElementStyleColorPaletteId] = useState('')
+  const [fontColorPaletteId, setFontColorPaletteId] = useState('')
   const [colorOptionId, setColorOptionId] = useState('')
+  const libraryPaletteOptions = useMemo(
+    () => colorLibraryPaletteSelectOptions(colors.items, [elementStyleColorPaletteId, fontColorPaletteId]),
+    [colors.items, elementStyleColorPaletteId, fontColorPaletteId],
+  )
+  const libraryStyleDefaultPaletteId = colors.items[0]?.id ?? ''
+  const libraryStyleEffectivePaletteId = elementStyleColorPaletteId.trim() || libraryStyleDefaultPaletteId
+  const libraryInheritPaletteName = colors.items.find((entry) => entry.id === libraryStyleEffectivePaletteId)?.name
+  const libraryPerColorPaletteNoneLabel = libraryInheritPaletteName
+    ? t('inheritColorPaletteNamed', { name: libraryInheritPaletteName })
+    : t('inheritColorPalette')
+  const libraryColorFieldOptions = colorOptions.map((color) => ({
+    id: color.optionId,
+    label: formatPaletteScopedColorLabel(color, t('paletteColorSlot', { index: color.slot })),
+    swatch: color.value,
+    paletteId: color.paletteId,
+  }))
+  const catalogsPending =
+    open &&
+    ((colors.listStatus === 'loading' && colors.items.length === 0) ||
+      (fonts.listStatus === 'loading' && fonts.items.length === 0))
+  const [editFormHydrating, setEditFormHydrating] = useState(false)
+  const generalTabLoading = catalogsPending || editFormHydrating
   const [size, setSize] = useState(16)
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
   const [customization, setCustomization] = useState(emptyWebsiteElementCustomization())
@@ -118,10 +144,11 @@ export function TextLibraryAddDialog({
 
   const editSessionRef = useRef<string | null>(null)
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open && chrome === 'dialog') return
     if (!open) {
       editSessionRef.current = null
+      setEditFormHydrating(false)
       return
     }
 
@@ -130,12 +157,28 @@ export function TextLibraryAddDialog({
     editSessionRef.current = sessionKey
 
     const next = item?.definition
-    setName(item?.name ?? '')
-    setPublishStatus(item?.publishStatus ?? 'draft')
-    setFontId('')
-    setColorPaletteId('')
-    setColorOptionId('')
-    setSize(next?.size ?? 16)
+    const hydrated =
+      item != null ? buildTextLibraryFormFromItem(item, fonts.items, colors.items, colorOptions) : null
+
+    if (hydrated) {
+      setName(hydrated.name)
+      setPublishStatus(hydrated.publishStatus)
+      setFontId(hydrated.fontId)
+      setElementStyleColorPaletteId(hydrated.elementStyleColorPaletteId)
+      setFontColorPaletteId(hydrated.fontColorPaletteId)
+      setColorOptionId(hydrated.colorOptionId)
+      setSize(hydrated.size)
+      setEditFormHydrating(false)
+    } else {
+      setEditFormHydrating(Boolean(item))
+      setName(item?.name ?? '')
+      setPublishStatus(item?.publishStatus ?? 'draft')
+      setFontId('')
+      setElementStyleColorPaletteId('')
+      setFontColorPaletteId('')
+      setColorOptionId('')
+      setSize(next?.size ?? 16)
+    }
     setCustomization(
       next ? normalizeWebsiteElementCustomization(next.customization) : emptyWebsiteElementCustomization(),
     )
@@ -144,35 +187,49 @@ export function TextLibraryAddDialog({
     setFieldErrors({})
     dispatch(websiteTextLibraryCreateActions.createReset())
     dispatch(websiteTextLibraryUpdateActions.updateReset())
-    dispatch(websiteFontLibraryActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
-    dispatch(websiteColorLibraryActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+    if (fonts.items.length === 0) {
+      dispatch(websiteFontLibraryActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+    }
+    if (colors.items.length === 0) {
+      dispatch(websiteColorLibraryActions.loadListRequested({ page: 1, pageSize: 48, force: true }))
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when the edit session opens, not when the list refreshes the same item
   }, [chrome, dispatch, initialTab, item?.id, open])
 
   useEffect(() => {
-    if (open && !item && !colorPaletteId && colors.items[0]) {
-      setColorPaletteId(colors.items[0].id)
-    }
     if (!open || !item?.id) return
     if (editSessionRef.current !== `${item.id}:${initialTab ?? 'preview'}`) return
-    if (fontId && colorOptionId && colorPaletteId) return
-    const d = item.definition
-    const font = fonts.items.find(
-      (entry) => entry.googleFontUrl === d.googleFontUrl || entry.family === d.family,
-    )
-    if (font && !fontId) setFontId(font.id)
-    if (colorOptions.length > 0) {
-      const nextColor = colorOptionId || findColorOptionId(d.colorValue, colorOptions)
-      if (!colorOptionId) setColorOptionId(nextColor)
-      if (!colorPaletteId) setColorPaletteId(inferLibraryPaletteId(colorOptions, [nextColor]))
+    if (isTextLibraryFormHydrated({ colorOptionId })) {
+      setEditFormHydrating(false)
+      return
     }
+    const hydrated = buildTextLibraryFormFromItem(item, fonts.items, colors.items, colorOptions)
+    if (!hydrated) {
+      if (
+        fonts.items.length > 0 &&
+        colors.items.length > 0 &&
+        fonts.listStatus !== 'loading' &&
+        colors.listStatus !== 'loading'
+      ) {
+        setEditFormHydrating(false)
+      }
+      return
+    }
+    setName(hydrated.name)
+    setPublishStatus(hydrated.publishStatus)
+    setFontId(hydrated.fontId)
+    setElementStyleColorPaletteId(hydrated.elementStyleColorPaletteId)
+    setFontColorPaletteId(hydrated.fontColorPaletteId)
+    setColorOptionId(hydrated.colorOptionId)
+    setSize(hydrated.size)
+    setEditFormHydrating(false)
   }, [
     colorOptionId,
     colorOptions,
-    colorPaletteId,
     colors.items,
-    fontId,
+    colors.listStatus,
     fonts.items,
+    fonts.listStatus,
     initialTab,
     item,
     open,
@@ -281,11 +338,13 @@ export function TextLibraryAddDialog({
       fontFamily: previewBaseStyle.fontFamily,
       fontSize: previewBaseStyle.fontSize,
     },
-    libraryPaletteColorValues(colors.items, colorPaletteId),
+    libraryPreviewPaletteValues(colors.items, colorOptions, [colorOptionId]),
   )
   const defaultHtml = defaultElementHtml('text', scopeId, elementVisual)
 
-  const generalFields = (
+  const generalFields = generalTabLoading ? (
+    <LoadingState label={t('loadingTextLibrary')} />
+  ) : (
     <>
     <WebsitePublishStatusField
       id="library-text-publish"
@@ -299,26 +358,46 @@ export function TextLibraryAddDialog({
       values={{
         name,
         fontId,
-        colorPaletteId,
+        styleColorPaletteId: elementStyleColorPaletteId,
+        fontColorPaletteId,
         colorId: colorOptionId,
         size,
       }}
+      styleDefaultPaletteId={libraryStyleDefaultPaletteId}
+      stylePaletteNoneLabel={tc('none')}
+      perColorPaletteNoneLabel={libraryPerColorPaletteNoneLabel}
+      getColorOptionsForPalette={(paletteId) => {
+        const effective = paletteId.trim() || libraryStyleEffectivePaletteId
+        return libraryColorFieldOptions.filter((entry) => entry.paletteId === effective)
+      }}
+      onRemapColorForPalette={({ toPaletteId, colorId }) =>
+        remapLibraryColorOptionId(colorOptions, toPaletteId, colorId)
+      }
       onChange={(next) => {
-        const paletteId = next.colorPaletteId || colorPaletteId
+        const previousStyleEffective = libraryStyleEffectivePaletteId
+        const nextStyleEffective = next.styleColorPaletteId.trim() || libraryStyleDefaultPaletteId
+        const stylePaletteChanged = nextStyleEffective !== previousStyleEffective
         setName(next.name)
         setFontId(next.fontId)
-        setColorPaletteId(paletteId)
-        setColorOptionId(
-          paletteId === colorPaletteId
-            ? next.colorId
-            : remapLibraryColorOptionId(colorOptions, paletteId, next.colorId),
-        )
+        setElementStyleColorPaletteId(next.styleColorPaletteId)
+        const fontPaletteUi =
+          !next.fontColorPaletteId.trim() || next.fontColorPaletteId === previousStyleEffective
+            ? ''
+            : next.fontColorPaletteId
+        setFontColorPaletteId(fontPaletteUi)
+        if (
+          stylePaletteChanged &&
+          (!next.fontColorPaletteId.trim() || next.fontColorPaletteId === previousStyleEffective)
+        ) {
+          setColorOptionId(remapLibraryColorOptionId(colorOptions, nextStyleEffective, next.colorId))
+        } else {
+          setColorOptionId(next.colorId)
+        }
         setSize(next.size)
       }}
       fieldErrors={{
         name: fieldErrors.name,
         fontId: fieldErrors.fontId,
-        colorPaletteId: fieldErrors.colorPaletteId,
         colorId: fieldErrors.colorId,
         size: fieldErrors.size ?? fieldErrors['definition.size'],
       }}
@@ -328,18 +407,8 @@ export function TextLibraryAddDialog({
         label: fontItem.name,
         fontFamily: fontItem.family,
       }))}
-      paletteOptions={usableLibraryItems(colors.items, [colorPaletteId]).map((libraryItem) => ({
-        id: libraryItem.id,
-        name: libraryItem.name,
-        palette: libraryItem.palette,
-      }))}
-      colorOptions={colorOptions
-        .filter((color) => !colorPaletteId || color.paletteId === colorPaletteId)
-        .map((color) => ({
-          id: color.optionId,
-          label: formatPaletteScopedColorLabel(color, t('paletteColorSlot', { index: color.slot })),
-          swatch: color.value,
-        }))}
+      paletteOptions={libraryPaletteOptions}
+      colorOptions={libraryColorFieldOptions}
       fontPlaceholder={t('pickFontRequired')}
       colorPlaceholder={t('pickColorRequired')}
     />

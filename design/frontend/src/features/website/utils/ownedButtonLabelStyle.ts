@@ -74,6 +74,9 @@ export function applyButtonBasicToDraft(
     name: string
     fontId: string
     colorPaletteId: string | null
+    backgroundColorPaletteId: string | null
+    textColorPaletteId: string | null
+    borderColorPaletteId: string | null
     backgroundColorIndex: number | null
     textColorIndex: number | null
     borderColorIndex: number | null
@@ -88,6 +91,9 @@ export function applyButtonBasicToDraft(
       ...button,
       name,
       colorPaletteId: next.colorPaletteId,
+      backgroundColorPaletteId: next.backgroundColorPaletteId,
+      textColorPaletteId: next.textColorPaletteId,
+      borderColorPaletteId: next.borderColorPaletteId,
       backgroundColorIndex: next.backgroundColorIndex,
       textColorIndex: next.textColorIndex,
       borderColorIndex: next.borderColorIndex,
@@ -99,7 +105,7 @@ export function applyButtonBasicToDraft(
       ...labelStyle,
       name: name.trim() || labelStyle.name,
       fontId: next.fontId,
-      colorPaletteId: next.colorPaletteId,
+      fontColorPaletteId: next.textColorPaletteId,
       colorIndex: next.textColorIndex,
       size: next.textSize,
     },

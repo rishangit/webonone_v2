@@ -8,7 +8,9 @@ import {
   flattenColorLibraryPalettes,
   formatPaletteScopedColorLabel,
   inferLibraryPaletteId,
-  libraryPaletteColorValues,
+  libraryPaletteIdFromOptionId,
+  libraryPerColorPaletteUi,
+  libraryPreviewPaletteValues,
 } from '../utils/colorLibraryPalette'
 import { themeFontFamilyStyle } from '../utils/themeFontPreview'
 import {
@@ -37,7 +39,6 @@ export function TextLibraryItemEditor({
   const colorLibrary = useAppSelector((state) => state.websiteColorLibrary)
   const colorOptions = useMemo(() => flattenColorLibraryPalettes(colorLibrary.items), [colorLibrary.items])
   const [fontId, setFontId] = useState('')
-  const [colorPaletteId, setColorPaletteId] = useState('')
   const [colorId, setColorId] = useState('')
   const [elementTab, setElementTab] = useState<WebsiteElementEditorTab>('general')
   const customization = normalizeWebsiteElementCustomization(item.definition.customization)
@@ -58,9 +59,7 @@ export function TextLibraryItemEditor({
     )
     if (font) setFontId(font.id)
     if (colorOptions.length > 0) {
-      const nextColor = findColorOptionId(d.colorValue, colorOptions)
-      setColorId(nextColor)
-      setColorPaletteId(inferLibraryPaletteId(colorOptions, [nextColor]))
+      setColorId(findColorOptionId(d.colorValue, colorOptions))
     }
   }, [colorOptions, fonts.items, item])
 
@@ -78,11 +77,24 @@ export function TextLibraryItemEditor({
       fontFamily: previewBaseStyle.fontFamily,
       fontSize: previewBaseStyle.fontSize,
     },
-    libraryPaletteColorValues(colorLibrary.items, colorPaletteId),
+    libraryPreviewPaletteValues(colorLibrary.items, colorOptions, [colorId]),
   )
   const defaultHtml = defaultElementHtml('text', item.id, elementVisual)
   const resolvedFontId = fontId || 'definition-font'
 
+  const libraryStyleDefaultPaletteId = colorLibrary.items[0]?.id ?? ''
+  const elementPalette = inferLibraryPaletteId(colorOptions, [colorId])
+  const styleEffective = elementPalette || libraryStyleDefaultPaletteId
+  const libraryInheritPaletteName = colorLibrary.items.find((entry) => entry.id === styleEffective)?.name
+  const libraryPerColorPaletteNoneLabel = libraryInheritPaletteName
+    ? t('inheritColorPaletteNamed', { name: libraryInheritPaletteName })
+    : t('inheritColorPalette')
+  const libraryColorFieldOptions = colorOptions.map((color) => ({
+    id: color.optionId,
+    label: formatPaletteScopedColorLabel(color, t('paletteColorSlot', { index: color.slot })),
+    swatch: color.value,
+    paletteId: color.paletteId,
+  }))
   const generalView = (
     <TextStyleBasicSettingsFields
       mode="view"
@@ -90,9 +102,20 @@ export function TextLibraryItemEditor({
       values={{
         name: item.name,
         fontId: resolvedFontId,
-        colorPaletteId,
+        styleColorPaletteId: libraryPerColorPaletteUi(elementPalette, '', libraryStyleDefaultPaletteId),
+        fontColorPaletteId: libraryPerColorPaletteUi(
+          libraryPaletteIdFromOptionId(colorOptions, colorId),
+          styleEffective,
+          libraryStyleDefaultPaletteId,
+        ),
         colorId,
         size: d.size,
+      }}
+      styleDefaultPaletteId={libraryStyleDefaultPaletteId}
+      perColorPaletteNoneLabel={libraryPerColorPaletteNoneLabel}
+      getColorOptionsForPalette={(paletteId) => {
+        const effective = paletteId.trim() || styleEffective
+        return libraryColorFieldOptions.filter((entry) => entry.paletteId === effective)
       }}
       fontOptions={[
         ...usableLibraryItems(fonts.items, [fontId]).map((fontItem) => ({
@@ -102,18 +125,14 @@ export function TextLibraryItemEditor({
         })),
         ...(!fontId && d.fontName ? [{ id: 'definition-font', label: d.fontName, fontFamily: d.family }] : []),
       ]}
-      paletteOptions={usableLibraryItems(colorLibrary.items, [colorPaletteId]).map((libraryItem) => ({
+      paletteOptions={usableLibraryItems(colorLibrary.items, [
+        libraryPaletteIdFromOptionId(colorOptions, colorId),
+      ]).map((libraryItem) => ({
         id: libraryItem.id,
         name: libraryItem.name,
         palette: libraryItem.palette,
       }))}
-      colorOptions={colorOptions
-        .filter((color) => !colorPaletteId || color.paletteId === colorPaletteId)
-        .map((color) => ({
-          id: color.optionId,
-          label: formatPaletteScopedColorLabel(color, t('paletteColorSlot', { index: color.slot })),
-          swatch: color.value,
-        }))}
+      colorOptions={libraryColorFieldOptions}
     />
   )
 

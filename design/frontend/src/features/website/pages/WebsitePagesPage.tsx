@@ -126,7 +126,7 @@ export function WebsitePagesPage() {
 
     return (
 
-      <FeaturePage title={t('title')} description={t('description')}>
+      <FeaturePage title={t('pages')} description={t('pagesDescription')}>
 
         <Alert>
 
@@ -166,7 +166,7 @@ export function WebsitePagesPage() {
 
   return (
 
-    <FeaturePage title={t('title')} description={t('pagesDescription')} className="min-h-full">
+    <FeaturePage title={t('pages')} description={t('pagesDescription')} className="min-h-full">
 
       <WebsiteHubListPage
 

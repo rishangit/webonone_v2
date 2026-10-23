@@ -9,7 +9,9 @@ import {
   flattenColorLibraryPalettes,
   formatPaletteScopedColorLabel,
   inferLibraryPaletteId,
-  libraryPaletteColorValues,
+  libraryPaletteIdFromOptionId,
+  libraryPerColorPaletteUi,
+  libraryPreviewPaletteValues,
 } from '../utils/colorLibraryPalette'
 import {
   defaultElementHtml,
@@ -37,7 +39,6 @@ export function ButtonLibraryItemEditor({
   const colorLibrary = useAppSelector((state) => state.websiteColorLibrary)
   const colorOptions = useMemo(() => flattenColorLibraryPalettes(colorLibrary.items), [colorLibrary.items])
   const [fontId, setFontId] = useState('')
-  const [colorPaletteId, setColorPaletteId] = useState('')
   const [backgroundColorId, setBackgroundColorId] = useState('')
   const [textColorId, setTextColorId] = useState('')
   const [borderColorId, setBorderColorId] = useState('')
@@ -60,14 +61,11 @@ export function ButtonLibraryItemEditor({
     )
     if (font) setFontId(font.id)
     if (colorOptions.length > 0) {
-      const nextBackground = findColorOptionId(d.backgroundColorValue, colorOptions)
-      const nextText =
-        findColorOptionId(d.labelColorValue, colorOptions) || findColorOptionId(d.textColorValue, colorOptions)
-      const nextBorder = findColorOptionId(d.borderColorValue, colorOptions)
-      setBackgroundColorId(nextBackground)
-      setTextColorId(nextText)
-      setBorderColorId(nextBorder)
-      setColorPaletteId(inferLibraryPaletteId(colorOptions, [nextBackground, nextText, nextBorder]))
+      setBackgroundColorId(findColorOptionId(d.backgroundColorValue, colorOptions))
+      setTextColorId(
+        findColorOptionId(d.labelColorValue, colorOptions) || findColorOptionId(d.textColorValue, colorOptions),
+      )
+      setBorderColorId(findColorOptionId(d.borderColorValue, colorOptions))
     }
   }, [colorOptions, fonts.items, item])
 
@@ -93,11 +91,32 @@ export function ButtonLibraryItemEditor({
       fontSize: previewBaseStyle.fontSize,
       lineHeight: 1,
     },
-    libraryPaletteColorValues(colorLibrary.items, colorPaletteId),
+    libraryPreviewPaletteValues(colorLibrary.items, colorOptions, [
+      backgroundColorId,
+      textColorId,
+      borderColorId,
+    ]),
   )
   const defaultHtml = defaultElementHtml('button', item.id, elementVisual)
 
   const resolvedFontId = fontId || 'definition-font'
+  const libraryStyleDefaultPaletteId = colorLibrary.items[0]?.id ?? ''
+  const elementPalette = inferLibraryPaletteId(colorOptions, [
+    backgroundColorId,
+    textColorId,
+    borderColorId,
+  ])
+  const styleEffective = elementPalette || libraryStyleDefaultPaletteId
+  const libraryInheritPaletteName = colorLibrary.items.find((entry) => entry.id === styleEffective)?.name
+  const libraryPerColorPaletteNoneLabel = libraryInheritPaletteName
+    ? t('inheritColorPaletteNamed', { name: libraryInheritPaletteName })
+    : t('inheritColorPalette')
+  const libraryColorFieldOptions = colorOptions.map((color) => ({
+    id: color.optionId,
+    label: formatPaletteScopedColorLabel(color, t('paletteColorSlot', { index: color.slot })),
+    swatch: color.value,
+    paletteId: color.paletteId,
+  }))
   const generalView = (
     <ButtonStyleBasicSettingsFields
       mode="view"
@@ -105,13 +124,34 @@ export function ButtonLibraryItemEditor({
       values={{
         name: item.name,
         fontId: resolvedFontId,
-        colorPaletteId,
+        styleColorPaletteId: libraryPerColorPaletteUi(elementPalette, '', libraryStyleDefaultPaletteId),
+        backgroundColorPaletteId: libraryPerColorPaletteUi(
+          libraryPaletteIdFromOptionId(colorOptions, backgroundColorId),
+          styleEffective,
+          libraryStyleDefaultPaletteId,
+        ),
         backgroundColorId,
+        textColorPaletteId: libraryPerColorPaletteUi(
+          libraryPaletteIdFromOptionId(colorOptions, textColorId),
+          styleEffective,
+          libraryStyleDefaultPaletteId,
+        ),
         textColorId,
+        borderColorPaletteId: libraryPerColorPaletteUi(
+          libraryPaletteIdFromOptionId(colorOptions, borderColorId),
+          styleEffective,
+          libraryStyleDefaultPaletteId,
+        ),
         borderColorId,
         textSize: d.textSize,
         borderWidth: d.borderWidth,
         radius: d.radius,
+      }}
+      styleDefaultPaletteId={libraryStyleDefaultPaletteId}
+      perColorPaletteNoneLabel={libraryPerColorPaletteNoneLabel}
+      getColorOptionsForPalette={(paletteId) => {
+        const effective = paletteId.trim() || styleEffective
+        return libraryColorFieldOptions.filter((entry) => entry.paletteId === effective)
       }}
       fontOptions={[
         ...usableLibraryItems(fonts.items, [fontId]).map((fontItem) => ({
@@ -123,18 +163,16 @@ export function ButtonLibraryItemEditor({
           ? [{ id: 'definition-font', label: d.textFontName, fontFamily: d.textFontFamily }]
           : []),
       ]}
-      paletteOptions={usableLibraryItems(colorLibrary.items, [colorPaletteId]).map((libraryItem) => ({
+      paletteOptions={usableLibraryItems(colorLibrary.items, [
+        libraryPaletteIdFromOptionId(colorOptions, backgroundColorId),
+        libraryPaletteIdFromOptionId(colorOptions, textColorId),
+        libraryPaletteIdFromOptionId(colorOptions, borderColorId),
+      ]).map((libraryItem) => ({
         id: libraryItem.id,
         name: libraryItem.name,
         palette: libraryItem.palette,
       }))}
-      colorOptions={colorOptions
-        .filter((color) => !colorPaletteId || color.paletteId === colorPaletteId)
-        .map((color) => ({
-          id: color.optionId,
-          label: formatPaletteScopedColorLabel(color, t('paletteColorSlot', { index: color.slot })),
-          swatch: color.value,
-        }))}
+      colorOptions={libraryColorFieldOptions}
     />
   )
 

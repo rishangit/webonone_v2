@@ -4,6 +4,9 @@ export const CALL_ORDER_STEP = 1000
 /** Used when the session has no completion pace yet. */
 export const DEFAULT_AVG_SERVICE_MS = 5 * 60 * 1000
 
+/** Late check-in may push back at most this many checked-in waiters when choosing call order. */
+export const LATE_CHECK_IN_MAX_PUSH_BACK = 5
+
 export function callOrderFromTokenNumber(tokenNumber: number): number {
   return tokenNumber * CALL_ORDER_STEP
 }
@@ -21,6 +24,9 @@ export type CompletedPaceSample = {
 /**
  * Pick insertion index into the checked-in waiting line (0 = front / next after serving)
  * that minimizes variance of projected total waits. Tie-break: larger index (farther back).
+ *
+ * Only indices that push back at most {@link LATE_CHECK_IN_MAX_PUSH_BACK} waiters are considered
+ * (insert at index i pushes back waiters.length - i people, or none at i === waiters.length).
  */
 export function pickEqualWaitInsertIndex(
   waiters: LateQueueWaiter[],
@@ -28,10 +34,11 @@ export function pickEqualWaitInsertIndex(
   avgServiceMs: number,
 ): number {
   const pace = Math.max(1, avgServiceMs)
+  const minIndex = Math.max(0, waiters.length - LATE_CHECK_IN_MAX_PUSH_BACK)
   let bestIndex = waiters.length
   let bestScore = Number.POSITIVE_INFINITY
 
-  for (let i = 0; i <= waiters.length; i++) {
+  for (let i = minIndex; i <= waiters.length; i++) {
     const totals: number[] = [i * pace]
     for (let j = 0; j < waiters.length; j++) {
       const waiter = waiters[j]!

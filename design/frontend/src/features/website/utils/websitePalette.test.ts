@@ -243,4 +243,30 @@ describe('websitePalette', () => {
     assert.equal(theme.pageBackground, '#EFF3FA')
     assert.equal(theme.bodyTextColor, '#17211D')
   })
+
+  it('reads a basic color from another palette and shifts indexes when that palette is removed', () => {
+    const theme = applyThemeChrome({
+      ...emptyTheme(),
+      colorPaletteId: 'one',
+      colorPalettes: [
+        { id: 'one', name: 'One', colors: [{ name: 'A', value: '#111111' }] },
+        { id: 'two', name: 'Two', colors: [{ name: 'B', value: '#222222' }, { name: 'C', value: '#333333' }] },
+        { id: 'three', name: 'Three', colors: [{ name: 'D', value: '#444444' }] },
+      ],
+      pageBackgroundPaletteIndex: 2,
+      pageBackgroundIndex: 2,
+      surfacePaletteIndex: 3,
+      surfaceIndex: 1,
+    })
+    assert.equal(theme.pageBackground, '#333333')
+    assert.equal(theme.surfaceColor, '#444444')
+    assert.equal(theme.bodyTextColor, '#111111')
+
+    const removed = applyThemeChrome({ ...theme, ...removeThemeColorPaletteGroup(theme, 'two') })
+    assert.equal(removed.colorPaletteId, 'one')
+    assert.equal(removed.pageBackgroundPaletteIndex, null)
+    assert.equal(removed.pageBackground, '#111111')
+    assert.equal(removed.surfacePaletteIndex, 2)
+    assert.equal(removed.surfaceColor, '#444444')
+  })
 })

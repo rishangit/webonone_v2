@@ -21,6 +21,10 @@ function styleColor(
   return themeSlotValue(theme, stylePaletteId(theme, paletteId), index, fallback)
 }
 
+function textStyleFontPaletteId(style: WebsiteTextStyle): string | null | undefined {
+  return style.fontColorPaletteId ?? style.colorPaletteId
+}
+
 export function fallbackTextSize(sizeByBreakpoint?: WebsiteTextStyle['sizeByBreakpoint']): number {
   return (
     sizeByBreakpoint?.md ??
@@ -53,7 +57,12 @@ export function textStyleSnapshot(
     color:
       style?.colorIndex == null
         ? 'transparent'
-        : styleColor(theme, style.colorPaletteId, style.colorIndex, theme?.bodyTextColor ?? '#111827'),
+        : styleColor(
+            theme,
+            textStyleFontPaletteId(style),
+            style.colorIndex,
+            theme?.bodyTextColor ?? '#111827',
+          ),
   }
 }
 
@@ -103,6 +112,21 @@ export function buttonLabelTypography(): CSSProperties {
   } as unknown as CSSProperties
 }
 
+function buttonColorPaletteId(
+  style: WebsiteButtonStyle,
+  role: 'background' | 'text' | 'border',
+  labelStyle?: WebsiteTextStyle,
+): string | null | undefined {
+  if (role === 'background') return style.backgroundColorPaletteId ?? style.colorPaletteId
+  if (role === 'border') return style.borderColorPaletteId ?? style.colorPaletteId
+  return (
+    style.textColorPaletteId ??
+    labelStyle?.fontColorPaletteId ??
+    labelStyle?.colorPaletteId ??
+    style.colorPaletteId
+  )
+}
+
 export function resolveButtonStyle(theme: WebsiteTheme | null, style: WebsiteButtonStyle | undefined) {
   const labelStyle = theme?.textStyles.find((item) => item.id === style?.textStyleId)
   const labelSnap = textStyleSnapshot(theme, labelStyle)
@@ -111,7 +135,7 @@ export function resolveButtonStyle(theme: WebsiteTheme | null, style: WebsiteBut
       ? 'transparent'
       : styleColor(
           theme,
-          labelStyle?.colorPaletteId ?? style?.colorPaletteId,
+          style ? buttonColorPaletteId(style, 'text', labelStyle) : null,
           labelStyle?.colorIndex ?? style?.textColorIndex ?? null,
           '#ffffff',
         )
@@ -120,12 +144,17 @@ export function resolveButtonStyle(theme: WebsiteTheme | null, style: WebsiteBut
     background:
       style?.backgroundColorIndex == null
         ? 'transparent'
-        : styleColor(theme, style.colorPaletteId, style.backgroundColorIndex, '#111827'),
+        : styleColor(
+            theme,
+            buttonColorPaletteId(style, 'background'),
+            style.backgroundColorIndex,
+            '#111827',
+          ),
     textColor: labelTextColor,
     borderColor:
       style?.borderColorIndex == null
         ? 'transparent'
-        : styleColor(theme, style.colorPaletteId, style.borderColorIndex, 'transparent'),
+        : styleColor(theme, buttonColorPaletteId(style, 'border'), style.borderColorIndex, 'transparent'),
     borderWidth: style?.borderWidth ?? 0,
     radius: style?.radius ?? 6,
     fontFamily: labelSnap.fontFamily,

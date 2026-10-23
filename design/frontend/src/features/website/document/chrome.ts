@@ -51,9 +51,27 @@ export function pickElementChrome(source: ElementChrome): ElementChrome {
   }
   const colorPaletteId = source.colorPaletteId?.trim()
   if (colorPaletteId) chrome.colorPaletteId = colorPaletteId
+  const backgroundColorPaletteId = source.backgroundColorPaletteId?.trim()
+  if (backgroundColorPaletteId) chrome.backgroundColorPaletteId = backgroundColorPaletteId
+  const borderColorPaletteId = source.borderColorPaletteId?.trim()
+  if (borderColorPaletteId) chrome.borderColorPaletteId = borderColorPaletteId
   if (source.backgroundColorIndex) chrome.backgroundColorIndex = source.backgroundColorIndex
   if (source.borderColorIndex) chrome.borderColorIndex = source.borderColorIndex
   return chrome
+}
+
+export function chromeColorPaletteId(
+  chrome: ElementChrome,
+  kind: 'background' | 'border',
+  inheritedPaletteId?: string | null,
+): string | undefined {
+  const perColor =
+    kind === 'background' ? chrome.backgroundColorPaletteId?.trim() : chrome.borderColorPaletteId?.trim()
+  if (perColor) return perColor
+  const element = chrome.colorPaletteId?.trim()
+  if (element) return element
+  const inherited = inheritedPaletteId?.trim()
+  return inherited || undefined
 }
 
 /** Palette slot for a stored chrome color. A matching hex still selects that theme color. */
@@ -92,11 +110,15 @@ export function chromeInlineStyle(
   chrome: ElementChrome,
   options?: { theme?: WebsiteTheme | null; paletteId?: string | null },
 ): CSSProperties {
-  const paletteId = options?.paletteId ?? chrome.colorPaletteId
+  const inherited = options?.paletteId ?? undefined
+  const backgroundPaletteId = chromeColorPaletteId(chrome, 'background', inherited)
+  const borderPaletteId = chromeColorPaletteId(chrome, 'border', inherited)
   const backgroundColor =
-    chromePaletteColor(options?.theme, paletteId, chrome.backgroundColorIndex) || chrome.backgroundColor || undefined
+    chromePaletteColor(options?.theme, backgroundPaletteId, chrome.backgroundColorIndex) ||
+    chrome.backgroundColor ||
+    undefined
   const borderColor =
-    chromePaletteColor(options?.theme, paletteId, chrome.borderColorIndex) || chrome.borderColor || undefined
+    chromePaletteColor(options?.theme, borderPaletteId, chrome.borderColorIndex) || chrome.borderColor || undefined
   return {
     backgroundColor,
     border: borderColor ? `1px solid ${borderColor}` : undefined,

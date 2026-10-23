@@ -15,6 +15,6 @@ export function toColorPaletteSelectOptions(
   return options.map((option) => ({
     id: option.id,
     name: option.name,
-    colors: option.palette.colors.map((color) => color.value),
+    colors: (option.palette?.colors ?? []).map((color) => color.value),
   }))
 }

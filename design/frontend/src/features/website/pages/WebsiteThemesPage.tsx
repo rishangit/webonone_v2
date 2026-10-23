@@ -65,7 +65,7 @@ export function WebsiteThemesPage() {
   if (!accessToken) return <Navigate to="/login" replace />
   if (!companyId && user?.role !== 'super_admin') {
     return (
-      <FeaturePage title={t('title')} description={t('description')}>
+      <FeaturePage title={t('themes')} description={t('themesDescription')}>
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -74,7 +74,7 @@ export function WebsiteThemesPage() {
   }
 
   return (
-    <FeaturePage title={t('title')} description={t('themesDescription')}>
+    <FeaturePage title={t('themes')} description={t('themesDescription')}>
       <WebsiteHubTabs
         actions={
           <WebsiteHubListToolbar
@@ -144,6 +144,11 @@ export function WebsiteThemesPage() {
                                 isDefault: false,
                                 fonts: theme.fonts,
                                 colorPaletteId: theme.colorPaletteId,
+                                pageBackgroundPaletteIndex: theme.pageBackgroundPaletteIndex ?? null,
+                                surfacePaletteIndex: theme.surfacePaletteIndex ?? null,
+                                bodyTextPaletteIndex: theme.bodyTextPaletteIndex ?? null,
+                                accent1PaletteIndex: theme.accent1PaletteIndex ?? null,
+                                accent2PaletteIndex: theme.accent2PaletteIndex ?? null,
                                 pageBackgroundIndex: theme.pageBackgroundIndex,
                                 surfaceIndex: theme.surfaceIndex,
                                 bodyTextIndex: theme.bodyTextIndex,

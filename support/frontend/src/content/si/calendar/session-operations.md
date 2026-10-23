@@ -17,4 +17,4 @@ session දිනයක (schedule හෝ session screen හි සිට):
 
 ආරම්භයට විනාඩි **5 කට** පමණ පෙර, එම session එකට පැවරුණු staff ට **Session due to start** ඇඟවීමක් ලැබේ (in-app bell, සහ mobile app එක වසා තිබුණත් දුරකථන notification tray එකේ).
 
-Window mode හි call next **call order** අනුගමනය කරයි (මුද්‍රිත token අංකය පමණක් නොවේ). Late check-in වලදී අංකය රැඳේ; රැඳීමේ කාලය සමාන කිරීමට call order ඉදිරියට හෝ පසුපසට යා හැක — [queue tokens](/docs/calendar/queue-token) බලන්න.
+Window mode හි call next **call order** අනුගමනය කරයි (මුද්‍රිත token අංකය පමණක් නොවේ). Late check-in වලදී අංකය රැඳේ; call order check-in වී රැඳී සිටින **අවසාන 5 දෙන** අතර පමණක් සකසයි — [queue tokens](/docs/calendar/queue-token) බලන්න.

@@ -16,6 +16,8 @@ export type ColorPaletteSelectProps = {
   placeholder?: string
   onChange: (id: string) => void
   disabled?: boolean
+  /** Render inside {@link PaletteColorSelect} or {@link InputGroup} — no outer trigger border. */
+  inGroup?: boolean
 }
 
 function ColorSwatchStrip({ colors }: { colors: string[] }) {
@@ -40,6 +42,7 @@ export function ColorPaletteSelect({
   placeholder,
   onChange,
   disabled,
+  inGroup = false,
 }: ColorPaletteSelectProps) {
   return (
     <Select
@@ -47,7 +50,7 @@ export function ColorPaletteSelect({
       onValueChange={(next) => onChange(next === COLOR_SELECT_NONE ? '' : next)}
       disabled={disabled}
     >
-      <SelectTrigger id={id}>
+      <SelectTrigger id={id} inGroup={inGroup} className={inGroup ? 'w-full' : undefined}>
         <SelectValue placeholder={placeholder ?? noneLabel} />
       </SelectTrigger>
       <SelectContent>

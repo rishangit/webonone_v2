@@ -143,13 +143,13 @@ export function createCatalogFeatureStore<T>(config: CatalogFeatureConfig<T>) {
         state.detail = action.payload as typeof state.detail
         state.detailLastFetchedAt = Date.now()
         state.detailStatus = 'idle'
-        state.lastFetchedAt = null
         const { items, totalDelta } = upsertCatalogListItem(
           state.items as T[],
           action.payload,
         )
         state.items = items as typeof state.items
         if (totalDelta > 0) state.total += totalDelta
+        state.lastFetchedAt = Date.now()
       },
       saveDetailFailed(state, action: PayloadAction<string>) {
         state.detailStatus = 'error'

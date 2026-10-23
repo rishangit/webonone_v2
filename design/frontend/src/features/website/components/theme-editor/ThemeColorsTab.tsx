@@ -104,6 +104,7 @@ export function ThemeColorsTab({ theme, onPersist, saving }: ThemeEditorTabProps
 
       <ThemeColorPaletteAddDialog
         open={paletteDialogOpen}
+        themeId={theme.id}
         appliedLibraryPaletteIds={appliedLibraryPaletteIds}
         onOpenChange={setPaletteDialogOpen}
         onApply={applyLibraryItem}

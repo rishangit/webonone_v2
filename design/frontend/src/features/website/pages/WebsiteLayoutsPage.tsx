@@ -71,7 +71,7 @@ export function WebsiteLayoutsPage() {
   if (!accessToken) return <Navigate to="/login" replace />
   if (!companyId && user?.role !== 'super_admin') {
     return (
-      <FeaturePage title={t('title')} description={t('description')}>
+      <FeaturePage title={t('layouts')} description={t('layoutsDescription')}>
         <Alert>
           <AlertDescription>{t('needCompany')}</AlertDescription>
         </Alert>
@@ -84,7 +84,7 @@ export function WebsiteLayoutsPage() {
     : null
 
   return (
-    <FeaturePage title={t('title')} description={t('layoutsDescription')} className="min-h-full">
+    <FeaturePage title={t('layouts')} description={t('layoutsDescription')} className="min-h-full">
       <WebsiteHubListPage
         list={list}
         loading={list.loading}
