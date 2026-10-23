@@ -21,7 +21,7 @@ import {
   type CanvasApplyResult,
 } from '../document/applyCanvas'
 import { findBlockInTree } from '../document/slider'
-import type { DesignerSelection, WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../types'
+import type { DesignerSelection, WebsiteAddon, WebsiteBlock, WebsiteDocumentV1, WebsiteTheme } from '../types'
 
 type PendingCallStatus = 'pending_confirmation' | 'confirmed' | 'rejected'
 
@@ -69,6 +69,7 @@ type DesignerAssistantPanelProps = {
   entityId: string
   entityName: string
   document: WebsiteDocumentV1
+  theme?: WebsiteTheme | null
   focus: DesignerSelection | null
   onApplyCanvas: (args: Record<string, unknown>) => CanvasApplyResult
   onClearFocus: () => void
@@ -162,6 +163,7 @@ export function DesignerAssistantPanel({
   entityId,
   entityName,
   document,
+  theme = null,
   focus,
   onApplyCanvas,
   onClearFocus,
@@ -179,8 +181,8 @@ export function DesignerAssistantPanel({
   const [aiConfigured, setAiConfigured] = useState<boolean | null>(null)
   const [expanded, setExpanded] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
-  const canvasRef = useRef({ kind, entityId, entityName, document, focus })
-  canvasRef.current = { kind, entityId, entityName, document, focus }
+  const canvasRef = useRef({ kind, entityId, entityName, document, theme, focus })
+  canvasRef.current = { kind, entityId, entityName, document, theme, focus }
 
   useEffect(() => {
     setConversationId(null)
@@ -250,6 +252,7 @@ export function DesignerAssistantPanel({
       id: canvas.entityId,
       name: canvas.entityName,
       document: canvas.document,
+      theme: canvas.theme,
       focus: canvas.focus,
     })}\n\n${content}`
     const optimisticId = newLocalId()

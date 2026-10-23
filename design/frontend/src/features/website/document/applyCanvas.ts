@@ -1,5 +1,12 @@
 import { nanoid } from 'nanoid'
 import { createMenuItem } from '../addons/menu/menuItemUtils'
+import {
+  applyThemeTextRole,
+  formatThemeTextStylesForAssistant,
+  isHeadingTextStyle,
+  themeFontSizeForRole,
+  type CanvasTextRole,
+} from './canvasThemeText'
 import type {
   DesignerSelection,
   LayoutByBreakpoint,
@@ -8,6 +15,7 @@ import type {
   WebsiteBlock,
   WebsiteBreakpoint,
   WebsiteDocumentV1,
+  WebsiteTheme,
 } from '../types'
 import { WEBSITE_BREAKPOINTS, WEBSITE_CANVAS_WIDTH } from '../types'
 import { addBlock, deleteAddon, deleteBlock, findBlock, updateAddon, updateBlockById } from './blockTree'
@@ -322,6 +330,19 @@ function fontSizeFor(role: string | undefined, breakpoint: WebsiteBreakpoint): n
   return 16
 }
 
+function resolvedFontSize(
+  type: string,
+  role: string | undefined,
+  breakpoint: WebsiteBreakpoint,
+  theme: WebsiteTheme | null,
+): number {
+  if (type === 'button' || type === 'menu') return 16
+  if (role === 'heading' || role === 'body') {
+    return themeFontSizeForRole(theme, role as CanvasTextRole, breakpoint) ?? fontSizeFor(role, breakpoint)
+  }
+  return fontSizeFor(role, breakpoint)
+}
+
 function wrapLines(lines: string[], charsPerLine: number): string[] {
   const wrapped: string[] = []
   for (const line of lines) {
@@ -344,12 +365,14 @@ function contentPixels(
   items: string[] | undefined,
   role: string | undefined,
   breakpoint: WebsiteBreakpoint,
+  theme: WebsiteTheme | null = null,
 ): { width: number; height: number } {
   if (type === 'image') return { width: 160, height: 160 }
   if (type === 'slider') return { width: 320, height: 192 }
-  const font = type === 'button' || type === 'menu' ? 16 : fontSizeFor(role, breakpoint)
+  const font = resolvedFontSize(type, role, breakpoint, theme)
   const padX = type === 'button' || type === 'menu' ? 24 : 16
   const padY = type === 'button' || type === 'menu' ? 16 : 16
+  const lineHeight = type === 'text' && role === 'heading' ? 1.15 : 1.45
   const fallback = type === 'button' ? 'Button' : type === 'menu' ? 'Home' : 'Text'
   const source =
     type === 'menu'
@@ -364,7 +387,7 @@ function contentPixels(
     lines = wrapLines(source, chars)
     width = maxWidth
   }
-  const height = Math.ceil((lines.length * font * 1.45 + padY + 8) / ROW_HEIGHT) * ROW_HEIGHT
+  const height = Math.ceil((lines.length * font * lineHeight + padY + 8) / ROW_HEIGHT) * ROW_HEIGHT
   return { width, height }
 }
 
@@ -392,12 +415,19 @@ function flowAddonLayout(
   text: string | undefined,
   items: string[] | undefined,
   role: string | undefined,
+  theme: WebsiteTheme | null,
 ): LayoutByBreakpoint {
   const layout = {} as LayoutByBreakpoint
   for (const breakpoint of FLOW_BREAKPOINTS) {
-    const size = contentPixels(type, text, items, role, breakpoint)
+    const size = contentPixels(type, text, items, role, breakpoint, theme)
     const occupied = siblings.map((addon) => resolveLayoutRect(addon.layout, breakpoint))
-    layout[breakpoint] = placeRect(occupied, columnsForPixels(size.width, breakpoint), size.height)
+    let colSpan = columnsForPixels(size.width, breakpoint)
+    if (type === 'text' && role === 'heading' && siblings.length === 0) {
+      colSpan = 12
+    } else if (type === 'text' && role === 'body' && siblings.length === 0) {
+      colSpan = Math.min(12, Math.max(colSpan, 10))
+    }
+    layout[breakpoint] = placeRect(occupied, colSpan, size.height)
   }
   return layout
 }
@@ -647,8 +677,11 @@ function addonItems(addon: WebsiteAddon): string[] | undefined {
   return addon.props.items.map((item) => item.label)
 }
 
-function addonRole(addon: WebsiteAddon): string | undefined {
-  if (addon.type !== 'text' || !addon.props.fontSizeByBreakpoint) return undefined
+function addonRole(addon: WebsiteAddon, theme: WebsiteTheme | null): string | undefined {
+  if (addon.type !== 'text') return undefined
+  if (isHeadingTextStyle(theme, addon.props.textStyleId, addon.props.textStyleIndex ?? null)) return 'heading'
+  if (addon.props.textStyleId || addon.props.textStyleIndex != null) return 'body'
+  if (!addon.props.fontSizeByBreakpoint) return undefined
   return (addon.props.fontSizeByBreakpoint['2xl'] ?? 0) >= 24 ? 'heading' : 'body'
 }
 
@@ -656,6 +689,7 @@ function layoutBlock(
   document: WebsiteDocumentV1,
   blockId: string,
   breakpoint: WebsiteBreakpoint,
+  theme: WebsiteTheme | null,
 ): { document: WebsiteDocumentV1; width: number; height: number; cols: number } {
   const block = findBlock(document, blockId)
   if (!block) return { document, width: 1, height: 1, cols: 1 }
@@ -668,7 +702,11 @@ function layoutBlock(
   }[] = []
 
   for (const addon of [...block.addons].sort((a, b) => a.zIndex - b.zIndex)) {
-    const size = contentPixels(addon.type, addonText(addon), addonItems(addon), addonRole(addon), breakpoint)
+    const role = addonRole(addon, theme)
+    let size = contentPixels(addon.type, addonText(addon), addonItems(addon), role, breakpoint, theme)
+    if (addon.type === 'text' && role === 'heading') {
+      size = { ...size, width: WEBSITE_CANVAS_WIDTH[breakpoint] }
+    }
     pieces.push({
       w: size.width,
       h: size.height,
@@ -681,7 +719,7 @@ function layoutBlock(
   }
 
   for (const child of [...(block.children ?? [])].sort((a, b) => a.zIndex - b.zIndex)) {
-    const nested = layoutBlock(next, child.id, breakpoint)
+    const nested = layoutBlock(next, child.id, breakpoint, theme)
     next = nested.document
     pieces.push({
       w: nested.width,
@@ -712,12 +750,12 @@ function layoutBlock(
 }
 
 /** Rewrite every block from its children so a narrower parent cannot crop them. */
-function layoutFromChildren(document: WebsiteDocumentV1): WebsiteDocumentV1 {
+function layoutFromChildren(document: WebsiteDocumentV1, theme: WebsiteTheme | null): WebsiteDocumentV1 {
   let next = document
   for (const breakpoint of FLOW_BREAKPOINTS) {
     let top = 0
     for (const root of [...next.blocks].sort((a, b) => a.zIndex - b.zIndex)) {
-      const laid = layoutBlock(next, root.id, breakpoint)
+      const laid = layoutBlock(next, root.id, breakpoint, theme)
       next = laid.document
       const place = findBlock(next, root.id)?.place
       const col =
@@ -826,15 +864,6 @@ function withMenuItems(addon: WebsiteAddon, items: string[] | undefined): Websit
     ...addon,
     props: { ...addon.props, items: items.map((label) => createMenuItem(label)) },
   }
-}
-
-function withTextRole(addon: WebsiteAddon, role: string | undefined): WebsiteAddon {
-  if (addon.type !== 'text' || (role !== 'heading' && role !== 'body')) return addon
-  const fontSizeByBreakpoint =
-    role === 'heading'
-      ? { sm: 24, md: 28, lg: 32, xl: 36, '2xl': 40 }
-      : { sm: 16, md: 16, lg: 18, xl: 18, '2xl': 18 }
-  return { ...addon, props: { ...addon.props, fontSizeByBreakpoint } }
 }
 
 function ensureBlock(document: WebsiteDocumentV1, preferred: string | null): { document: WebsiteDocumentV1; blockId: string | null } {
@@ -1049,7 +1078,14 @@ function widenParentRow(document: WebsiteDocumentV1, parentId: string): WebsiteD
   }))
 }
 
-export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<string, unknown>): CanvasApplyResult {
+export type ApplyCanvasOptions = { theme?: WebsiteTheme | null }
+
+export function applyCanvasOperations(
+  document: WebsiteDocumentV1,
+  args: Record<string, unknown>,
+  options?: ApplyCanvasOptions,
+): CanvasApplyResult {
+  const theme = options?.theme ?? null
   let next = document
   const preserveExisting = document.blocks.length > 0
   const changeName = typeof args.name === 'string' ? args.name : undefined
@@ -1143,10 +1179,15 @@ export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<
       }
       pendingBlockId = nestedBeside && pendingSectionId ? pendingSectionId : blockId
       const before = findBlock(next, blockId)
-      const layout = flowAddonLayout(before?.addons ?? [], op.type, op.text, op.items, op.role)
+      const layout = flowAddonLayout(before?.addons ?? [], op.type, op.text, op.items, op.role, theme)
       const created = createPlacedAddon(op.type as WebsiteAddon['type'], before?.addons.length ?? 0, layout)
+      const withContent = withMenuItems(withText(created, op.text), op.items)
+      const styled =
+        withContent.type === 'text' && (op.role === 'heading' || op.role === 'body')
+          ? applyThemeTextRole(theme, withContent, op.role)
+          : withContent
       const patched = {
-        ...withTextRole(withMenuItems(withText(created, op.text), op.items), op.role),
+        ...styled,
         name: displayName(op.elementName, op.text ?? op.items?.[0]),
       }
       const slot = replaceSlot?.blockId === blockId ? replaceSlot.index : null
@@ -1250,11 +1291,16 @@ export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<
       const target = resolveTextEdit(next, op)
       let changed = false
       if (target && target.addon.type === 'text') {
-        next = updateAddon(next, target.blockId, {
-          ...target.addon,
-          name: op.elementName ?? target.addon.name,
-          props: { ...target.addon.props, content: op.text },
-        })
+        const updated = applyThemeTextRole(
+          theme,
+          {
+            ...target.addon,
+            name: op.elementName ?? target.addon.name,
+            props: { ...target.addon.props, content: op.text },
+          },
+          op.role === 'heading' || op.role === 'body' ? op.role : undefined,
+        )
+        next = updateAddon(next, target.blockId, updated)
         pendingBlockId = target.blockId
         selection = { kind: 'addon', blockId: target.blockId, addonId: target.addon.id }
         touched.add(target.blockId)
@@ -1338,7 +1384,7 @@ export function applyCanvasOperations(document: WebsiteDocumentV1, args: Record<
     applied,
     selection,
   })
-  if (!preserveExisting) return finish(layoutFromChildren(next))
+  if (!preserveExisting) return finish(layoutFromChildren(next, theme))
   for (const blockId of touched) next = widenForContent(next, blockId)
   return finish(fitContainer(next))
 }
@@ -1521,6 +1567,7 @@ export function formatDesignerCanvasContext(input: {
   id: string
   name: string
   document: WebsiteDocumentV1
+  theme?: WebsiteTheme | null
   focus?: DesignerSelection | null
 }): string {
   const blocks = outlineBlocks(input.document.blocks, '')
@@ -1539,7 +1586,8 @@ export function formatDesignerCanvasContext(input: {
       ? `The user copied this element into the assistant. Change this element unless they name a different one: ${focus}.`
       : 'No element was copied. Ask which element to change when the request is ambiguous.',
     'This outline is the canvas right now, including every change the user made by hand. Ignore any earlier designer-canvas outline. Edit these ids in place. Do not recreate a block that is already listed, and do not change text, items, or positions you were not asked to change.',
-    'Create with add_block and add_addon. add_addon type is text, button, image, slider, or menu. group true nests a block in the current section. rename, update_text, update_button, update_menu, and update_block edit an existing id. update_block sets html, styles, and scripts for that block shell only. Keep {{children}} in html. Do not paste child or addon markup into html. move uses col, row, cols, and rows from this outline. place_block align is start, center, or end. delete_block and delete_addon remove an existing id. Do not recreate an element to rename it. Do not name an element Block, Text, Button, Image, Slider, or Menu. Set role heading or body on text. span full is only for a wide image.',
+    'Create with add_block and add_addon. add_addon type is text, button, image, slider, or menu. group true nests a block in the current section. rename, update_text, update_button, update_menu, and update_block edit an existing id. update_block sets html, styles, and scripts for that block shell only. Keep {{children}} in html. Do not paste child or addon markup into html. move uses col, row, cols, and rows from this outline. place_block align is start, center, or end. delete_block and delete_addon remove an existing id. Do not recreate an element to rename it. Do not name an element Block, Text, Button, Image, Slider, or Menu. Set role heading on every title and role body on paragraphs — this applies the active theme text styles (font size, font, color). span full is only for a wide image.',
+    ...formatThemeTextStylesForAssistant(input.theme ?? null),
     ...shell,
     'Do not create a new page, header, footer, preset, layout, or theme unless the user asked for a new record.',
     'Images have no media until the user picks one. Do not invent media ids.',

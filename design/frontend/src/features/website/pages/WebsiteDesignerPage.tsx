@@ -1114,11 +1114,12 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
             entityId={id}
             entityName={name ?? t('designer')}
             document={document}
+            theme={theme ?? null}
             focus={assistantFocus}
             onClearFocus={() => setAssistantFocus(null)}
             onClose={() => setAssistantOpen(false)}
             onApplyCanvas={(args) => {
-              const result = applyCanvasOperations(documentRef.current, args)
+              const result = applyCanvasOperations(documentRef.current, args, { theme: theme ?? null })
               if (result.applied === 0) {
                 toast({ title: t('designerAssistant.nothingApplied'), variant: 'destructive' })
                 return result

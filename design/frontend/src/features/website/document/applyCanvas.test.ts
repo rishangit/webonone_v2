@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { emptyLayoutByBreakpoint, emptyWebsiteDocument, WEBSITE_CANVAS_WIDTH } from '../types'
+import { emptyLayoutByBreakpoint, emptyWebsiteDocument, WEBSITE_CANVAS_WIDTH, type WebsiteTheme } from '../types'
 import { resolveLayoutRect } from './layout'
 import type { LayoutRect } from '../types'
 
@@ -11,9 +11,64 @@ function containedWidth(child: LayoutRect, parent: LayoutRect, canvas: number): 
 import { updateAddon, updateBlockById } from './blockTree'
 import { applyCanvasOperations, formatDesignerCanvasContext } from './applyCanvas'
 
+function canvasAssistantTheme(): WebsiteTheme {
+  return {
+    id: 'theme-1',
+    companyId: 'co',
+    name: 'Default',
+    pageBackground: '#fff',
+    bodyTextColor: '#111827',
+    colorPaletteId: 'p1',
+    pageBackgroundIndex: 1,
+    surfaceIndex: 1,
+    bodyTextIndex: 1,
+    accent1Index: 1,
+    accent2Index: 2,
+    isActive: true,
+    isDefault: true,
+    sourceLibraryId: null,
+    fonts: [
+      { id: 'font-heading', name: 'Heading', family: 'Inter', googleFontUrl: '' },
+      { id: 'font-body', name: 'Body', family: 'Inter', googleFontUrl: '' },
+    ],
+    colorPalettes: [
+      {
+        id: 'p1',
+        name: 'Main',
+        colors: [{ name: 'Text', value: '#111827' }],
+      },
+    ],
+    textStyles: [
+      {
+        id: 'text-heading',
+        name: 'Heading',
+        fontId: 'font-heading',
+        size: 48,
+        sizeByBreakpoint: { sm: 28, md: 32, lg: 40, xl: 44, '2xl': 48 },
+        colorIndex: 1,
+      },
+      {
+        id: 'text-body',
+        name: 'Body',
+        fontId: 'font-body',
+        size: 18,
+        colorIndex: 1,
+      },
+    ],
+    buttonStyles: [],
+    createdBy: null,
+    createdAt: '',
+    updatedAt: '',
+  }
+}
+
+const withAssistantTheme = { theme: canvasAssistantTheme() }
+
 describe('applyCanvasOperations placement', () => {
   it('stacks sections and flows buttons into a desktop row that stacks on phone', () => {
-    const result = applyCanvasOperations(emptyWebsiteDocument(), {
+    const result = applyCanvasOperations(
+      emptyWebsiteDocument(),
+      {
       name: 'Hero',
       operations: [
         { op: 'add_block' },
@@ -23,7 +78,9 @@ describe('applyCanvasOperations placement', () => {
         { op: 'add_block' },
         { op: 'add_addon', type: 'text', text: 'About', role: 'heading' },
       ],
-    })
+      },
+      withAssistantTheme,
+    )
 
     assert.equal(result.applied, 6)
     assert.equal(result.document.blocks.length, 2)
@@ -39,13 +96,13 @@ describe('applyCanvasOperations placement', () => {
     const [heading, book, call] = hero.addons
     assert.ok(heading && book && call)
     assert.equal(heading.type, 'text')
-    if (heading.type === 'text') {
-      assert.equal(heading.props.fontSizeByBreakpoint?.sm, 24)
-      assert.equal(heading.props.fontSizeByBreakpoint?.['2xl'], 40)
-    }
-
     const canvas = WEBSITE_CANVAS_WIDTH['2xl']
     const headingDesktop = resolveLayoutRect(heading.layout, '2xl')
+    if (heading.type === 'text') {
+      assert.equal(heading.props.textStyleId, 'text-heading')
+      assert.equal(heading.props.snapshot.size, 48)
+      assert.equal(headingDesktop.colSpan, 12)
+    }
     const bookDesktop = resolveLayoutRect(book.layout, '2xl')
     const callDesktop = resolveLayoutRect(call.layout, '2xl')
     assert.ok(containedWidth(headingDesktop, heroDesktop, canvas) >= 200)
@@ -627,6 +684,19 @@ describe('formatDesignerCanvasContext', () => {
     })
     assert.match(context, new RegExp(`addon ${button.id} in block ${block.id}`))
     assert.match(context, /The user copied this element/)
+  })
+
+  it('lists theme text styles for the assistant', () => {
+    const context = formatDesignerCanvasContext({
+      kind: 'pages',
+      id: 'page-1',
+      name: 'Home',
+      document: emptyWebsiteDocument(),
+      theme: canvasAssistantTheme(),
+    })
+    assert.match(context, /theme-text-styles/)
+    assert.match(context, /text-heading/)
+    assert.match(context, /role heading/)
   })
 
   it('includes the focused block shell without child markup', () => {
