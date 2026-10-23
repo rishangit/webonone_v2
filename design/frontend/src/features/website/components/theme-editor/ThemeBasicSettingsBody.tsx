@@ -80,7 +80,7 @@ function rolePaletteId(themeValue: WebsiteTheme, paletteIndex: number | null | u
 export type ThemeBasicSettingsBodyProps = {
   theme: WebsiteTheme
   onChange: (theme: WebsiteTheme) => void
-  fieldErrors: Record<string, string>
+  fieldErrors: Partial<Record<string, string>>
   mode: 'view' | 'edit'
 }
 

@@ -23,7 +23,7 @@ export function ThemeBasicSettingsDialog({
   const { t } = useTranslation('website')
   const { t: tc } = useTranslation('common')
   const [draft, setDraft] = useState(theme)
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<string, string>>>({})
   const syncSessionRef = useRef<string | null>(null)
 
   useEffect(() => {

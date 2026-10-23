@@ -95,7 +95,6 @@ export function ElementChromeSettingsFields({
     kind: 'background' | 'border',
     index: number | undefined,
     hex: string | undefined,
-    fromPaletteId: string,
     toPaletteId: string,
   ): { index?: number; hex?: string } {
     if (!theme) return { index, hex }
@@ -107,7 +106,6 @@ export function ElementChromeSettingsFields({
 
   function onPerColorPaletteChange(kind: 'background' | 'border', nextPaletteUi: string) {
     const paletteKey = kind === 'background' ? 'backgroundColorPaletteId' : 'borderColorPaletteId'
-    const previousEffective = effectivePaletteForKind(kind)
     const nextStored = nextPaletteUi.trim() || null
     const nextEffective =
       nextStored ||
@@ -116,11 +114,11 @@ export function ElementChromeSettingsFields({
       themePaletteId
     const background =
       kind === 'background'
-        ? colorFields('background', value.backgroundColorIndex, value.backgroundColor, previousEffective, nextEffective)
+        ? colorFields('background', value.backgroundColorIndex, value.backgroundColor, nextEffective)
         : { index: value.backgroundColorIndex, hex: value.backgroundColor }
     const border =
       kind === 'border'
-        ? colorFields('border', value.borderColorIndex, value.borderColor, previousEffective, nextEffective)
+        ? colorFields('border', value.borderColorIndex, value.borderColor, nextEffective)
         : { index: value.borderColorIndex, hex: value.borderColor }
     patch({
       [paletteKey]: nextStored === null ? undefined : nextStored,

@@ -517,7 +517,11 @@ function growFromBlock(document: WebsiteDocumentV1, blockId: string): WebsiteDoc
   return next
 }
 
-function widenForContent(document: WebsiteDocumentV1, blockId: string): WebsiteDocumentV1 {
+function widenForContent(
+  document: WebsiteDocumentV1,
+  blockId: string,
+  theme: WebsiteTheme | null,
+): WebsiteDocumentV1 {
   let next = document
   const block = findBlock(next, blockId)
   if (!block) return next
@@ -528,7 +532,14 @@ function widenForContent(document: WebsiteDocumentV1, blockId: string): WebsiteD
     let colSpan = resolveLayoutRect(current.layout, breakpoint).colSpan
     for (const addon of current.addons) {
       const child = resolveLayoutRect(addon.layout, breakpoint)
-      const want = contentPixels(addon.type, addonText(addon), addonItems(addon), addonRole(addon), breakpoint).width
+      const want = contentPixels(
+        addon.type,
+        addonText(addon),
+        addonItems(addon),
+        addonRole(addon, theme),
+        breakpoint,
+        theme,
+      ).width
       if (child.colSpan <= 0) continue
       const required = Math.ceil((want * 12) / (child.colSpan * (canvas / 12)))
       colSpan = Math.max(colSpan, Math.min(12, required))
@@ -542,7 +553,7 @@ function widenForContent(document: WebsiteDocumentV1, blockId: string): WebsiteD
     }
   }
   const parent = parentBlockId(next.blocks, blockId, null)
-  return parent ? widenForContent(next, parent) : next
+  return parent ? widenForContent(next, parent, theme) : next
 }
 
 function pinBlockAlign(
@@ -1385,7 +1396,7 @@ export function applyCanvasOperations(
     selection,
   })
   if (!preserveExisting) return finish(layoutFromChildren(next, theme))
-  for (const blockId of touched) next = widenForContent(next, blockId)
+  for (const blockId of touched) next = widenForContent(next, blockId, theme)
   return finish(fitContainer(next))
 }
 
