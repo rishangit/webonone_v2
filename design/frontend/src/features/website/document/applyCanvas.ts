@@ -29,6 +29,7 @@ import {
   type LayoutLimits,
 } from './layout'
 import { createEmptySlideTemplate, DEFAULT_SLIDER_DISPLAY_SETTINGS, findBlockInTree, mapBlockInTree } from './slider'
+import { isTemplateHost, readHostTemplate } from './templateHost'
 import {
   defaultElementHtml,
   defaultElementStyles,
@@ -106,6 +107,24 @@ function createPlacedAddon(
       },
     }
   }
+  if (type === 'list') {
+    return {
+      id,
+      type,
+      zIndex,
+      layout,
+      props: {
+        itemTemplate: createEmptySlideTemplate(280),
+        sourcePresetId: null,
+        dataSource: 'manual',
+        datasetId: null,
+        itemGroup: null,
+        itemsPath: null,
+        manualItems: [],
+        itemGap: 12,
+      },
+    }
+  }
   return {
     id,
     type: 'menu',
@@ -118,7 +137,7 @@ function createPlacedAddon(
   }
 }
 
-const ADDON_TYPES = new Set(['text', 'button', 'image', 'slider', 'menu'])
+const ADDON_TYPES = new Set(['text', 'button', 'image', 'slider', 'list', 'menu'])
 const SPANS = new Set(['full', 'half', 'third', 'quarter'])
 const ROLES = new Set(['heading', 'body'])
 const PLACES = new Set(['start', 'center', 'end'])
@@ -274,7 +293,7 @@ function inferredCanvasOp(op: Record<string, unknown>): string {
   const hasGrid = ['col', 'row', 'cols', 'rows'].some((key) => op[key] != null && op[key] !== '')
   if (hasGrid && (typeof op.blockId === 'string' || typeof op.addonId === 'string')) return 'move'
   const type = typeof op.type === 'string' ? op.type.trim().toLowerCase() : ''
-  if (type === 'image' || type === 'hero' || type === 'banner' || type === 'photo' || type === 'text' || type === 'button' || type === 'menu' || type === 'slider') {
+  if (type === 'image' || type === 'hero' || type === 'banner' || type === 'photo' || type === 'text' || type === 'button' || type === 'menu' || type === 'slider' || type === 'list') {
     return 'add_addon'
   }
   if (type === 'section' || type === 'block' || type === 'group') return 'add_block'
@@ -369,6 +388,7 @@ function contentPixels(
 ): { width: number; height: number } {
   if (type === 'image') return { width: 160, height: 160 }
   if (type === 'slider') return { width: 320, height: 192 }
+  if (type === 'list') return { width: 320, height: 280 }
   const font = resolvedFontSize(type, role, breakpoint, theme)
   const padX = type === 'button' || type === 'menu' ? 24 : 16
   const padY = type === 'button' || type === 'menu' ? 16 : 16
@@ -1527,8 +1547,9 @@ function findTemplateBlock(document: WebsiteDocumentV1, blockId: string): Websit
   function walk(blocks: WebsiteBlock[]): WebsiteBlock | null {
     for (const block of blocks) {
       for (const addon of block.addons) {
-        if (addon.type !== 'slider' || !addon.props.slideTemplate) continue
-        const found = findBlockInTree(addon.props.slideTemplate, blockId)
+        const template = readHostTemplate(addon)
+        if (!template) continue
+        const found = findBlockInTree(template, blockId)
         if (found) return found
       }
       const nested = walk(block.children ?? [])
@@ -1559,8 +1580,10 @@ function focusedShellBlock(
   if (!focus || focus.kind === 'container' || focus.kind === 'addon' || focus.kind === 'templateAddon') return null
   if (focus.kind === 'block') return findBlock(document, focus.blockId)
   const slider = findBlock(document, focus.hostBlockId)?.addons.find((addon) => addon.id === focus.sliderAddonId)
-  if (!slider || slider.type !== 'slider' || !slider.props.slideTemplate) return null
-  return findBlockInTree(slider.props.slideTemplate, focus.templateBlockId)
+  if (!slider || !isTemplateHost(slider)) return null
+  const template = readHostTemplate(slider)
+  if (!template) return null
+  return findBlockInTree(template, focus.templateBlockId)
 }
 
 function canvasFocusLine(focus: DesignerSelection | null | undefined): string | null {

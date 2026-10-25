@@ -101,6 +101,7 @@ export const buttonAddonPropsSchema = z.object({
 })
 
 export const MAX_SLIDER_DATA_ITEMS = 48
+export const MAX_LIST_DATA_ITEMS = 48
 
 export const menuDisplayModeSchema = z.enum(['inline', 'hamburger', 'wrap', 'scroll'])
 
@@ -215,6 +216,22 @@ export type SliderDisplaySettings = {
   autoSlide: boolean
 }
 
+export type ListManualItem = {
+  id: string
+  data: Record<string, unknown>
+}
+
+export type ListAddonProps = {
+  itemTemplate: WebsiteBlock | null
+  sourcePresetId?: string | null
+  dataSource: 'dataset' | 'manual' | 'parent'
+  datasetId: string | null
+  itemGroup?: string | null
+  itemsPath?: string | null
+  manualItems: ListManualItem[]
+  itemGap: number
+}
+
 export type SliderAddonProps = {
   slideTemplate: WebsiteBlock | null
   sourcePresetId?: string | null
@@ -260,6 +277,10 @@ export type WebsiteAddon =
   | (WebsiteAddonBase & {
       type: 'slider'
       props: SliderAddonProps
+    })
+  | (WebsiteAddonBase & {
+      type: 'list'
+      props: ListAddonProps
     })
   | (WebsiteAddonBase & {
       type: 'menu'
@@ -348,6 +369,27 @@ export const sliderAddonPropsSchema: z.ZodType<SliderAddonProps> = z.lazy(() =>
   }),
 ) as z.ZodType<SliderAddonProps>
 
+export const listAddonPropsSchema: z.ZodType<ListAddonProps> = z.lazy(() =>
+  z.object({
+    itemTemplate: websiteBlockSchema.nullable().default(null),
+    sourcePresetId: z.string().max(21).nullable().optional(),
+    dataSource: z.enum(['dataset', 'manual', 'parent']).default('manual'),
+    datasetId: z.string().max(21).nullable().default(null),
+    itemGroup: z.string().max(64).nullable().optional(),
+    itemsPath: z.string().max(128).nullable().optional(),
+    manualItems: z
+      .array(
+        z.object({
+          id: z.string().min(1).max(64),
+          data: z.record(z.string().max(128), z.any()).default({}),
+        }),
+      )
+      .max(MAX_LIST_DATA_ITEMS)
+      .default([]),
+    itemGap: z.number().int().min(0).max(64).default(12),
+  }),
+) as z.ZodType<ListAddonProps>
+
 export const websiteAddonSchema: z.ZodType<WebsiteAddon> = z.lazy(() =>
   z.discriminatedUnion('type', [
     z.object({
@@ -369,6 +411,11 @@ export const websiteAddonSchema: z.ZodType<WebsiteAddon> = z.lazy(() =>
       ...addonBaseFields,
       type: z.literal('slider'),
       props: sliderAddonPropsSchema,
+    }),
+    z.object({
+      ...addonBaseFields,
+      type: z.literal('list'),
+      props: listAddonPropsSchema,
     }),
     z.object({
       ...addonBaseFields,
@@ -410,14 +457,25 @@ function stripLegacyImageSliders(value: unknown): unknown {
           .map((addon) => {
             if (!addon || typeof addon !== 'object') return addon
             const typed = addon as { type?: string; props?: { slideTemplate?: unknown } }
-            if (typed.type !== 'slider' || !typed.props?.slideTemplate) return addon
-            return {
-              ...typed,
-              props: {
-                ...typed.props,
-                slideTemplate: stripBlock(typed.props.slideTemplate),
-              },
+            if (typed.type === 'slider' && typed.props?.slideTemplate) {
+              return {
+                ...typed,
+                props: {
+                  ...typed.props,
+                  slideTemplate: stripBlock(typed.props.slideTemplate),
+                },
+              }
             }
+            if (typed.type === 'list' && typed.props?.itemTemplate) {
+              return {
+                ...typed,
+                props: {
+                  ...typed.props,
+                  itemTemplate: stripBlock(typed.props.itemTemplate),
+                },
+              }
+            }
+            return addon
           })
       : node.addons
     const children = Array.isArray(node.children) ? node.children.map(stripBlock) : node.children

@@ -11,6 +11,7 @@ import {
   type WebsiteDocumentV1,
 } from '../types'
 import { cloneBlockTree, findBlock, stripNestedSliders, updateAddon } from './blockTree'
+import { isTemplateHost, readHostTemplate, writeHostTemplate, type TemplateHostAddon } from './templateHost'
 import {
   getDataItemByPath,
   itemsFromDataValue,
@@ -47,36 +48,35 @@ export function ensureSliderSlideTemplate(
 ): WebsiteDocumentV1 {
   const hostBlock = findBlock(document, hostBlockId)
   if (!hostBlock) return document
-  const slider = hostBlock.addons.find((addon) => addon.id === sliderAddonId)
-  if (!slider || slider.type !== 'slider') return document
+  const host = hostBlock.addons.find((addon) => addon.id === sliderAddonId)
+  if (!host || !isTemplateHost(host)) return document
+  const templateHost = host
 
-  const shellHeight = slider.layout['2xl']?.height ?? EMPTY_SLIDE_TEMPLATE_HEIGHT
-  const existing = slider.props.slideTemplate
+  const shellHeight = templateHost.layout['2xl']?.height ?? EMPTY_SLIDE_TEMPLATE_HEIGHT
+  const existing = readHostTemplate(templateHost)
 
-  if (!existing) {
+  function save(template: WebsiteBlock) {
+    const next = writeHostTemplate(templateHost, template)
+    if (next.type === 'slider') {
+      return updateAddon(document, hostBlockId, {
+        ...next,
+        props: { ...next.props, sourcePresetId: null },
+      })
+    }
     return updateAddon(document, hostBlockId, {
-      ...slider,
-      props: {
-        ...slider.props,
-        slideTemplate: createEmptySlideTemplate(shellHeight),
-        sourcePresetId: null,
-      },
+      ...next,
+      props: { ...next.props, sourcePresetId: null },
     })
   }
+
+  if (!existing) return save(createEmptySlideTemplate(shellHeight))
 
   // Preset-as-root: has its own addons → wrap so the preset can be positioned on the canvas.
   if (!isSlideShellTemplate(existing)) {
     const shell = createEmptySlideTemplate(
       Math.max(shellHeight, resolveLayoutRectHeight(existing) || shellHeight),
     )
-    return updateAddon(document, hostBlockId, {
-      ...slider,
-      props: {
-        ...slider.props,
-        slideTemplate: { ...shell, children: [existing] },
-        sourcePresetId: null,
-      },
-    })
+    return save({ ...shell, children: [existing] })
   }
 
   return document
@@ -92,7 +92,7 @@ export function normalizeSliderSlideShells(document: WebsiteDocumentV1): Website
   const targets: Array<{ hostBlockId: string; sliderAddonId: string }> = []
   function walk(block: WebsiteBlock) {
     for (const addon of block.addons ?? []) {
-      if (addon.type === 'slider') {
+      if (isTemplateHost(addon)) {
         targets.push({ hostBlockId: block.id, sliderAddonId: addon.id })
       }
     }
@@ -111,14 +111,10 @@ export function stripLegacyImageSliders(document: WebsiteDocumentV1): WebsiteDoc
     const addons = (block.addons ?? [])
       .filter((addon) => (addon as { type: string }).type !== 'imageSlider')
       .map((addon) => {
-        if (addon.type !== 'slider' || !addon.props.slideTemplate) return addon
-        return {
-          ...addon,
-          props: {
-            ...addon.props,
-            slideTemplate: stripBlock(addon.props.slideTemplate),
-          },
-        }
+        if (!isTemplateHost(addon)) return addon
+        const template = readHostTemplate(addon)
+        if (!template) return addon
+        return writeHostTemplate(addon, stripBlock(template))
       })
     return {
       ...block,
@@ -176,15 +172,15 @@ export function growSlideShellToFitContent(
   }
   const sliderRect = ctx.slider.layout['2xl']
   const nextSliderHeight = Math.max(sliderRect?.height ?? nextHeight, nextHeight)
+  const nextHost = writeHostTemplate(ctx.slider, nextShell)
   return updateAddon(document, hostBlockId, {
-    ...ctx.slider,
+    ...nextHost,
     layout: emptyLayoutByBreakpoint({
       col: sliderRect?.col ?? 1,
       colSpan: sliderRect?.colSpan ?? 12,
       top: sliderRect?.top ?? 0,
       height: nextSliderHeight,
     }),
-    props: { ...ctx.slider.props, slideTemplate: nextShell },
   })
 }
 
@@ -195,9 +191,10 @@ function findParentInTree(root: WebsiteBlock, blockId: string): WebsiteBlock | n
     if (found) return found
   }
   for (const addon of root.addons ?? []) {
-    if (addon.type !== 'slider' || !addon.props.slideTemplate) continue
-    if (addon.props.slideTemplate.id === blockId) return root
-    const found = findParentInTree(addon.props.slideTemplate, blockId)
+    const template = readHostTemplate(addon)
+    if (!template) continue
+    if (template.id === blockId) return root
+    const found = findParentInTree(template, blockId)
     if (found) return found
   }
   return null
@@ -215,14 +212,13 @@ function removeChildFromTree(root: WebsiteBlock, blockId: string): WebsiteBlock 
     return next
   })
   const nextAddons = (root.addons ?? []).map((addon) => {
-    if (addon.type !== 'slider' || !addon.props.slideTemplate) return addon
-    const nextTemplate = removeChildFromTree(addon.props.slideTemplate, blockId)
-    if (nextTemplate === addon.props.slideTemplate) return addon
+    if (!isTemplateHost(addon)) return addon
+    const template = readHostTemplate(addon)
+    if (!template) return addon
+    const nextTemplate = removeChildFromTree(template, blockId)
+    if (nextTemplate === template) return addon
     changed = true
-    return {
-      ...addon,
-      props: { ...addon.props, slideTemplate: nextTemplate },
-    }
+    return writeHostTemplate(addon, nextTemplate)
   })
   if (!changed) return root
   return { ...root, children: nextChildren, addons: nextAddons }
@@ -554,7 +550,7 @@ export function isSliderAddon(addon: WebsiteAddon): addon is Extract<WebsiteAddo
 
 export type SliderHostContext = {
   hostBlock: WebsiteBlock
-  slider: Extract<WebsiteAddon, { type: 'slider' }>
+  slider: TemplateHostAddon
   slideTemplate: WebsiteBlock
 }
 
@@ -566,8 +562,10 @@ export function findSliderHostContext(
   const hostBlock = findBlock(document, hostBlockId)
   if (!hostBlock) return null
   const slider = hostBlock.addons.find((addon) => addon.id === sliderAddonId)
-  if (!slider || slider.type !== 'slider' || !slider.props.slideTemplate) return null
-  return { hostBlock, slider, slideTemplate: slider.props.slideTemplate }
+  if (!slider || !isTemplateHost(slider)) return null
+  const slideTemplate = readHostTemplate(slider)
+  if (!slideTemplate) return null
+  return { hostBlock, slider, slideTemplate }
 }
 
 export function findBlockInTree(root: WebsiteBlock, blockId: string): WebsiteBlock | null {
@@ -577,8 +575,9 @@ export function findBlockInTree(root: WebsiteBlock, blockId: string): WebsiteBlo
     if (found) return found
   }
   for (const addon of root.addons ?? []) {
-    if (addon.type !== 'slider' || !addon.props.slideTemplate) continue
-    const found = findBlockInTree(addon.props.slideTemplate, blockId)
+    const template = readHostTemplate(addon)
+    if (!template) continue
+    const found = findBlockInTree(template, blockId)
     if (found) return found
   }
   return null
@@ -597,14 +596,13 @@ export function mapBlockInTree(
     return next
   })
   const addons = (root.addons ?? []).map((addon) => {
-    if (addon.type !== 'slider' || !addon.props.slideTemplate) return addon
-    const nextTemplate = mapBlockInTree(addon.props.slideTemplate, blockId, updater)
-    if (nextTemplate === addon.props.slideTemplate) return addon
+    if (!isTemplateHost(addon)) return addon
+    const template = readHostTemplate(addon)
+    if (!template) return addon
+    const nextTemplate = mapBlockInTree(template, blockId, updater)
+    if (nextTemplate === template) return addon
     changed = true
-    return {
-      ...addon,
-      props: { ...addon.props, slideTemplate: nextTemplate },
-    }
+    return writeHostTemplate(addon, nextTemplate)
   })
   if (!changed) return root
   return { ...root, children, addons }
@@ -626,12 +624,12 @@ export function findEnclosingSliderItemsPath(root: WebsiteBlock, blockId: string
       if (visit(child, itemsPath)) return true
     }
     for (const addon of block.addons ?? []) {
-      if (addon.type !== 'slider' || !addon.props.slideTemplate) continue
+      const template = readHostTemplate(addon)
+      if (!template || !isTemplateHost(addon)) continue
+      const explicit = addon.props.itemsPath?.trim()
       const nestedPath =
-        addon.props.dataSource === 'parent' && addon.props.itemsPath?.trim()
-          ? addon.props.itemsPath.trim()
-          : itemsPath
-      if (visit(addon.props.slideTemplate, nestedPath)) return true
+        addon.props.dataSource === 'parent' && explicit ? explicit : itemsPath
+      if (visit(template, nestedPath)) return true
     }
     return false
   }
@@ -648,10 +646,7 @@ export function updateSlideTemplate(
   const ctx = findSliderHostContext(document, hostBlockId, sliderAddonId)
   if (!ctx) return document
   const nextTemplate = updater(ctx.slideTemplate)
-  return updateAddon(document, hostBlockId, {
-    ...ctx.slider,
-    props: { ...ctx.slider.props, slideTemplate: nextTemplate },
-  })
+  return updateAddon(document, hostBlockId, writeHostTemplate(ctx.slider, nextTemplate))
 }
 
 export function updateTemplateBlock(

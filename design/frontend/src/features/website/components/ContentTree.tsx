@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Box, ChevronDown, ChevronRight, LayoutTemplate } from 'lucide-react'
+import { Box, LayoutTemplate } from 'lucide-react'
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -26,7 +26,8 @@ import {
   type TemplateTreeCallbacks,
 } from './contentTree/TemplateTreeNodes'
 import { CopyCanvasElementToAiMenuItem } from './CopyCanvasElementToAiMenuItem'
-import { ADDON_ICONS, TREE_NEST, TreeDropFrame, TreeNavRow, TreeRowMenu } from './contentTree/treeUi'
+import { ADDON_ICONS, TREE_NEST, TreeDropFrame, TreeExpandToggle, TreeNavRow, TreeRowMenu } from './contentTree/treeUi'
+import { isTemplateHost } from '../document/templateHost'
 
 interface ContentTreeProps {
   document: WebsiteDocumentV1
@@ -193,7 +194,7 @@ function AddonTreeNode({
 }) {
   const { t } = useTranslation('website')
 
-  if (addon.type === 'slider') {
+  if (isTemplateHost(addon)) {
     const context = buildTemplateContext(
       hostBlockId,
       addon.id,
@@ -437,15 +438,12 @@ function BlockTreeNode({
       >
       <div className="flex items-center">
         {hasNesting ? (
-          <button
-            type="button"
-            className="flex h-7 w-4 shrink-0 items-center justify-center text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            aria-expanded={open}
-            aria-label={open ? t('collapse') : t('expand')}
-            onClick={() => setCollapsed((current) => ({ ...current, [block.id]: !current[block.id] }))}
-          >
-            {open ? <ChevronDown className="h-3.5 w-3.5" aria-hidden /> : <ChevronRight className="h-3.5 w-3.5" aria-hidden />}
-          </button>
+          <TreeExpandToggle
+            open={open}
+            expandLabel={t('expand')}
+            collapseLabel={t('collapse')}
+            onToggle={() => setCollapsed((current) => ({ ...current, [block.id]: !current[block.id] }))}
+          />
         ) : (
           <span className="w-4 shrink-0" aria-hidden />
         )}

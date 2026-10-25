@@ -367,7 +367,7 @@ export function DesignerCanvas({
     if (selection.kind === 'addon') {
       const host = findBlock(document, selection.blockId)
       const addon = host?.addons.find((item) => item.id === selection.addonId)
-      if (addon?.type === 'slider') return []
+      if (addon?.type === 'slider' || addon?.type === 'list') return []
     }
     return []
   }, [document, selection])

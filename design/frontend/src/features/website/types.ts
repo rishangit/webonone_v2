@@ -121,6 +121,27 @@ export type SliderAddonProps = {
 }
 
 export const MAX_SLIDER_DATA_ITEMS = 48
+export const MAX_LIST_DATA_ITEMS = 48
+
+export type ListManualItem = {
+  id: string
+  data: Record<string, unknown>
+}
+
+/** Vertical list of one child template, repeated per manual row or dataset row. */
+export type ListAddonProps = {
+  itemTemplate: WebsiteBlock | null
+  sourcePresetId?: string | null
+  dataSource: 'dataset' | 'manual' | 'parent'
+  datasetId: string | null
+  /** Which direct child under the item shell (by `groupName`) is the repeating card. */
+  itemGroup?: string | null
+  /** When `dataSource === 'parent'`, dotted path on the parent row used as list items. */
+  itemsPath?: string | null
+  manualItems: ListManualItem[]
+  /** Vertical space between items, in pixels. */
+  itemGap: number
+}
 
 export type MenuDisplayMode = 'inline' | 'hamburger' | 'wrap' | 'scroll'
 
@@ -209,6 +230,10 @@ export type WebsiteAddon =
   | (WebsiteAddonBase & {
       type: 'slider'
       props: SliderAddonProps
+    })
+  | (WebsiteAddonBase & {
+      type: 'list'
+      props: ListAddonProps
     })
   | (WebsiteAddonBase & {
       type: 'menu'

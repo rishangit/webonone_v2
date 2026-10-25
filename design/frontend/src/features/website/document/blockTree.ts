@@ -3,6 +3,7 @@ import { elementScopeClass } from '../utils/websiteElementCustomization'
 import { DEFAULT_CONTENT_BLOCK_COL_SPAN, DEFAULT_CONTENT_BLOCK_HEIGHT, ROW_HEIGHT } from './layout'
 import { emptyLayoutByBreakpoint, WEBSITE_BREAKPOINTS } from '../types'
 import type { LayoutByBreakpoint, MenuItem, WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../types'
+import { isTemplateHost, readHostTemplate, writeHostTemplate } from './templateHost'
 
 export function slugifyGroupName(name: string): string {
   return name
@@ -144,14 +145,10 @@ export function stripNestedSliders(block: WebsiteBlock): WebsiteBlock {
   return {
     ...block,
     addons: (block.addons ?? []).map((addon) => {
-      if (addon.type !== 'slider' || !addon.props.slideTemplate) return addon
-      return {
-        ...addon,
-        props: {
-          ...addon.props,
-          slideTemplate: stripNestedSliders(addon.props.slideTemplate),
-        },
-      }
+      if (!isTemplateHost(addon)) return addon
+      const template = readHostTemplate(addon)
+      if (!template) return addon
+      return writeHostTemplate(addon, stripNestedSliders(template))
     }),
     children: (block.children ?? []).map(stripNestedSliders),
   }
@@ -164,16 +161,33 @@ function cloneAddon(addon: WebsiteAddon, zIndex: number): WebsiteAddon {
   if (cloned.type === 'menu') {
     cloned.props = { ...cloned.props, items: remintMenuItems(cloned.props.items) }
   }
-  if (cloned.type === 'slider') {
-    cloned.props = {
-      ...cloned.props,
-      slideTemplate: cloned.props.slideTemplate
-        ? stripNestedSliders(cloneBlockTree(cloned.props.slideTemplate, 0, null))
-        : null,
-      manualSlides: cloned.props.manualSlides.map((slide) => ({
-        ...structuredClone(slide),
-        id: nanoid(10),
-      })),
+  if (cloned.type === 'slider' || cloned.type === 'list') {
+    const template = readHostTemplate(cloned)
+    const withTemplate = writeHostTemplate(
+      cloned,
+      template ? stripNestedSliders(cloneBlockTree(template, 0, null)) : null,
+    )
+    if (withTemplate.type === 'slider') {
+      return {
+        ...withTemplate,
+        props: {
+          ...withTemplate.props,
+          manualSlides: withTemplate.props.manualSlides.map((slide) => ({
+            ...structuredClone(slide),
+            id: nanoid(10),
+          })),
+        },
+      }
+    }
+    return {
+      ...withTemplate,
+      props: {
+        ...withTemplate.props,
+        manualItems: withTemplate.props.manualItems.map((item) => ({
+          ...structuredClone(item),
+          id: nanoid(10),
+        })),
+      },
     }
   }
   return cloned

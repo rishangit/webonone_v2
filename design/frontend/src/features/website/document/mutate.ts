@@ -9,11 +9,14 @@ import {
 } from '../types'
 import {
   cloneBlockTree,
+  findBlock,
   insertBlocksFromPreset,
   slugifyGroupName,
   stripNestedSliders,
+  updateAddon,
   updateBlockById,
 } from './blockTree'
+import { syncListAddonManualItems } from './listTemplateElements'
 import {
   ensureSliderSlideTemplate,
   findBlockInTree,
@@ -87,6 +90,31 @@ export function addAddonsFromPreset(
   return addBlocksFromPreset(document, blockId, presetDocument, designerKind, presetName)
 }
 
+function syncListManualItemsAfterTemplateEdit(
+  document: WebsiteDocumentV1,
+  hostBlockId: string,
+  hostAddonId: string,
+): WebsiteDocumentV1 {
+  const hostBlock = findBlock(document, hostBlockId)
+  const addon = hostBlock?.addons.find((item) => item.id === hostAddonId)
+  if (!addon) return document
+  const nextAddon = syncListAddonManualItems(addon)
+  if (nextAddon === addon) return document
+  return updateAddon(document, hostBlockId, nextAddon)
+}
+
+function finishTemplateHostMutation(
+  document: WebsiteDocumentV1,
+  hostBlockId: string,
+  hostAddonId: string,
+): WebsiteDocumentV1 {
+  return syncListManualItemsAfterTemplateEdit(
+    growSlideShellToFitContent(document, hostBlockId, hostAddonId),
+    hostBlockId,
+    hostAddonId,
+  )
+}
+
 function resolveSliderTemplateTarget(
   document: WebsiteDocumentV1,
   hostBlockId: string,
@@ -136,7 +164,7 @@ export function addAddonToSliderTemplate(
     const addon = module.createDefaultAddon(block.addons.length)
     return { ...block, addons: [...block.addons, addon] }
   })
-  return growSlideShellToFitContent(doc, hostBlockId, sliderAddonId)
+  return finishTemplateHostMutation(doc, hostBlockId, sliderAddonId)
 }
 
 /** Insert a preset into the slider as a movable child of the slide shell canvas. */
@@ -176,7 +204,7 @@ export function addBlocksFromPresetToSliderTemplate(
       return { ...block, children: [...existingChildren, ...cloned] }
     },
   )
-  return growSlideShellToFitContent(doc, hostBlockId, sliderAddonId)
+  return finishTemplateHostMutation(doc, hostBlockId, sliderAddonId)
 }
 
 /** Add an empty nested content block under the slider template (or a template child). */
@@ -210,5 +238,5 @@ export function addBlockToSliderTemplate(
       return { ...block, children: [...children, child] }
     },
   )
-  return growSlideShellToFitContent(doc, hostBlockId, sliderAddonId)
+  return finishTemplateHostMutation(doc, hostBlockId, sliderAddonId)
 }

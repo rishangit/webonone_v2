@@ -1,5 +1,6 @@
 import { buttonAddonModule } from './button/ButtonAddon'
 import { imageAddonModule } from './image/ImageAddon'
+import { listAddonModule } from './list/ListAddon'
 import { menuAddonModule } from './menu/MenuAddon'
 import { sliderAddonModule } from './slider/SliderAddon'
 import { textAddonModule } from './text/TextAddon'
@@ -9,6 +10,7 @@ import type { WebsiteAddon, WebsiteDesignerKind } from '../types'
 const modules: AddonModule[] = [
   imageAddonModule,
   sliderAddonModule,
+  listAddonModule,
   textAddonModule,
   buttonAddonModule,
   menuAddonModule,

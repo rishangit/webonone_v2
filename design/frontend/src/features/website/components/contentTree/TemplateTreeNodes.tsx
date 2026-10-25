@@ -1,6 +1,6 @@
 import { useEffect, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown, ChevronRight, Box } from 'lucide-react'
+import { Box } from 'lucide-react'
 import { DropdownMenuItem, DropdownMenuSeparator, cn } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../../addons/registry'
 import {
@@ -19,7 +19,8 @@ import {
 import { findBlockPath } from '../../document/blockTree'
 import type { DesignerSelection, WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../../types'
 import { CopyCanvasElementToAiMenuItem } from '../CopyCanvasElementToAiMenuItem'
-import { ADDON_ICONS, TREE_NEST, TreeDropFrame, TreeNavRow, TreeRowMenu } from './treeUi'
+import { ADDON_ICONS, TREE_NEST, TreeDropFrame, TreeExpandToggle, TreeNavRow, TreeRowMenu } from './treeUi'
+import { readHostTemplate, type TemplateHostAddon } from '../../document/templateHost'
 
 export type TemplateTreeCallbacks = {
   onSelect: (selection: DesignerSelection) => void
@@ -133,7 +134,7 @@ export function TemplateContextAddonTreeNode({
   const typeLabel = module ? t(module.labelKey) : addon.type
   const label = elementTreeTitle(addon.name, typeLabel)
   const AddonIcon = ADDON_ICONS[addon.type]
-  const slideTemplate = addon.type === 'slider' ? addon.props.slideTemplate : null
+  const slideTemplate = readHostTemplate(addon)
   const hasTemplate = slideTemplate != null
   const collapseKey = `${collapseKeyPrefix}:${addon.id}`
   const open = !collapsed[collapseKey]
@@ -162,19 +163,12 @@ export function TemplateContextAddonTreeNode({
     <div>
       <div className="flex items-center">
         {hasTemplate ? (
-          <button
-            type="button"
-            className="flex h-7 w-4 shrink-0 items-center justify-center text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            aria-expanded={open}
-            aria-label={open ? t('collapse') : t('expand')}
-            onClick={() => setCollapsed((current) => ({ ...current, [collapseKey]: !current[collapseKey] }))}
-          >
-            {open ? (
-              <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-            )}
-          </button>
+          <TreeExpandToggle
+            open={open}
+            expandLabel={t('expand')}
+            collapseLabel={t('collapse')}
+            onToggle={() => setCollapsed((current) => ({ ...current, [collapseKey]: !current[collapseKey] }))}
+          />
         ) : (
           <span className="w-4 shrink-0" aria-hidden />
         )}
@@ -317,19 +311,12 @@ export function TemplateBlockTreeNode({
     <div>
       <div className="flex items-center">
         {hasNesting ? (
-          <button
-            type="button"
-            className="flex h-7 w-4 shrink-0 items-center justify-center text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            aria-expanded={open}
-            aria-label={open ? t('collapse') : t('expand')}
-            onClick={() => setCollapsed((current) => ({ ...current, [collapseKey]: !current[collapseKey] }))}
-          >
-            {open ? (
-              <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-            )}
-          </button>
+          <TreeExpandToggle
+            open={open}
+            expandLabel={t('expand')}
+            collapseLabel={t('collapse')}
+            onToggle={() => setCollapsed((current) => ({ ...current, [collapseKey]: !current[collapseKey] }))}
+          />
         ) : (
           <span className="w-4 shrink-0" aria-hidden />
         )}
@@ -460,7 +447,7 @@ export function PageSliderAddonTreeNode({
   onOpenAddonSettings,
 }: {
   document: WebsiteDocumentV1
-  addon: Extract<WebsiteAddon, { type: 'slider' }>
+  addon: TemplateHostAddon
   hostBlockId: string
   addonIndex: number
   context: TemplateTreeContext
@@ -477,7 +464,7 @@ export function PageSliderAddonTreeNode({
 }) {
   const { t } = useTranslation('website')
   const { selection, canManage, collapsed, setCollapsed, onSelect } = context
-  const slideTemplate = addon.props.slideTemplate
+  const slideTemplate = readHostTemplate(addon)
   const hasTemplate = slideTemplate != null
   const collapseKey = addonCollapseKey(addon.id)
   const open = !collapsed[collapseKey]
@@ -553,19 +540,12 @@ export function PageSliderAddonTreeNode({
       >
       <div className="flex items-center">
         {hasTemplate ? (
-          <button
-            type="button"
-            className="flex h-7 w-4 shrink-0 items-center justify-center text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-            aria-expanded={open}
-            aria-label={open ? t('collapse') : t('expand')}
-            onClick={() => setCollapsed((current) => ({ ...current, [collapseKey]: !current[collapseKey] }))}
-          >
-            {open ? (
-              <ChevronDown className="h-3.5 w-3.5" aria-hidden />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-            )}
-          </button>
+          <TreeExpandToggle
+            open={open}
+            expandLabel={t('expand')}
+            collapseLabel={t('collapse')}
+            onToggle={() => setCollapsed((current) => ({ ...current, [collapseKey]: !current[collapseKey] }))}
+          />
         ) : (
           <span className="w-4 shrink-0" aria-hidden />
         )}

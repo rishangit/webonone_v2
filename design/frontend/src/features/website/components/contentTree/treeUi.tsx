@@ -9,10 +9,13 @@ import {
 import {
   GalleryHorizontal,
   ImageIcon,
+  List,
   ListTree,
   MoreVertical,
   MousePointerClick,
   Type,
+  ChevronDown,
+  ChevronRight,
   type LucideIcon,
 } from 'lucide-react'
 import { useTreeHoverReporter } from '../../document/canvasHighlight'
@@ -29,9 +32,34 @@ export const TREE_NEST = 'pl-2'
 export const ADDON_ICONS: Record<WebsiteAddon['type'], LucideIcon> = {
   image: ImageIcon,
   slider: GalleryHorizontal,
+  list: List,
   text: Type,
   button: MousePointerClick,
   menu: ListTree,
+}
+
+export function TreeExpandToggle({
+  open,
+  expandLabel,
+  collapseLabel,
+  onToggle,
+}: {
+  open: boolean
+  expandLabel: string
+  collapseLabel: string
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className="flex h-7 w-4 shrink-0 items-center justify-center text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      aria-expanded={open}
+      aria-label={open ? collapseLabel : expandLabel}
+      onClick={onToggle}
+    >
+      {open ? <ChevronDown className="h-3.5 w-3.5" aria-hidden /> : <ChevronRight className="h-3.5 w-3.5" aria-hidden />}
+    </button>
+  )
 }
 
 /** Line between rows, or a border when the drop will land inside a block. */

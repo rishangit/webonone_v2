@@ -17,6 +17,7 @@ import { getAddonModuleByType } from '../addons/registry'
 import { findBlockPath } from '../document/blockTree'
 import { pickElementChrome } from '../document/chrome'
 import { findNearestDatasetBinding } from '../document/dataBinding'
+import type { TemplateHostEditorContext } from '../addons/types'
 import type {
   ElementChrome,
   WebsiteAddon,
@@ -49,6 +50,9 @@ interface AddonSettingsDialogProps {
    */
   fieldPathPrefix?: string | null
   inheritedPaletteId?: string | null
+  /** Add-on is edited inside a slider/list item template (not a page-level add-on). */
+  hostedInTemplate?: boolean
+  templateHostEditor?: TemplateHostEditorContext | null
   onOpenChange: (open: boolean) => void
   onSave: (addon: WebsiteAddon) => void
 }
@@ -64,6 +68,8 @@ export function AddonSettingsDialog({
   datasetIdOverride,
   fieldPathPrefix = null,
   inheritedPaletteId = null,
+  hostedInTemplate = false,
+  templateHostEditor = null,
   onOpenChange,
   onSave,
 }: AddonSettingsDialogProps) {
@@ -165,6 +171,8 @@ export function AddonSettingsDialog({
                   pages={pages}
                   onChange={setDraft}
                   onNestedDialogOpenChange={setNestedDialogOpen}
+                  hostedInTemplate={hostedInTemplate}
+                  templateHostEditor={templateHostEditor}
                 />
               ) : null}
             </TabsContent>
@@ -186,14 +194,14 @@ export function AddonSettingsDialog({
                   pages={pages}
                   onChange={setDraft}
                   onNestedDialogOpenChange={setNestedDialogOpen}
-                  inheritedFromParent={Boolean(datasetIdOverride)}
+                  inheritedFromParent={Boolean(datasetIdOverride) || hostedInTemplate}
                   parentDataset={nearestDataset}
                 />
               ) : (
                 <AddonDataBindingFields
                   addon={draft}
                   dataset={nearestDataset}
-                  inheritedFromParent={Boolean(datasetIdOverride)}
+                  inheritedFromParent={Boolean(datasetIdOverride) || hostedInTemplate}
                   fieldPathPrefix={fieldPathPrefix}
                   onChange={setDraft}
                 />

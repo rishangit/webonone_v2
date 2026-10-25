@@ -71,6 +71,19 @@ function rewriteAddon(addon: WebsiteAddon): WebsiteAddon {
       },
     }
   }
+  if (addon.type === 'list') {
+    return {
+      ...addon,
+      props: {
+        ...addon.props,
+        itemTemplate: addon.props.itemTemplate ? rewriteBlock(addon.props.itemTemplate) : null,
+        manualItems: addon.props.manualItems.map((item) => ({
+          ...item,
+          data: rewriteSlideData(item.data),
+        })),
+      },
+    }
+  }
   return addon
 }
 

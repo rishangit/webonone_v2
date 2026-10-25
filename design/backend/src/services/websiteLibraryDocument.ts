@@ -41,6 +41,19 @@ function detachAddon(addon: WebsiteAddon): WebsiteAddon {
       },
     }
   }
+  if (addon.type === 'list') {
+    const dataSource = addon.props.dataSource === 'dataset' ? 'manual' : addon.props.dataSource
+    return {
+      ...addon,
+      props: {
+        ...addon.props,
+        dataSource,
+        datasetId: null,
+        sourcePresetId: null,
+        itemTemplate: addon.props.itemTemplate ? detachBlock(addon.props.itemTemplate) : null,
+      },
+    }
+  }
   return addon
 }
 

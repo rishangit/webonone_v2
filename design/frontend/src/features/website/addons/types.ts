@@ -52,6 +52,14 @@ export interface AddonRenderProps {
   onAddChild?: () => void
 }
 
+/** Open block/add-on settings for elements inside a list or slider item template. */
+export type TemplateHostEditorContext = {
+  hostBlockId: string
+  hostAddonId: string
+  onOpenTemplateBlockSettings: (templateBlockId: string) => void
+  onOpenTemplateAddonSettings: (templateBlockId: string, templateAddonId: string) => void
+}
+
 export interface AddonPropsFieldsProps {
   addon: WebsiteAddon
   breakpoint: WebsiteBreakpoint
@@ -61,7 +69,10 @@ export interface AddonPropsFieldsProps {
   onNestedDialogOpenChange?: (open: boolean) => void
   /** When true, this addon sits under a parent dataset owner (slider/block). */
   inheritedFromParent?: boolean
+  /** When true, this add-on lives inside another list or slider template. */
+  hostedInTemplate?: boolean
   parentDataset?: WebsiteDataset | null
+  templateHostEditor?: TemplateHostEditorContext | null
 }
 
 export interface AddonModule {

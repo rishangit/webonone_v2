@@ -9,6 +9,7 @@ import type {
 import { WEBSITE_BREAKPOINTS } from '../types'
 import { cloneBlockTree } from './blockTree'
 import { resolveLayoutRect, ROW_HEIGHT } from './layout'
+import { isTemplateHost, readHostTemplate } from './templateHost'
 
 export { slugifyGroupName } from './blockTree'
 
@@ -17,6 +18,7 @@ export const ADDON_BINDABLE_PROP_KEYS: Record<WebsiteAddon['type'], readonly str
   button: ['label'],
   image: ['media'],
   slider: [],
+  list: [],
   menu: [],
 }
 
@@ -25,9 +27,15 @@ function collectFromBlocks(blocks: WebsiteBlock[], into: Set<string>) {
     const datasetId = block.dataBinding?.datasetId
     if (datasetId) into.add(datasetId)
     for (const addon of block.addons ?? []) {
-      if (addon.type === 'slider' && addon.props.dataSource === 'dataset' && addon.props.datasetId) {
+      if (
+        isTemplateHost(addon) &&
+        addon.props.dataSource === 'dataset' &&
+        addon.props.datasetId
+      ) {
         into.add(addon.props.datasetId)
       }
+      const template = readHostTemplate(addon)
+      if (template) collectFromBlocks([template], into)
     }
     collectFromBlocks(block.children ?? [], into)
   }

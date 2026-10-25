@@ -372,6 +372,33 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     }
   }, [blockSettings, document, datasetsState.items])
 
+  const listTemplateHostEditor = useMemo(() => {
+    if (!addonSettings?.blockId) return null
+    const resolved = addonSettings.sliderAddonId && addonSettings.templateBlockId
+      ? resolveTemplateAddon(
+          document,
+          addonSettings.blockId,
+          addonSettings.sliderAddonId,
+          addonSettings.templateBlockId,
+          addonSettings.addonId,
+        )
+      : findBlock(document, addonSettings.blockId)?.addons.find((item) => item.id === addonSettings.addonId) ??
+        null
+    if (resolved?.type !== 'list') return null
+    const hostBlockId = addonSettings.blockId
+    const listAddonId = resolved.id
+    return {
+      hostBlockId,
+      hostAddonId: listAddonId,
+      onOpenTemplateBlockSettings: (templateBlockId: string) => {
+        openTemplateBlockSettings(hostBlockId, listAddonId, templateBlockId)
+      },
+      onOpenTemplateAddonSettings: (templateBlockId: string, templateAddonId: string) => {
+        openTemplateAddonSettings(hostBlockId, listAddonId, templateBlockId, templateAddonId)
+      },
+    }
+  }, [addonSettings, document])
+
   if (embedParentOrigin) return null
   if (!accessToken) return <Navigate to="/login" replace />
   if (!id) return <Navigate to="/website/pages" replace />
@@ -431,11 +458,13 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     if (selection.kind === 'addon') {
       const host = findBlock(document, selection.blockId)
       const addon = host?.addons.find((item) => item.id === selection.addonId)
-      if (addon?.type === 'slider') {
+      if (addon?.type === 'slider' || addon?.type === 'list') {
+        const template =
+          addon.type === 'slider' ? addon.props.slideTemplate : addon.props.itemTemplate
         return {
           hostBlockId: selection.blockId,
           sliderAddonId: selection.addonId,
-          templateBlockId: addon.props.slideTemplate?.id ?? null,
+          templateBlockId: template?.id ?? null,
         }
       }
     }
@@ -764,7 +793,8 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
           const slider = findBlock(document, addonSettings.blockId)?.addons.find(
             (item) => item.id === addonSettings.sliderAddonId,
           )
-          return slider?.type === 'slider' && slider.props.dataSource === 'dataset'
+          return (slider?.type === 'slider' || slider?.type === 'list') &&
+            slider.props.dataSource === 'dataset'
             ? slider.props.datasetId
             : null
         })()
@@ -1235,6 +1265,10 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         pages={pagesState.items}
         datasetIdOverride={settingsDatasetIdOverride}
         fieldPathPrefix={settingsFieldPathPrefix}
+        hostedInTemplate={Boolean(
+          addonSettings?.sliderAddonId && addonSettings?.templateBlockId,
+        )}
+        templateHostEditor={listTemplateHostEditor}
         inheritedPaletteId={
           addonSettings
             ? paletteInheritedByAddon(

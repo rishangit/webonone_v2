@@ -3,6 +3,7 @@ import { cn } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../addons/registry'
 import { chromeBoxStyle, chromeClassName, chromeInlineStyle, pickElementChrome } from '../document/chrome'
 import { resolveAddonProps, resolveBlockDataItem } from '../document/dataBinding'
+import { readHostTemplate } from '../document/templateHost'
 import {
   ADDON_FRAME,
   ADDON_OUTLINE,
@@ -44,6 +45,8 @@ export interface NestedBlockTreeProps {
   datasetItemsById?: Record<string, Record<string, unknown>[]>
   /** Ambient parent row for nested parent-path sliders / scoped bindings. */
   parentDataItem?: Record<string, unknown> | null
+  /** Per-clone rows after a list item group is expanded. */
+  dataItemByBlockId?: Record<string, Record<string, unknown>>
   onSelect?: (selection: DesignerSelection) => void
   onMovePointerDown?: (event: ReactPointerEvent, grabbed: DesignerSelection) => void
   onResizePointerDown?: (
@@ -84,6 +87,7 @@ export function NestedBlockTree({
   selection = null,
   datasetItemsById,
   parentDataItem = null,
+  dataItemByBlockId = {},
   onSelect,
   onMovePointerDown,
   onResizePointerDown,
@@ -131,7 +135,8 @@ export function NestedBlockTree({
     Boolean(hostBlockId && sliderAddonId) &&
     isTemplateDescendantSelected(block, selection, sliderAddonId)
   const chrome = pickElementChrome(block)
-  const localParentItem = resolveBlockDataItem(block, parentDataItem)
+  const row = dataItemByBlockId[block.id] ?? parentDataItem
+  const localParentItem = resolveBlockDataItem(block, row)
   const hostItemsPath = block.dataBinding?.itemsPath ?? null
 
   return (
@@ -301,6 +306,7 @@ export function NestedBlockTree({
           selection={selection}
           datasetItemsById={datasetItemsById}
           parentDataItem={localParentItem}
+          dataItemByBlockId={dataItemByBlockId}
           onSelect={onSelect}
           onMovePointerDown={onMovePointerDown}
           onResizePointerDown={onResizePointerDown}
@@ -561,9 +567,10 @@ function findDescendantBlock(block: WebsiteBlock, blockId: string): boolean {
     if (findDescendantBlock(child, blockId)) return true
   }
   for (const addon of block.addons ?? []) {
-    if (addon.type !== 'slider' || !addon.props.slideTemplate) continue
-    if (addon.props.slideTemplate.id === blockId) return true
-    if (findDescendantBlock(addon.props.slideTemplate, blockId)) return true
+    const template = readHostTemplate(addon)
+    if (!template) continue
+    if (template.id === blockId) return true
+    if (findDescendantBlock(template, blockId)) return true
   }
   return false
 }

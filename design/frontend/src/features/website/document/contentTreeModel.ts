@@ -1,6 +1,7 @@
 import type { DesignerSelection, WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../types'
 import { findBlock } from './blockTree'
 import { findBlockInTree } from './slider'
+import { isTemplateHost, readHostTemplate } from './templateHost'
 
 export type SlideTemplateTreeChildren = {
   /** Addons stored directly on the slide shell (legacy); shell row itself is hidden. */
@@ -33,9 +34,8 @@ function walkBlockPath(block: WebsiteBlock, blockId: string, path: WebsiteBlock[
     if (walkBlockPath(child, blockId, path)) return true
   }
   for (const addon of block.addons ?? []) {
-    if (addon.type === 'slider' && addon.props.slideTemplate) {
-      if (walkBlockPath(addon.props.slideTemplate, blockId, path)) return true
-    }
+    const template = readHostTemplate(addon)
+    if (template && walkBlockPath(template, blockId, path)) return true
   }
   path.pop()
   return false
@@ -78,18 +78,17 @@ export function findSliderSlideTemplate(
 ): WebsiteBlock | null {
   const host = findBlock(document, hostBlockId)
   const slider = host?.addons.find((addon) => addon.id === sliderAddonId)
-  if (!slider || slider.type !== 'slider') return null
-  return slider.props.slideTemplate
+  if (!slider || !isTemplateHost(slider)) return null
+  return readHostTemplate(slider)
 }
 
 function collectSliderCollapseKeysOnPath(path: WebsiteBlock[], keys: Set<string>) {
   for (const block of path) {
     for (const addon of block.addons ?? []) {
-      if (addon.type === 'slider') {
+      if (isTemplateHost(addon)) {
         keys.add(templateSliderCollapseKey(addon.id))
-        if (addon.props.slideTemplate) {
-          keys.add(templateCollapseKey(addon.props.slideTemplate.id))
-        }
+        const template = readHostTemplate(addon)
+        if (template) keys.add(templateCollapseKey(template.id))
       }
     }
   }
@@ -116,11 +115,10 @@ export function collapseKeysForTemplateSelection(
   if (selection.kind === 'templateAddon') {
     for (const block of path) {
       for (const addon of block.addons ?? []) {
-        if (addon.id === selection.templateAddonId && addon.type === 'slider') {
+        if (addon.id === selection.templateAddonId && isTemplateHost(addon)) {
           keys.add(templateSliderCollapseKey(addon.id))
-          if (addon.props.slideTemplate) {
-            keys.add(templateCollapseKey(addon.props.slideTemplate.id))
-          }
+          const template = readHostTemplate(addon)
+          if (template) keys.add(templateCollapseKey(template.id))
         }
       }
     }

@@ -13,6 +13,7 @@ import {
 import { pageLinkHref } from '../document/pageLink'
 import { inheritPaletteId } from '../document/palette'
 import { expandDocumentForPublish, resolveAddonProps, resolveBlockDataItem } from '../document/dataBinding'
+import { isTemplateHost, readHostTemplate } from '../document/templateHost'
 import {
   ADDON_FRAME,
   ADDON_OUTLINE,
@@ -651,10 +652,8 @@ function AddonView({
   const addonGrabbed: DesignerSelection = { kind: 'addon', blockId, addonId: addon.id }
   // Sliders stay interactive under a selected host so nested presets remain clickable
   // after the host is deselected; while the host is selected they defer pointer events.
-  const blockLocksPointers = blockSelected && addon.type !== 'slider'
-  // Keep slider chrome (dots/arrows) clipped to the resized addon frame unless a nested
-  // template item is selected and needs visible selection chrome.
-  const clipSliderFrame = addon.type === 'slider' && !templateChildSelected
+  const blockLocksPointers = blockSelected && !isTemplateHost(addon)
+  const clipFrame = isTemplateHost(addon) && !templateChildSelected
   return (
     <div
       className={cn(hostOutlined && ADDON_OUTLINE, chromeClassName(chrome))}
@@ -669,7 +668,7 @@ function AddonView({
             : highlighted
               ? 9000 + addon.zIndex
               : addon.zIndex + 2,
-        overflow: clipSliderFrame ? 'hidden' : 'visible',
+        overflow: clipFrame ? 'hidden' : 'visible',
         cursor: interactive && !blockLocksPointers ? 'move' : undefined,
         touchAction: interactive && !blockLocksPointers ? 'none' : undefined,
         userSelect: interactive ? 'none' : undefined,
@@ -710,9 +709,9 @@ function AddonView({
       <div
         className={cn(
           'h-full w-full',
-          clipSliderFrame
+          clipFrame
             ? 'overflow-hidden'
-            : addon.type === 'slider' || templateChildSelected
+            : isTemplateHost(addon) || templateChildSelected
               ? 'overflow-visible'
               : 'overflow-hidden',
         )}
@@ -758,7 +757,7 @@ function AddonView({
             onDeleteTemplateAddon={(templateBlockId, templateAddonId) =>
               onDeleteTemplateAddon?.(blockId, addon.id, templateBlockId, templateAddonId)
             }
-            onAddChild={addon.type === 'slider' ? onAddAddon : undefined}
+            onAddChild={isTemplateHost(addon) ? onAddAddon : undefined}
             onNavigatePage={onNavigatePage}
           />
         ) : null}
@@ -769,7 +768,7 @@ function AddonView({
           kind="addon"
           grabbed={addonGrabbed}
           canManage={canManage}
-          onAddAddon={addon.type === 'slider' ? onAddAddon : undefined}
+          onAddAddon={isTemplateHost(addon) ? onAddAddon : undefined}
           onOpenSettings={() => onOpenAddonSettings?.()}
           onDuplicate={onDuplicateSelection}
           onLayer={(direction) => onLayer?.(direction)}
@@ -810,9 +809,9 @@ function isImmediateParent(block: WebsiteBlock, selection: DesignerSelection | n
   if (selection.kind === 'block') return (block.children ?? []).some((child) => child.id === selection.blockId)
   if (selection.kind !== 'templateBlock' && selection.kind !== 'templateAddon') return false
   if (selection.hostBlockId !== block.id) return false
-  const slider = block.addons.find((addon) => addon.id === selection.sliderAddonId)
-  if (!slider || slider.type !== 'slider') return false
-  const shell = slider.props.slideTemplate
+  const host = block.addons.find((addon) => addon.id === selection.sliderAddonId)
+  if (!host || !isTemplateHost(host)) return false
+  const shell = readHostTemplate(host)
   if (!shell) return false
   if (selection.kind === 'templateAddon') return selection.templateBlockId === shell.id
   return (shell.children ?? []).some((child) => child.id === selection.templateBlockId)

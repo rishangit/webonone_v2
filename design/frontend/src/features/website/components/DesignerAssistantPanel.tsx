@@ -14,6 +14,7 @@ import { aiFetch } from '@/features/ai/utils/aiClient'
 import { getWebOnOneOrigin } from '@/features/auth/utils/identityConfig'
 import { getAddonModuleByType } from '../addons/registry'
 import { findBlock } from '../document/blockTree'
+import { isTemplateHost, readHostTemplate } from '../document/templateHost'
 import { blockTreeLabel } from '../document/contentTreeModel'
 import {
   formatDesignerCanvasContext,
@@ -86,8 +87,8 @@ function addonName(addon: WebsiteAddon, t: (key: string) => string): string {
 
 function templateRoot(document: WebsiteDocumentV1, hostBlockId: string, sliderAddonId: string): WebsiteBlock | null {
   const slider = findBlock(document, hostBlockId)?.addons.find((addon) => addon.id === sliderAddonId)
-  if (!slider || slider.type !== 'slider' || !slider.props.slideTemplate) return null
-  return slider.props.slideTemplate
+  if (!slider || !isTemplateHost(slider)) return null
+  return readHostTemplate(slider)
 }
 
 function focusName(
