@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription, FeaturePage } from '@webonone/ui-kit'
-import { MediaSelectorFrame, useMediaEmbedMessage } from '@webonone/media-embed'
+import { HostedMediaPreviewDialog, MediaSelectorFrame, useMediaEmbedMessage } from '@webonone/media-embed'
 import { useAppSelector } from '@/app/store/hooks'
 import { WebsiteMediaCropDialog, useWebsiteMediaCrop } from '../components/WebsiteMediaCropDialog'
 import { WebsiteMediaFolderDialogHost } from '../components/WebsiteMediaFolderDialogHost'
@@ -17,6 +17,7 @@ import { withAppliedUserTheme } from '../utils/mediaEmbedTheme'
 
 export function WebsiteMediaPage() {
   const { t } = useTranslation('website')
+  const { t: tc } = useTranslation('common')
   const accessToken = useAppSelector((s) => s.auth.accessToken)
   const user = useAppSelector((s) => s.auth.user)
   const companyId = user?.companyId ?? null
@@ -101,6 +102,7 @@ export function WebsiteMediaPage() {
         onOpenChange={crop.handleCropOpenChange}
         onCancel={crop.closeCropDialog}
       />
+      <HostedMediaPreviewDialog mediaOrigin={getMediaOrigin()} stackLevel={2} closeLabel={tc('close')} />
     </FeaturePage>
   )
 }

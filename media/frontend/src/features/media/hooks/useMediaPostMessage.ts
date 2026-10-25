@@ -55,6 +55,17 @@ export function useMediaPostMessage(parentOrigin: string | null, scope: string |
     [parentOrigin, scope],
   )
 
+  const postPreviewRequest = useCallback(
+    (item: MediaItemDto) => {
+      if (!parentOrigin || !scope) return
+      window.parent.postMessage(
+        { type: MEDIA_MESSAGE_TYPES.PREVIEW_REQUEST, scope, item },
+        parentOrigin,
+      )
+    },
+    [parentOrigin, scope],
+  )
+
   const postViewerChanged = useCallback(
     (item: MediaItemDto) => {
       if (!parentOrigin || !scope) return
@@ -93,6 +104,7 @@ export function useMediaPostMessage(parentOrigin: string | null, scope: string |
     postDeleted,
     postCancel,
     postSelectionChange,
+    postPreviewRequest,
     postViewerChanged,
     postCropRequest,
   }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
+  HostedMediaPreviewDialog,
   MediaCropDialogFrame,
   MediaSelectorFrame,
   sendMediaConfirm,
@@ -61,6 +62,8 @@ export function CatalogLibraryGalleryMediaModal({
 }: CatalogLibraryGalleryMediaModalProps) {
   const [searchParams] = useSearchParams()
   const [cropOpen, setCropOpen] = useState(false)
+  const [previewGuard, setPreviewGuard] = useState(false)
+  const previewGuardRef = useRef(false)
   const [cropContext, setCropContext] = useState<CropContext | null>(null)
   const [cropOpenKey, setCropOpenKey] = useState(0)
   const [blockOuterDismiss, setBlockOuterDismiss] = useState(false)
@@ -211,8 +214,16 @@ export function CatalogLibraryGalleryMediaModal({
     if (blockOuterDismissRef.current || blockOuterDismiss) {
       return
     }
+    if (previewGuardRef.current || previewGuard) {
+      return
+    }
     onClose()
   }
+
+  const handlePreviewGuard = useCallback((guard: boolean) => {
+    previewGuardRef.current = guard
+    setPreviewGuard(guard)
+  }, [])
 
   function handleCropOpenChange(next: boolean) {
     if (!next) {
@@ -234,7 +245,7 @@ export function CatalogLibraryGalleryMediaModal({
         title={title}
         sizeWidth="medium"
         sizeHeight="large"
-        nestedDismissGuard={cropOpen || blockOuterDismiss}
+        nestedDismissGuard={cropOpen || blockOuterDismiss || previewGuard}
         className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
         noContentPadding
         disableContentScroll
@@ -326,6 +337,11 @@ export function CatalogLibraryGalleryMediaModal({
           </div>
         ) : null}
       </CustomDialog>
+      <HostedMediaPreviewDialog
+        mediaOrigin={getMediaOrigin()}
+        stackLevel={3}
+        onGuardChange={handlePreviewGuard}
+      />
     </>
   )
 }

@@ -9,9 +9,17 @@ import {
   listSlideTemplateTreeChildren,
   templateCollapseKey,
 } from '../../document/contentTreeModel'
-import type { DesignerSelection, WebsiteAddon, WebsiteBlock } from '../../types'
+import {
+  addonDropMove,
+  hintForAddonRow,
+  type TreeDrag,
+  type TreeDropHint,
+  type TreeDropPlacement,
+} from '../../document/treeDrop'
+import { findBlockPath } from '../../document/blockTree'
+import type { DesignerSelection, WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../../types'
 import { CopyCanvasElementToAiMenuItem } from '../CopyCanvasElementToAiMenuItem'
-import { ADDON_ICONS, TREE_NEST, TreeNavRow, TreeRowMenu } from './treeUi'
+import { ADDON_ICONS, TREE_NEST, TreeDropFrame, TreeNavRow, TreeRowMenu } from './treeUi'
 
 export type TemplateTreeCallbacks = {
   onSelect: (selection: DesignerSelection) => void
@@ -435,25 +443,33 @@ export function TemplateBlockTreeNode({
 
 /** Page-level slider addon row — uses addon selection + shared slide template branch. */
 export function PageSliderAddonTreeNode({
+  document,
   addon,
   hostBlockId,
   addonIndex,
   context,
   drag,
   setDrag,
+  dropHint,
+  setDropHint,
   onMoveAddon,
+  onMoveBlock,
   onLayer,
   onDeleteAddon,
   onDuplicateAddon,
   onOpenAddonSettings,
 }: {
+  document: WebsiteDocumentV1
   addon: Extract<WebsiteAddon, { type: 'slider' }>
   hostBlockId: string
   addonIndex: number
   context: TemplateTreeContext
-  drag: { kind: 'addon'; blockId: string; addonId: string; index: number } | null
-  setDrag: (drag: { kind: 'addon'; blockId: string; addonId: string; index: number } | null) => void
+  drag: TreeDrag | null
+  setDrag: (drag: TreeDrag | null) => void
+  dropHint: TreeDropHint | null
+  setDropHint: (hint: TreeDropHint | null) => void
   onMoveAddon: (fromBlockId: string, addonId: string, toBlockId: string, toIndex: number) => void
+  onMoveBlock: (blockId: string, toParentId: string | null, toIndex: number) => void
   onLayer: (target: { blockId: string; addonId?: string }, direction: 'up' | 'down') => void
   onDeleteAddon: (blockId: string, addonId: string) => void
   onDuplicateAddon?: (blockId: string, addonId: string) => void
@@ -465,6 +481,7 @@ export function PageSliderAddonTreeNode({
   const hasTemplate = slideTemplate != null
   const collapseKey = addonCollapseKey(addon.id)
   const open = !collapsed[collapseKey]
+  const rowPlacement = dropHint?.treeId === `addon:${addon.id}` ? dropHint.placement : null
   const module = getAddonModuleByType(addon.type)
   const typeLabel = module ? t(module.labelKey) : addon.type
   const label = elementTreeTitle(addon.name, typeLabel)
@@ -484,8 +501,56 @@ export function PageSliderAddonTreeNode({
     }))
   }, [addonSelected, collapseKey, hasTemplate, setCollapsed, slideTemplate, templateSelected])
 
+  function hostIsInsideDrag() {
+    return drag?.kind === 'block' && findBlockPath(document, hostBlockId).some((block) => block.id === drag.blockId)
+  }
+
+  function hoverAddon(zone: TreeDropPlacement) {
+    if (!drag) return
+    setDropHint(
+      hintForAddonRow({
+        drag,
+        zone,
+        addonId: addon.id,
+        addonIndex,
+        hostBlockId,
+        hostIsInsideDrag: hostIsInsideDrag(),
+      }),
+    )
+  }
+
+  function dropAddon(zone: TreeDropPlacement) {
+    const move = drag
+      ? addonDropMove({
+          drag,
+          zone,
+          addonId: addon.id,
+          addonIndex,
+          hostBlockId,
+          hostIsInsideDrag: hostIsInsideDrag(),
+        })
+      : null
+    if (move?.kind === 'addon') {
+      onMoveAddon(move.fromBlockId, move.addonId, move.toBlockId, move.toIndex)
+      setCollapsed((current) => ({ ...current, [move.toBlockId]: false }))
+    } else if (move?.kind === 'block') {
+      onMoveBlock(move.blockId, move.toParentId, move.toIndex)
+      if (move.toParentId) {
+        const parentId = move.toParentId
+        setCollapsed((current) => ({ ...current, [parentId]: false }))
+      }
+    }
+    setDrag(null)
+    setDropHint(null)
+  }
+
   return (
     <div>
+      <TreeDropFrame
+        placement={rowPlacement === 'inside' ? null : rowPlacement}
+        onDragHover={canManage && drag ? hoverAddon : undefined}
+        onDrop={canManage && drag ? dropAddon : undefined}
+      >
       <div className="flex items-center">
         {hasTemplate ? (
           <button
@@ -515,12 +580,9 @@ export function PageSliderAddonTreeNode({
             draggable={canManage}
             onSelect={() => onSelect({ kind: 'addon', blockId: hostBlockId, addonId: addon.id })}
             onDragStart={() => setDrag({ kind: 'addon', blockId: hostBlockId, addonId: addon.id, index: addonIndex })}
-            onDragEnd={() => setDrag(null)}
-            onDrop={() => {
-              if (drag?.kind === 'addon' && drag.addonId !== addon.id) {
-                onMoveAddon(drag.blockId, drag.addonId, hostBlockId, addonIndex)
-              }
+            onDragEnd={() => {
               setDrag(null)
+              setDropHint(null)
             }}
             menu={
               canManage ? (
@@ -567,6 +629,7 @@ export function PageSliderAddonTreeNode({
           />
         </div>
       </div>
+      </TreeDropFrame>
       {open && hasTemplate && slideTemplate ? (
         <SlideTemplateTreeBranch slideTemplate={slideTemplate} context={context} />
       ) : null}

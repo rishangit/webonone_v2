@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
-import type { MediaItemDto } from '@webonone/media-embed'
+import { useEffect, useRef, useState } from 'react'
 import {
+  HostedMediaPreviewDialog,
   MediaSelectorFrame,
   MediaUploadDialogFrame,
   useMediaEmbedMessage,
+  type MediaItemDto,
 } from '@webonone/media-embed'
 import { Button, CustomDialog } from '@webonone/ui-kit'
 import { useAppSelector } from '@/app/store/hooks'
@@ -32,6 +33,8 @@ export function ComponentShowcasePage() {
   const [activeDialog, setActiveDialog] = useState<DialogSurface>(null)
   const [dialogKey, setDialogKey] = useState(0)
   const [folderReady, setFolderReady] = useState(false)
+  const [previewGuard, setPreviewGuard] = useState(false)
+  const previewGuardRef = useRef(false)
 
   useEffect(() => {
     if (!user) {
@@ -153,11 +156,13 @@ export function ComponentShowcasePage() {
       <CustomDialog
         open={activeDialog === 'profileSelector' && folderReady}
         onOpenChange={(open) => {
+          if (!open && previewGuardRef.current) return
           if (!open) setActiveDialog(null)
         }}
         title="Select profile image"
         sizeWidth="large"
         sizeHeight="xlarge"
+        nestedDismissGuard={previewGuard}
         className="w-[calc(100vw-1rem)] max-w-5xl sm:w-3/4"
         noContentPadding
         disableContentScroll
@@ -181,11 +186,13 @@ export function ComponentShowcasePage() {
       <CustomDialog
         open={activeDialog === 'rootSelector'}
         onOpenChange={(open) => {
+          if (!open && previewGuardRef.current) return
           if (!open) setActiveDialog(null)
         }}
         title="Media selector"
         sizeWidth="medium"
         sizeHeight="large"
+        nestedDismissGuard={previewGuard}
         className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
         noContentPadding
         disableContentScroll
@@ -209,9 +216,11 @@ export function ComponentShowcasePage() {
       <CustomDialog
         open={activeDialog === 'rootUpload'}
         onOpenChange={(open) => {
+          if (!open && previewGuardRef.current) return
           if (!open) setActiveDialog(null)
         }}
         title="Media upload"
+        nestedDismissGuard={previewGuard}
         sizeWidth="medium"
         sizeHeight="large"
         noContentPadding
@@ -231,6 +240,14 @@ export function ComponentShowcasePage() {
           className="h-full min-h-0 w-full border-0 bg-transparent"
         />
       </CustomDialog>
+      <HostedMediaPreviewDialog
+        mediaOrigin={MEDIA_ORIGIN}
+        stackLevel={2}
+        onGuardChange={(guard) => {
+          previewGuardRef.current = guard
+          setPreviewGuard(guard)
+        }}
+      />
     </div>
   )
 }

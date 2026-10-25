@@ -8,6 +8,7 @@ import {
   type MediaDeletedMessage,
   type MediaSelectionChangeMessage,
   type MediaSelectMessage,
+  type MediaPreviewRequestMessage,
   type MediaUploadedMessage,
   type MediaViewerChangedMessage,
 } from './types'
@@ -20,6 +21,7 @@ export interface UseMediaEmbedMessageOptions {
   onDeleted?: (message: MediaDeletedMessage) => void
   onCancel?: (message: MediaCancelMessage) => void
   onViewerChanged?: (message: MediaViewerChangedMessage) => void
+  onPreviewRequest?: (message: MediaPreviewRequestMessage) => void
   onCropRequest?: (message: MediaCropRequestMessage) => void
   onContentSize?: (message: MediaContentSizeMessage) => void
 }
@@ -33,6 +35,7 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
     onDeleted,
     onCancel,
     onViewerChanged,
+    onPreviewRequest,
     onCropRequest,
     onContentSize,
   } = options
@@ -66,6 +69,9 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
         case MEDIA_MESSAGE_TYPES.VIEWER_CHANGED:
           onViewerChanged?.(message)
           break
+        case MEDIA_MESSAGE_TYPES.PREVIEW_REQUEST:
+          onPreviewRequest?.(message)
+          break
         case MEDIA_MESSAGE_TYPES.CROP_REQUEST:
           onCropRequest?.(message)
           break
@@ -87,6 +93,7 @@ export function useMediaEmbedMessage(options: UseMediaEmbedMessageOptions): void
     onDeleted,
     onSelect,
     onSelectionChange,
+    onPreviewRequest,
     onUploaded,
     onViewerChanged,
   ])

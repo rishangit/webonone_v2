@@ -1,6 +1,6 @@
 import { combineEpics, ofType, type Epic } from 'redux-observable'
 import { from, of } from 'rxjs'
-import { catchError, exhaustMap, filter, map, mergeMap, withLatestFrom } from 'rxjs/operators'
+import { catchError, exhaustMap, filter, map, mergeMap, switchMap, withLatestFrom } from 'rxjs/operators'
 import { isFresh } from '@/shared/store/cacheUtils'
 import { themeApi } from '../services/themeApi'
 import { themeFormToApiBody } from '../utils/themeFormMapping'
@@ -54,7 +54,7 @@ const deleteThemeEpic: SystemThemeEpic = (action$) =>
 const patchPreferencesEpic: SystemThemeEpic = (action$) =>
   action$.pipe(
     ofType(systemThemeActions.patchPreferencesRequested.type),
-    exhaustMap((action: ReturnType<typeof systemThemeActions.patchPreferencesRequested>) =>
+    switchMap((action: ReturnType<typeof systemThemeActions.patchPreferencesRequested>) =>
       from(themeApi.patchPreferences(action.payload)).pipe(
         map((preferences) => systemThemeActions.patchPreferencesSucceeded(preferences)),
         catchError((err: Error) => of(systemThemeActions.patchPreferencesFailed(err.message))),

@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  HostedMediaPreviewDialog,
   MediaCropDialogFrame,
   MediaSelectorFrame,
   sendMediaConfirm,
@@ -60,6 +61,8 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
   const selectorIframeRef = useRef<HTMLIFrameElement>(null)
   const openSequenceRef = useRef(0)
   const [pendingSelection, setPendingSelection] = useState<PlatformMediaDialogItem[]>([])
+  const [previewGuard, setPreviewGuard] = useState(false)
+  const previewGuardRef = useRef(false)
 
   const mediaOrigin = getMediaOrigin()
   const hostOrigin = typeof window !== 'undefined' ? window.location.origin : ''
@@ -209,8 +212,16 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
     if (blockOuterDismissRef.current || blockOuterDismiss) {
       return
     }
+    if (previewGuardRef.current || previewGuard) {
+      return
+    }
     cancelActive('cancelled')
   }
+
+  const handlePreviewGuard = useCallback((guard: boolean) => {
+    previewGuardRef.current = guard
+    setPreviewGuard(guard)
+  }, [])
 
   function handleCropOpenChange(next: boolean) {
     if (!next) {
@@ -232,7 +243,7 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
           sizeWidth="medium"
           sizeHeight="large"
           stackLevel={MEDIA_DIALOG_STACK_LEVEL}
-          nestedDismissGuard={cropOpen || blockOuterDismiss}
+          nestedDismissGuard={cropOpen || blockOuterDismiss || previewGuard}
           className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
           noContentPadding
           disableContentScroll
@@ -338,6 +349,12 @@ export function PlatformMediaDialogProvider({ children }: { children: ReactNode 
           </div>
         </CustomDialog>
       ) : null}
+      <HostedMediaPreviewDialog
+        mediaOrigin={mediaOrigin}
+        stackLevel={5}
+        closeLabel={t('common:close')}
+        onGuardChange={handlePreviewGuard}
+      />
     </PlatformMediaDialogContext.Provider>
   )
 }

@@ -126,7 +126,7 @@ function CustomDialog({
     !hideHeader && !noContentPadding && 'p-6',
     noContentPadding && 'p-0',
     disableContentScroll
-      ? 'min-h-0 flex-1 overflow-hidden'
+      ? 'relative min-h-0 flex-1 overflow-hidden'
       : isAutoHeight
         ? 'min-h-0 shrink overflow-y-auto overscroll-y-contain max-h-[calc(100vh-10rem)] scrollbar-themed transform-gpu'
         : 'min-h-0 flex-1 overflow-y-auto overscroll-y-contain scrollbar-themed transform-gpu',

@@ -22,6 +22,7 @@ import {
   type MediaUploadedMessage,
   type MediaViewerChangedMessage,
   type MediaParentMessage,
+  type MediaPreviewRequestMessage,
   type MediaConfirmMessage,
   isMediaEmbedMessage,
 } from './types'
@@ -47,6 +48,7 @@ export {
   type MediaInitMessage,
   type MediaItemDto,
   type MediaParentMessage,
+  type MediaPreviewRequestMessage,
   type MediaSelectionChangeMessage,
   type MediaSelectMessage,
   type MediaTypePreset,
@@ -77,3 +79,5 @@ export { MediaSelectorFrame } from './MediaSelectorFrame'
 export { MediaViewerFrame } from './MediaViewerFrame'
 export { MediaCropDialogFrame } from './MediaCropDialogFrame'
 export { MediaDialogFrame } from './MediaDialogFrame'
+export { HostedMediaPreviewDialog, MediaPreviewDialog } from './MediaPreviewDialog'
+export type { HostedMediaPreviewDialogProps, MediaPreviewDialogProps } from './MediaPreviewDialog'

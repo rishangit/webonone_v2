@@ -9,7 +9,7 @@ import {
   cn,
 } from '@webonone/ui-kit'
 import type { ColorMode } from '@webonone/theme'
-import { UI_THEMES, type UiThemeId } from '@webonone/theme'
+import { persistListDisplayMode, UI_THEMES, type UiThemeId } from '@webonone/theme'
 import { useEffect } from 'react'
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isFresh } from '@/shared/store/cacheUtils'
@@ -123,6 +123,7 @@ export function AppearanceSettingsPanel() {
     if (mode === listDisplayMode) {
       return
     }
+    persistListDisplayMode(mode)
     dispatch(systemThemeActions.patchPreferencesRequested({ listDisplayMode: mode }))
   }
 

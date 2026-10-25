@@ -16,3 +16,29 @@ export function resolveCollectionDisplayMode(
   if (!cardLayout && mode === 'card') return 'list'
   return mode
 }
+
+const COLLECTION_DISPLAY_MODE_ORDER: ListDisplayMode[] = ['list', 'grid', 'card']
+
+/** Next layout when cycling the list-page view control (respects card/grid availability). */
+export function getNextCollectionDisplayMode(
+  mode: ListDisplayMode,
+  cardLayout = true,
+  gridLayout = true,
+): ListDisplayMode {
+  const effective = resolveCollectionDisplayMode(mode, cardLayout, gridLayout)
+  const visibleModes = COLLECTION_DISPLAY_MODE_ORDER.filter((entry) => {
+    if (!cardLayout && entry === 'card') return false
+    if (!gridLayout && entry === 'grid') return false
+    return true
+  })
+  if (visibleModes.length === 0) {
+    return DEFAULT_LIST_DISPLAY_MODE
+  }
+
+  const currentIndex = Math.max(
+    0,
+    visibleModes.indexOf(effective),
+  )
+  const nextIndex = (currentIndex + 1) % visibleModes.length
+  return visibleModes[nextIndex] ?? DEFAULT_LIST_DISPLAY_MODE
+}

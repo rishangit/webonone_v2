@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  HostedMediaPreviewDialog,
   MediaSelectorFrame,
   useMediaEmbedMessage,
   type MediaItemDto,
@@ -41,6 +42,8 @@ export function FeedbackScreenshotField({
   const { t } = useTranslation('feedback')
   const { t: tc } = useTranslation('common')
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [previewGuard, setPreviewGuard] = useState(false)
+  const previewGuardRef = useRef(false)
   const [pickerAttempt, setPickerAttempt] = useState(0)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
@@ -115,7 +118,11 @@ export function FeedbackScreenshotField({
 
       <CustomDialog
         open={pickerOpen}
-        onOpenChange={setPickerOpen}
+        onOpenChange={(next) => {
+          if (!next && previewGuardRef.current) return
+          setPickerOpen(next)
+        }}
+        nestedDismissGuard={previewGuard}
         title={t('fields.screenshotPickerTitle')}
         description={t('fields.screenshotPickerDescription')}
         sizeWidth="large"
@@ -149,6 +156,15 @@ export function FeedbackScreenshotField({
           <p className="p-6 text-sm text-muted-foreground">{t('fields.screenshotUnavailable')}</p>
         )}
       </CustomDialog>
+      <HostedMediaPreviewDialog
+        mediaOrigin={mediaOrigin}
+        stackLevel={2}
+        closeLabel={tc('close')}
+        onGuardChange={(guard) => {
+          previewGuardRef.current = guard
+          setPreviewGuard(guard)
+        }}
+      />
     </>
   )
 }

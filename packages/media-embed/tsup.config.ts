@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ['react', '@webonone/platform-embed'],
+  external: ['react', '@webonone/platform-embed', '@webonone/ui-kit'],
 })

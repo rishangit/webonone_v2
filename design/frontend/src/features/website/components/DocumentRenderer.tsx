@@ -362,7 +362,6 @@ function BlockView({
   const shellClass = blockShellScopeClass(block.id, block.customization)
   const blockClassName = cn(
     shellClass,
-    interactive && !chromeStyle.backgroundColor && 'bg-primary/5',
     selected || childSelected || highlighted || parentOutlined ? 'overflow-visible' : 'overflow-hidden',
     outlined && CONTENT_ELEMENT_OUTLINE,
     parentOutlined && CONTENT_ELEMENT_PARENT_OUTLINE,
@@ -371,9 +370,7 @@ function BlockView({
   const blockStyle: CSSProperties = {
     ...chromeBoxStyle(rect, chrome),
     ...chromeStyle,
-    ...(!chromeStyle.backgroundColor && (publish || !interactive) && theme?.surfaceColor
-      ? { backgroundColor: theme.surfaceColor }
-      : {}),
+    ...(!chromeStyle.backgroundColor && !interactive ? { backgroundColor: 'transparent' } : {}),
     zIndex: selected || childSelected || parentOutlined ? 10000 + block.zIndex : highlighted ? 9000 + block.zIndex : block.zIndex,
     cursor: interactive ? 'move' : link ? 'pointer' : undefined,
     touchAction: interactive ? 'none' : undefined,

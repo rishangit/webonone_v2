@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { MediaSelectorFrame, type MediaItemDto, useMediaEmbedMessage } from '@webonone/media-embed'
+import {
+  HostedMediaPreviewDialog,
+  MediaSelectorFrame,
+  type MediaItemDto,
+  useMediaEmbedMessage,
+} from '@webonone/media-embed'
 import {
   isPlatformMediaDialogCancelMessage,
   isPlatformMediaDialogResultMessage,
@@ -54,6 +59,8 @@ export function FormMediaPickerDialog({
   const hostParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const hostRequestIdRef = useRef<string | null>(null)
   const [selected, setSelected] = useState<MediaItemDto[]>([])
+  const [previewGuard, setPreviewGuard] = useState(false)
+  const previewGuardRef = useRef(false)
   const [openKey, setOpenKey] = useState(0)
   const scope = buildFormMediaScope(companyId)
   const folderPath = buildFormMediaFolderPath()
@@ -125,14 +132,22 @@ export function FormMediaPickerDialog({
     onSelectionChange: (message) => handleSelectionChange(message.items),
   })
 
+  const handlePreviewGuard = useCallback((guard: boolean) => {
+    previewGuardRef.current = guard
+    setPreviewGuard(guard)
+  }, [])
+
   if (hostParentOrigin) return null
 
   return (
+    <>
     <CustomDialog
       open={open}
       onOpenChange={(next) => {
+        if (!next && previewGuardRef.current) return
         if (!next) onClose()
       }}
+      nestedDismissGuard={previewGuard}
       title={t('pickDocuments')}
       sizeWidth="large"
       sizeHeight="large"
@@ -178,5 +193,12 @@ export function FormMediaPickerDialog({
         />
       )}
     </CustomDialog>
+    <HostedMediaPreviewDialog
+      mediaOrigin={getFormMediaOrigin()}
+      stackLevel={2}
+      closeLabel={tc('close')}
+      onGuardChange={handlePreviewGuard}
+    />
+    </>
   )
 }

@@ -105,7 +105,7 @@ export const systemThemeSlice = createSlice({
     },
     patchPreferencesRequested(
       state,
-      _action: PayloadAction<{
+      action: PayloadAction<{
         activeThemeId?: string
         colorMode?: ColorMode
         listPageMode?: ListPageMode
@@ -113,12 +113,14 @@ export const systemThemeSlice = createSlice({
         uiTheme?: UiThemeId
       }>,
     ) {
+      if (state.preferences) {
+        state.preferences = { ...state.preferences, ...action.payload }
+      }
       state.status = 'saving'
       state.error = null
     },
     patchPreferencesSucceeded(state, action: PayloadAction<PreferencesResponse>) {
       state.preferences = action.payload
-      state.preferencesFetchedAt = Date.now()
       state.status = 'idle'
     },
     patchPreferencesFailed(state, action: PayloadAction<string>) {

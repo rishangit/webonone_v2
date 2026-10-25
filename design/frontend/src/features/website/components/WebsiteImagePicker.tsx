@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
+  HostedMediaPreviewDialog,
   MediaSelectorFrame,
   type MediaItemDto,
   useMediaEmbedMessage,
@@ -46,6 +47,8 @@ export function WebsiteImagePicker({ open, onClose, onSelect }: WebsiteImagePick
   const hostParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const hostRequestIdRef = useRef<string | null>(null)
   const [selected, setSelected] = useState<MediaItemDto | null>(null)
+  const [previewGuard, setPreviewGuard] = useState(false)
+  const previewGuardRef = useRef(false)
   const [openKey, setOpenKey] = useState(0)
   const scope = role === 'super_admin' ? WEBSITE_LIBRARY_MEDIA_SCOPE : buildWebsiteMediaScope(companyId)
   const folderPath = buildWebsiteFolderPath()
@@ -138,8 +141,16 @@ export function WebsiteImagePicker({ open, onClose, onSelect }: WebsiteImagePick
     if (crop.blockOuterDismissRef.current || crop.blockOuterDismiss) {
       return
     }
+    if (previewGuardRef.current || previewGuard) {
+      return
+    }
     onClose()
   }
+
+  const handlePreviewGuard = useCallback((guard: boolean) => {
+    previewGuardRef.current = guard
+    setPreviewGuard(guard)
+  }, [])
 
   if (hostParentOrigin) return null
 
@@ -152,7 +163,7 @@ export function WebsiteImagePicker({ open, onClose, onSelect }: WebsiteImagePick
         sizeWidth="large"
         sizeHeight="large"
         stackLevel={1}
-        nestedDismissGuard={crop.cropOpen || crop.blockOuterDismiss}
+        nestedDismissGuard={crop.cropOpen || crop.blockOuterDismiss || previewGuard}
         noContentPadding
         disableContentScroll
         footer={
@@ -206,6 +217,12 @@ export function WebsiteImagePicker({ open, onClose, onSelect }: WebsiteImagePick
         iframeRef={crop.cropIframeRef}
         onOpenChange={crop.handleCropOpenChange}
         onCancel={crop.closeCropDialog}
+      />
+      <HostedMediaPreviewDialog
+        mediaOrigin={getMediaOrigin()}
+        stackLevel={3}
+        closeLabel={tc('close')}
+        onGuardChange={handlePreviewGuard}
       />
     </>
   )

@@ -10,6 +10,7 @@ export const MEDIA_MESSAGE_TYPES = {
   DELETED: 'webonone:media:deleted',
   CANCEL: 'webonone:media:cancel',
   VIEWER_CHANGED: 'webonone:media:viewer-changed',
+  PREVIEW_REQUEST: 'webonone:media:preview-request',
 } as const
 
 export interface MediaItemDto {
@@ -84,6 +85,12 @@ export interface MediaViewerChangedMessage {
   item: MediaItemDto
 }
 
+export interface MediaPreviewRequestMessage {
+  type: typeof MEDIA_MESSAGE_TYPES.PREVIEW_REQUEST
+  scope: string
+  item: MediaItemDto
+}
+
 export interface MediaConfirmMessage {
   type: typeof MEDIA_MESSAGE_TYPES.CONFIRM
 }
@@ -95,6 +102,7 @@ export type MediaEmbedMessage =
   | MediaDeletedMessage
   | MediaCancelMessage
   | MediaViewerChangedMessage
+  | MediaPreviewRequestMessage
   | MediaCropRequestMessage
   | MediaContentSizeMessage
 
@@ -165,6 +173,7 @@ const IFRAME_TO_PARENT_TYPES = new Set<string>([
   MEDIA_MESSAGE_TYPES.DELETED,
   MEDIA_MESSAGE_TYPES.CANCEL,
   MEDIA_MESSAGE_TYPES.VIEWER_CHANGED,
+  MEDIA_MESSAGE_TYPES.PREVIEW_REQUEST,
   MEDIA_MESSAGE_TYPES.CROP_REQUEST,
   MEDIA_MESSAGE_TYPES.CONTENT_SIZE,
 ])

@@ -324,8 +324,8 @@ export function documentFromBlock(block: WebsiteBlock): WebsiteDocumentV1 {
   const next = cloneBlockTree(block, 0, null)
   const rect = next.layout['2xl']
   const height = Math.max(
-    DEFAULT_CONTENT_BLOCK_HEIGHT + 32,
-    (rect?.top ?? 0) + (rect?.height ?? DEFAULT_CONTENT_BLOCK_HEIGHT) + 16,
+    DEFAULT_CONTENT_BLOCK_HEIGHT + ROW_HEIGHT,
+    (rect?.top ?? 0) + (rect?.height ?? DEFAULT_CONTENT_BLOCK_HEIGHT) + ROW_HEIGHT / 2,
   )
   return {
     version: 1,

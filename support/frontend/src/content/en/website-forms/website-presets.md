@@ -11,7 +11,7 @@ summary: "Save reusable block layouts and insert them while designing pages, hea
 2. Choose **Add preset**, then **Add from library** to copy a shared preset, or **Create new** to make one for this website. Give it a name, then design it in the same webpage designer used for pages (blocks and add-ons). **Edit details** sets the preset color palette. Inherit uses the theme palette, and a chosen palette applies to blocks and add-ons that do not set their own. Super Admin uses **Add preset** to add a library preset directly.
 3. Save the preset.
 4. Or, in a page, header, or footer designer, open a block’s menu and choose **Save as preset** (unavailable while you are already editing a preset).
-5. In a page, header, or footer designer, select a block and click **Add add-on**.
+5. In a page, header, or footer designer, select a block, open its menu, and choose **Add add-on**.
 6. Open **Website → Presets** and choose a saved preset. Its add-ons are copied into that block (new copies, independent of the original).
 
 Nav menu add-ons in a preset are skipped when you insert into a page or footer. Presets are not shown on the public site.

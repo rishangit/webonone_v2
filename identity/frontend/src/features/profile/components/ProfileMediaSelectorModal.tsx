@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
+  HostedMediaPreviewDialog,
   MediaCropDialogFrame,
   MediaSelectorFrame,
   sendMediaConfirm,
@@ -60,6 +61,8 @@ export function ProfileMediaSelectorModal({
   const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const [cropOpen, setCropOpen] = useState(false)
+  const [previewGuard, setPreviewGuard] = useState(false)
+  const previewGuardRef = useRef(false)
   const [cropContext, setCropContext] = useState<CropContext | null>(null)
   const [cropOpenKey, setCropOpenKey] = useState(0)
   /** Stays true briefly after crop closes so the outer overlay blocks pointer fall-through. */
@@ -210,8 +213,16 @@ export function ProfileMediaSelectorModal({
     if (blockOuterDismissRef.current || blockOuterDismiss) {
       return
     }
+    if (previewGuardRef.current || previewGuard) {
+      return
+    }
     onClose()
   }
+
+  const handlePreviewGuard = useCallback((guard: boolean) => {
+    previewGuardRef.current = guard
+    setPreviewGuard(guard)
+  }, [])
 
   function handleCropOpenChange(next: boolean) {
     if (!next) {
@@ -234,7 +245,7 @@ export function ProfileMediaSelectorModal({
         sizeWidth="medium"
         sizeHeight="large"
         stackLevel={1}
-        nestedDismissGuard={cropOpen || blockOuterDismiss}
+        nestedDismissGuard={cropOpen || blockOuterDismiss || previewGuard}
         className="w-[calc(100vw-1rem)] max-w-4xl sm:w-2/3"
         noContentPadding
         disableContentScroll
@@ -327,6 +338,12 @@ export function ProfileMediaSelectorModal({
           </div>
         ) : null}
       </CustomDialog>
+      <HostedMediaPreviewDialog
+        mediaOrigin={getMediaOrigin()}
+        stackLevel={3}
+        closeLabel={tc('close')}
+        onGuardChange={handlePreviewGuard}
+      />
     </>
   )
 }

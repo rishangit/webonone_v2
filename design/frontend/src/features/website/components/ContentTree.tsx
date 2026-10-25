@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Box, ChevronDown, ChevronRight, LayoutTemplate } from 'lucide-react'
 import {
@@ -8,14 +8,25 @@ import {
 } from '@webonone/ui-kit'
 import { getAddonModuleByType } from '../addons/registry'
 import { TreeHoverProvider } from '../document/canvasHighlight'
+import { findBlockPath } from '../document/blockTree'
 import { collapseKeysForTemplateSelection, elementTreeTitle } from '../document/contentTreeModel'
+import {
+  addonDropMove,
+  blockDropMove,
+  hintForAddonRow,
+  hintForBlockRow,
+  type TreeDrag,
+  type TreeDropHint,
+  type TreeDropPlacement,
+  type TreeMove,
+} from '../document/treeDrop'
 import type { DesignerSelection, WebsiteAddon, WebsiteBlock, WebsiteDocumentV1 } from '../types'
 import {
   PageSliderAddonTreeNode,
   type TemplateTreeCallbacks,
 } from './contentTree/TemplateTreeNodes'
 import { CopyCanvasElementToAiMenuItem } from './CopyCanvasElementToAiMenuItem'
-import { ADDON_ICONS, TREE_NEST, TreeNavRow, TreeRowMenu } from './contentTree/treeUi'
+import { ADDON_ICONS, TREE_NEST, TreeDropFrame, TreeNavRow, TreeRowMenu } from './contentTree/treeUi'
 
 interface ContentTreeProps {
   document: WebsiteDocumentV1
@@ -78,9 +89,34 @@ interface ContentTreeProps {
   onHover?: (selection: DesignerSelection | null) => void
 }
 
-type DragState =
-  | { kind: 'block'; blockId: string; parentBlockId: string | null; index: number }
-  | { kind: 'addon'; blockId: string; addonId: string; index: number }
+type DragState = TreeDrag
+
+function blockIsInsideDrag(document: WebsiteDocumentV1, dragBlockId: string, blockId: string | null) {
+  if (!blockId) return false
+  return findBlockPath(document, blockId).some((block) => block.id === dragBlockId)
+}
+
+function applyTreeMove(
+  move: TreeMove | null,
+  onMoveAddon: ContentTreeProps['onMoveAddon'],
+  onMoveBlock: ContentTreeProps['onMoveBlock'],
+  setCollapsed: Dispatch<SetStateAction<Record<string, boolean>>>,
+  setDrag: (drag: DragState | null) => void,
+  setDropHint: (hint: TreeDropHint | null) => void,
+) {
+  if (move?.kind === 'addon') {
+    onMoveAddon(move.fromBlockId, move.addonId, move.toBlockId, move.toIndex)
+    setCollapsed((current) => ({ ...current, [move.toBlockId]: false }))
+  } else if (move?.kind === 'block') {
+    onMoveBlock(move.blockId, move.toParentId, move.toIndex)
+    if (move.toParentId) {
+      const parentId = move.toParentId
+      setCollapsed((current) => ({ ...current, [parentId]: false }))
+    }
+  }
+  setDrag(null)
+  setDropHint(null)
+}
 
 function treeItemId(selection: DesignerSelection) {
   if (selection.kind === 'container') return 'container'
@@ -111,6 +147,7 @@ function buildTemplateContext(
 }
 
 function AddonTreeNode({
+  document,
   addon,
   hostBlockId,
   addonIndex,
@@ -120,6 +157,8 @@ function AddonTreeNode({
   setCollapsed,
   drag,
   setDrag,
+  dropHint,
+  setDropHint,
   onSelect,
   onMoveAddon,
   onMoveBlock,
@@ -130,6 +169,7 @@ function AddonTreeNode({
   templateCallbacks,
   onCopyToAi,
 }: {
+  document: WebsiteDocumentV1
   addon: WebsiteAddon
   hostBlockId: string
   addonIndex: number
@@ -139,6 +179,8 @@ function AddonTreeNode({
   setCollapsed: Dispatch<SetStateAction<Record<string, boolean>>>
   drag: DragState | null
   setDrag: (drag: DragState | null) => void
+  dropHint: TreeDropHint | null
+  setDropHint: (hint: TreeDropHint | null) => void
   onSelect: (selection: DesignerSelection) => void
   onMoveAddon: (fromBlockId: string, addonId: string, toBlockId: string, toIndex: number) => void
   onMoveBlock: (blockId: string, toParentId: string | null, toIndex: number) => void
@@ -163,13 +205,17 @@ function AddonTreeNode({
     )
     return (
       <PageSliderAddonTreeNode
+        document={document}
         addon={addon}
         hostBlockId={hostBlockId}
         addonIndex={addonIndex}
         context={context}
-        drag={drag?.kind === 'addon' ? drag : null}
+        drag={drag}
         setDrag={setDrag}
+        dropHint={dropHint}
+        setDropHint={setDropHint}
         onMoveAddon={onMoveAddon}
+        onMoveBlock={onMoveBlock}
         onLayer={onLayer}
         onDeleteAddon={onDeleteAddon}
         onDuplicateAddon={onDuplicateAddon}
@@ -183,8 +229,42 @@ function AddonTreeNode({
   const label = elementTreeTitle(addon.name, typeLabel)
   const AddonIcon = ADDON_ICONS[addon.type]
   const addonSelected = selection?.kind === 'addon' && selection.addonId === addon.id
+  const rowPlacement = dropHint?.treeId === `addon:${addon.id}` ? dropHint.placement : null
+
+  function hoverAddon(zone: TreeDropPlacement) {
+    if (!drag) return
+    setDropHint(
+      hintForAddonRow({
+        drag,
+        zone,
+        addonId: addon.id,
+        addonIndex,
+        hostBlockId,
+        hostIsInsideDrag: drag.kind === 'block' && blockIsInsideDrag(document, drag.blockId, hostBlockId),
+      }),
+    )
+  }
+
+  function dropAddon(zone: TreeDropPlacement) {
+    const move = drag
+      ? addonDropMove({
+          drag,
+          zone,
+          addonId: addon.id,
+          addonIndex,
+          hostBlockId,
+          hostIsInsideDrag: drag.kind === 'block' && blockIsInsideDrag(document, drag.blockId, hostBlockId),
+        })
+      : null
+    applyTreeMove(move, onMoveAddon, onMoveBlock, setCollapsed, setDrag, setDropHint)
+  }
 
   return (
+    <TreeDropFrame
+      placement={rowPlacement === 'inside' ? null : rowPlacement}
+      onDragHover={canManage && drag ? hoverAddon : undefined}
+      onDrop={canManage && drag ? dropAddon : undefined}
+    >
     <TreeNavRow
       treeId={`addon:${addon.id}`}
       icon={AddonIcon}
@@ -195,16 +275,9 @@ function AddonTreeNode({
       draggable={canManage}
       onSelect={() => onSelect({ kind: 'addon', blockId: hostBlockId, addonId: addon.id })}
       onDragStart={() => setDrag({ kind: 'addon', blockId: hostBlockId, addonId: addon.id, index: addonIndex })}
-      onDragEnd={() => setDrag(null)}
-      onDrop={() => {
-        if (drag?.kind === 'addon' && drag.addonId !== addon.id) {
-          onMoveAddon(drag.blockId, drag.addonId, hostBlockId, addonIndex)
-          setCollapsed((current) => ({ ...current, [hostBlockId]: false }))
-        } else if (drag?.kind === 'block' && drag.blockId !== hostBlockId) {
-          onMoveBlock(drag.blockId, hostBlockId, Number.MAX_SAFE_INTEGER)
-          setCollapsed((current) => ({ ...current, [hostBlockId]: false }))
-        }
+      onDragEnd={() => {
         setDrag(null)
+        setDropHint(null)
       }}
       menu={
         canManage ? (
@@ -247,10 +320,12 @@ function AddonTreeNode({
         ) : null
       }
     />
+    </TreeDropFrame>
   )
 }
 
 function BlockTreeNode({
+  document,
   block,
   parentBlockId,
   blockIndex,
@@ -261,6 +336,8 @@ function BlockTreeNode({
   setCollapsed,
   drag,
   setDrag,
+  dropHint,
+  setDropHint,
   onSelect,
   onMoveAddon,
   onMoveBlock,
@@ -276,6 +353,7 @@ function BlockTreeNode({
   saveAsPresetDisabled,
   onCopyToAi,
 }: {
+  document: WebsiteDocumentV1
   block: WebsiteBlock
   parentBlockId: string | null
   blockIndex: number
@@ -286,6 +364,8 @@ function BlockTreeNode({
   setCollapsed: Dispatch<SetStateAction<Record<string, boolean>>>
   drag: DragState | null
   setDrag: (drag: DragState | null) => void
+  dropHint: TreeDropHint | null
+  setDropHint: (hint: TreeDropHint | null) => void
   onSelect: (selection: DesignerSelection) => void
   onMoveAddon: (fromBlockId: string, addonId: string, toBlockId: string, toIndex: number) => void
   onMoveBlock: (blockId: string, toParentId: string | null, toIndex: number) => void
@@ -307,9 +387,54 @@ function BlockTreeNode({
   const addons = [...block.addons].sort((a, b) => a.zIndex - b.zIndex)
   const children = [...(block.children ?? [])].sort((a, b) => a.zIndex - b.zIndex)
   const hasNesting = addons.length > 0 || children.length > 0
+  const rowPlacement = dropHint?.treeId === `block:${block.id}` ? dropHint.placement : null
+
+  function dragFlags() {
+    if (drag?.kind !== 'block') return { parentIsInsideDrag: false, blockIsInsideDrag: false }
+    return {
+      parentIsInsideDrag: blockIsInsideDrag(document, drag.blockId, parentBlockId),
+      blockIsInsideDrag: blockIsInsideDrag(document, drag.blockId, block.id),
+    }
+  }
+
+  function hoverBlock(zone: TreeDropPlacement) {
+    if (!drag) return
+    setDropHint(
+      hintForBlockRow({
+        drag,
+        zone,
+        blockId: block.id,
+        parentBlockId,
+        blockIndex,
+        ...dragFlags(),
+      }),
+    )
+  }
+
+  function dropBlock(zone: TreeDropPlacement) {
+    const move = drag
+      ? blockDropMove({
+          drag,
+          zone,
+          blockId: block.id,
+          parentBlockId,
+          blockIndex,
+          childCount: children.length,
+          addonCount: addons.length,
+          ...dragFlags(),
+        })
+      : null
+    applyTreeMove(move, onMoveAddon, onMoveBlock, setCollapsed, setDrag, setDropHint)
+  }
 
   return (
     <div>
+      <TreeDropFrame
+        placement={rowPlacement}
+        nestable
+        onDragHover={canManage && drag ? hoverBlock : undefined}
+        onDrop={canManage && drag ? dropBlock : undefined}
+      >
       <div className="flex items-center">
         {hasNesting ? (
           <button
@@ -335,16 +460,9 @@ function BlockTreeNode({
             draggable={canManage}
             onSelect={() => onSelect({ kind: 'block', blockId: block.id })}
             onDragStart={() => setDrag({ kind: 'block', blockId: block.id, parentBlockId, index: blockIndex })}
-            onDragEnd={() => setDrag(null)}
-            onDrop={() => {
-              if (drag?.kind === 'addon') {
-                onMoveAddon(drag.blockId, drag.addonId, block.id, addons.length)
-                setCollapsed((current) => ({ ...current, [block.id]: false }))
-              } else if (drag?.kind === 'block' && drag.blockId !== block.id) {
-                onMoveBlock(drag.blockId, block.id, children.length)
-                setCollapsed((current) => ({ ...current, [block.id]: false }))
-              }
+            onDragEnd={() => {
               setDrag(null)
+              setDropHint(null)
             }}
             menu={
               canManage ? (
@@ -396,11 +514,13 @@ function BlockTreeNode({
           />
         </div>
       </div>
+      </TreeDropFrame>
       {open && hasNesting ? (
         <div className={cn('mt-0.5 space-y-0.5', TREE_NEST)}>
           {addons.map((addon, addonIndex) => (
             <AddonTreeNode
               key={addon.id}
+              document={document}
               addon={addon}
               hostBlockId={block.id}
               addonIndex={addonIndex}
@@ -410,6 +530,8 @@ function BlockTreeNode({
               setCollapsed={setCollapsed}
               drag={drag}
               setDrag={setDrag}
+              dropHint={dropHint}
+              setDropHint={setDropHint}
               onSelect={onSelect}
               onMoveAddon={onMoveAddon}
               onMoveBlock={onMoveBlock}
@@ -424,6 +546,7 @@ function BlockTreeNode({
           {children.map((child, childIndex) => (
             <BlockTreeNode
               key={child.id}
+              document={document}
               block={child}
               parentBlockId={block.id}
               blockIndex={childIndex}
@@ -434,6 +557,8 @@ function BlockTreeNode({
               setCollapsed={setCollapsed}
               drag={drag}
               setDrag={setDrag}
+              dropHint={dropHint}
+              setDropHint={setDropHint}
               onSelect={onSelect}
               onMoveAddon={onMoveAddon}
               onMoveBlock={onMoveBlock}
@@ -487,6 +612,13 @@ export function ContentTree({
   const rootRef = useRef<HTMLElement>(null)
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [drag, setDrag] = useState<DragState | null>(null)
+  const [dropHint, setDropHintState] = useState<TreeDropHint | null>(null)
+  const setDropHint = useCallback((hint: TreeDropHint | null) => {
+    setDropHintState((current) => {
+      if (current?.treeId === hint?.treeId && current?.placement === hint?.placement) return current
+      return hint
+    })
+  }, [])
   const blocks = [...document.blocks].sort((a, b) => a.zIndex - b.zIndex)
 
   const templateCallbacks: TemplateTreeCallbacks = {
@@ -527,7 +659,16 @@ export function ContentTree({
 
   return (
     <TreeHoverProvider onHover={onHover}>
-    <nav ref={rootRef} className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2 scrollbar-themed" aria-label={t('contentTree')}>
+    <nav
+      ref={rootRef}
+      className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2 scrollbar-themed"
+      aria-label={t('contentTree')}
+      onDragLeave={(event) => {
+        const next = event.relatedTarget
+        if (next instanceof Node && event.currentTarget.contains(next)) return
+        setDropHint(null)
+      }}
+    >
       <h2 className="sr-only">{t('contentTree')}</h2>
       <TreeNavRow
         treeId="container"
@@ -554,6 +695,7 @@ export function ContentTree({
       {blocks.map((block, blockIndex) => (
         <BlockTreeNode
           key={block.id}
+          document={document}
           block={block}
           parentBlockId={null}
           blockIndex={blockIndex}
@@ -564,6 +706,8 @@ export function ContentTree({
           setCollapsed={setCollapsed}
           drag={drag}
           setDrag={setDrag}
+          dropHint={dropHint}
+          setDropHint={setDropHint}
           onSelect={onSelect}
           onMoveAddon={onMoveAddon}
           onMoveBlock={onMoveBlock}

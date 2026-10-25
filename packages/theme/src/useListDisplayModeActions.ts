@@ -11,9 +11,10 @@ export function useListDisplayModeActions(options?: {
 
   const setMode = useCallback(
     (next: ListDisplayMode) => {
-      if (next === mode) return
       persistListDisplayMode(next)
-      options?.onPatch?.(next)
+      if (next !== mode) {
+        options?.onPatch?.(next)
+      }
     },
     [mode, options?.onPatch],
   )

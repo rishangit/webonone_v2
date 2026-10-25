@@ -1,6 +1,7 @@
 import {
   DEFAULT_LIST_DISPLAY_MODE,
   LIST_DISPLAY_MODE_CHANGE_EVENT,
+  LIST_DISPLAY_MODE_QUERY,
   type ListDisplayMode,
 } from './listDisplayModeConstants'
 
@@ -8,6 +9,18 @@ const SESSION_KEY = 'webonone:list-display-mode'
 
 function isListDisplayMode(value: unknown): value is ListDisplayMode {
   return value === 'list' || value === 'grid' || value === 'card'
+}
+
+function syncListDisplayModeQueryParam(mode: ListDisplayMode): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    const url = new URL(window.location.href)
+    url.searchParams.set(LIST_DISPLAY_MODE_QUERY, mode)
+    window.history.replaceState(window.history.state, '', url)
+  } catch {
+    // ignore invalid location
+  }
 }
 
 export function persistListDisplayMode(mode: ListDisplayMode): void {
@@ -18,6 +31,7 @@ export function persistListDisplayMode(mode: ListDisplayMode): void {
   }
 
   if (typeof window === 'undefined') return
+  syncListDisplayModeQueryParam(mode)
   window.dispatchEvent(new CustomEvent(LIST_DISPLAY_MODE_CHANGE_EVENT, { detail: mode }))
 }
 

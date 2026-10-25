@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, type ReactNode } from 'react'
 import {
   applyThemeVariables,
   applyUiTheme,
@@ -53,11 +53,18 @@ export function ThemeProviderBridge({ children }: ThemeProviderBridgeProps) {
     const payload = buildThemePayload(toThemeDto(preferences.theme), preferences.colorMode)
     applyThemeVariables(payload)
     persistListPageMode(preferences.listPageMode ?? 'pagination')
-    persistListDisplayMode(preferences.listDisplayMode ?? 'list')
     const uiTheme = preferences.uiTheme ?? 'classic'
     persistUiTheme(uiTheme)
     applyUiTheme(uiTheme)
   }, [preferences])
+
+  const listDisplayModeSyncedAt = useRef<number | null>(null)
+  useEffect(() => {
+    if (!preferences || !preferencesFetchedAt) return
+    if (listDisplayModeSyncedAt.current === preferencesFetchedAt) return
+    listDisplayModeSyncedAt.current = preferencesFetchedAt
+    persistListDisplayMode(preferences.listDisplayMode ?? 'list')
+  }, [preferences, preferencesFetchedAt])
 
   const broadcastToIframes = useCallback(() => {
     if (!preferences) return

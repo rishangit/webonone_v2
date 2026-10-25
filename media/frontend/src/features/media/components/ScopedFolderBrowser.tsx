@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react'
 import { Check, FileIcon, Folder, FolderPlus, LayoutGrid, List, Upload } from 'lucide-react'
-import type { MediaItemDto } from '@webonone/media-embed'
+import { MediaPreviewDialog, type MediaItemDto } from '@webonone/media-embed'
 import {
   Alert,
   AlertDescription,
@@ -38,8 +38,8 @@ import { useAppDispatch, useAppSelector } from '@/app/store/hooks'
 import { isAllowedParentOrigin } from '@/features/auth/utils/identityConfig'
 import { getMediaListQueryKey, mediaActions } from '@/features/media/store'
 import { CreateFolderDialog } from './CreateFolderDialog'
-import { MediaPreviewDialog } from './MediaPreviewDialog'
 import { PlatformAlertConfirmDialog } from '@webonone/platform-embed'
+import { useMediaPostMessage } from '../hooks/useMediaPostMessage'
 import { useScopedNavigation } from '../hooks/useScopedNavigation'
 import {
   createFolder,
@@ -115,6 +115,7 @@ export function ScopedFolderBrowser({
   pageScroll = false,
 }: ScopedFolderBrowserProps) {
   const dispatch = useAppDispatch()
+  const { postPreviewRequest } = useMediaPostMessage(parentOrigin, scope)
   const rootLabel = companyRootLabel(scope, scopedRoot)
   const { currentPath, navigateTo, breadcrumbSegments } = useScopedNavigation(
     scopedRoot,
@@ -381,7 +382,17 @@ export function ScopedFolderBrowser({
     return (
       <ItemListMenu ariaLabel={`Actions for ${item.fileName}`}>
         {isImage ? (
-          <DropdownMenuItem onClick={() => setPreviewItem(item)}>View image</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              if (parentOrigin) {
+                postPreviewRequest(item)
+                return
+              }
+              setPreviewItem(item)
+            }}
+          >
+            View image
+          </DropdownMenuItem>
         ) : null}
         {allowDelete ? (
           <>
@@ -998,13 +1009,15 @@ export function ScopedFolderBrowser({
           )
         }}
       />
-      <MediaPreviewDialog
-        item={previewItem}
-        open={previewItem !== null}
-        onOpenChange={(open) => {
-          if (!open) setPreviewItem(null)
-        }}
-      />
+      {parentOrigin ? null : (
+        <MediaPreviewDialog
+          item={previewItem}
+          open={previewItem !== null}
+          onOpenChange={(open) => {
+            if (!open) setPreviewItem(null)
+          }}
+        />
+      )}
       <PlatformAlertConfirmDialog
         open={deleteFileTarget !== null}
         title={deleteFileTarget ? `Delete ${deleteFileTarget.fileName}?` : 'Delete media?'}

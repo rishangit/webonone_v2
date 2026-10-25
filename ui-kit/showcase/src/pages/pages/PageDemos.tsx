@@ -122,7 +122,7 @@ function ListPageDemoBody({
     <ListDisplayModeProvider mode={displayMode}>
     <FeaturePage
       title="List page"
-      description="List-page chrome with list, grid, and card collection layouts (toggle in the header). List mode shows one production ItemList row per screen with a source breadcrumb; card mode uses the same ItemListCollectionCard patterns as each app list."
+      description="List-page chrome with list, grid, and card collection layouts (cycle the view icon in the header). List mode shows one production ItemList row per screen with a source breadcrumb; card mode uses the same ItemListCollectionCard patterns as each app list."
       actions={
         <ListPageActions>
           <SearchInput

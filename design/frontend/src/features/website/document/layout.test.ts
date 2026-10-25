@@ -59,25 +59,25 @@ describe('documentContentHeight', () => {
 })
 
 describe('row grid snap', () => {
-  it('snapToRow rounds to the nearest 32px', () => {
+  it('snapToRow rounds to the nearest row height', () => {
     assert.equal(snapToRow(0), 0)
-    assert.equal(snapToRow(15), 0)
-    assert.equal(snapToRow(16), 32)
-    assert.equal(snapToRow(40), 32)
-    assert.equal(snapToRow(48), 64)
-    assert.equal(snapToRow(49), 64)
+    assert.equal(snapToRow(3), 0)
+    assert.equal(snapToRow(8), 8)
+    assert.equal(snapToRow(40), 40)
+    assert.equal(snapToRow(48), 48)
+    assert.equal(snapToRow(49), 48)
   })
 
   it('snapRowSpan enforces a minimum row count', () => {
     assert.equal(snapRowSpan(10, 1), ROW_HEIGHT)
-    assert.equal(snapRowSpan(80, 3), 96)
+    assert.equal(snapRowSpan(80, 3), 80)
     assert.equal(snapRowSpan(96, 3), 96)
   })
 
   it('clampRect snaps top and height to row multiples', () => {
     const rect = clampRect({ col: 1, colSpan: 4, top: 17, height: 85 }, CONTENT_BLOCK_LAYOUT_LIMITS)
-    assert.equal(rect.top, 32)
-    assert.equal(rect.height, 96)
+    assert.equal(rect.top, 16)
+    assert.equal(rect.height, 88)
   })
 
   it('clampRect allows content blocks down to colSpan 1', () => {
@@ -85,10 +85,10 @@ describe('row grid snap', () => {
     assert.equal(rect.colSpan, 1)
   })
 
-  it('clampRect enforces addon min row span of 1 (32px)', () => {
+  it('clampRect enforces addon min row span of 1 (one row)', () => {
     const rect = clampRect({ col: 1, colSpan: 2, top: 5, height: 20 }, ADDON_LAYOUT_LIMITS)
-    assert.equal(rect.top, 0)
-    assert.equal(rect.height, 32)
+    assert.equal(rect.top, 8)
+    assert.equal(rect.height, 24)
   })
 
   it('pointerToRect move snaps vertical position to rows', () => {
@@ -102,7 +102,7 @@ describe('row grid snap', () => {
     const start = { col: 1, colSpan: 4, top: 0, height: 96 }
     const resized = pointerToRect(start, 0, 20, 1200, 's', CONTENT_BLOCK_LAYOUT_LIMITS)
     assert.equal(resized.height % ROW_HEIGHT, 0)
-    assert.equal(resized.height, 128)
+    assert.equal(resized.height, 120)
   })
 
   it('pointerToRect southeast resize snaps both dimensions', () => {

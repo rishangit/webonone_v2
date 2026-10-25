@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
+  HostedMediaPreviewDialog,
   MediaSelectorFrame,
   useMediaEmbedMessage,
   type MediaItemDto,
@@ -52,6 +53,8 @@ export function ReceiptUploadModal({
   const { t: tc } = useTranslation('common')
   const [searchParams] = useSearchParams()
   const hostRequestIdRef = useRef<string | null>(null)
+  const previewGuardRef = useRef(false)
+  const [previewGuard, setPreviewGuard] = useState(false)
   const hostParentOrigin = resolvePlatformEmbedParentOrigin(searchParams, isAllowedParentOrigin)
   const scope = buildPaymentCompanyMediaScope(companyId)
   const folderPath = buildInvoiceReceiptFolderPath(invoiceId)
@@ -124,16 +127,24 @@ export function ReceiptUploadModal({
     },
   })
 
+  const handlePreviewGuard = useCallback((guard: boolean) => {
+    previewGuardRef.current = guard
+    setPreviewGuard(guard)
+  }, [])
+
   if (hostParentOrigin) {
     return null
   }
 
   return (
+    <>
     <CustomDialog
       open={isOpen}
       onOpenChange={(open) => {
+        if (!open && previewGuardRef.current) return
         if (!open) onClose()
       }}
+      nestedDismissGuard={previewGuard}
       title={t('uploadReceipt')}
       sizeWidth="medium"
       sizeHeight="large"
@@ -167,5 +178,12 @@ export function ReceiptUploadModal({
         />
       )}
     </CustomDialog>
+    <HostedMediaPreviewDialog
+      mediaOrigin={getMediaOrigin()}
+      stackLevel={2}
+      closeLabel={tc('close')}
+      onGuardChange={handlePreviewGuard}
+    />
+    </>
   )
 }

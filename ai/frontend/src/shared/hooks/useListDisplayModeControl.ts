@@ -5,7 +5,6 @@ export function useListDisplayModeControl() {
   const mode = useListDisplayMode()
 
   function setMode(next: ListDisplayMode) {
-    if (next === mode) return
     persistListDisplayMode(next)
   }
 

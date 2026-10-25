@@ -23,6 +23,7 @@
   },
   "peerDependencies": {
     "@webonone/platform-embed": "1.0.0",
+    "@webonone/ui-kit": "*",
     "react": "^18.0.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.1.6",
+    "@webonone/ui-kit": "*",
     "react": "^19.1.0",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3"

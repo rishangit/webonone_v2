@@ -8,6 +8,7 @@ import {
   type SelectMediaValue,
 } from '@webonone/ui-kit'
 import {
+  HostedMediaPreviewDialog,
   MediaSelectorFrame,
   sendMediaConfirm,
   useMediaEmbedMessage,
@@ -82,6 +83,8 @@ function MediaPickerField({
 }: MediaPickerFieldProps) {
   const pickerMode: MediaEmbedMode = multiple ? 'multiple' : 'single'
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [previewGuard, setPreviewGuard] = useState(false)
+  const previewGuardRef = useRef(false)
   const [pickerAttempt, setPickerAttempt] = useState(0)
   const [selectedItems, setSelectedItems] = useState<SelectMediaValue[]>([])
   const [pendingSelection, setPendingSelection] = useState<MediaItemDto[]>([])
@@ -128,6 +131,7 @@ function MediaPickerField({
   }
 
   function handleDialogOpenChange(open: boolean) {
+    if (!open && previewGuardRef.current) return
     setPickerOpen(open)
     if (!open) {
       setPendingSelection([])
@@ -168,6 +172,7 @@ function MediaPickerField({
         }
         sizeWidth="large"
         sizeHeight="xlarge"
+        nestedDismissGuard={previewGuard}
         noContentPadding
         disableContentScroll
         footer={
@@ -208,6 +213,14 @@ function MediaPickerField({
           )}
         </div>
       </CustomDialog>
+      <HostedMediaPreviewDialog
+        mediaOrigin={mediaOrigin}
+        stackLevel={2}
+        onGuardChange={(guard) => {
+          previewGuardRef.current = guard
+          setPreviewGuard(guard)
+        }}
+      />
     </>
   )
 }

@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactNode } from 'react'
+import type { DragEvent as ReactDragEvent, MouseEvent, ReactNode } from 'react'
 import {
   Button,
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useTreeHoverReporter } from '../../document/canvasHighlight'
+import { placementFromPointer, type TreeDropPlacement } from '../../document/treeDrop'
 import type { DesignerSelection, WebsiteAddon } from '../../types'
 
 /** Same row chrome as WebOnOne `NavItem` at md (`py-2`, `h-5` icon). */
@@ -31,6 +32,69 @@ export const ADDON_ICONS: Record<WebsiteAddon['type'], LucideIcon> = {
   text: Type,
   button: MousePointerClick,
   menu: ListTree,
+}
+
+/** Line between rows, or a border when the drop will land inside a block. */
+export function TreeDropFrame({
+  placement,
+  nestable = false,
+  onDragHover,
+  onDrop,
+  children,
+}: {
+  placement: TreeDropPlacement | null
+  /** Block rows accept a middle “drop inside” zone. Add-on rows only reorder. */
+  nestable?: boolean
+  onDragHover?: (placement: TreeDropPlacement) => void
+  onDrop?: (placement: TreeDropPlacement) => void
+  children: ReactNode
+}) {
+  function zoneFrom(event: ReactDragEvent<HTMLDivElement>) {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const ratio = rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0.5
+    return placementFromPointer(ratio, nestable)
+  }
+
+  const listening = Boolean(onDragHover || onDrop)
+
+  return (
+    <div
+      className={cn('relative', placement === 'inside' && 'rounded-md ring-2 ring-inset ring-primary')}
+      onDragOver={
+        listening
+          ? (event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              event.dataTransfer.dropEffect = 'move'
+              onDragHover?.(zoneFrom(event))
+            }
+          : undefined
+      }
+      onDrop={
+        onDrop
+          ? (event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              onDrop(zoneFrom(event))
+            }
+          : undefined
+      }
+    >
+      {placement === 'before' ? (
+        <span
+          className="pointer-events-none absolute inset-x-2 top-0 z-10 h-0.5 -translate-y-1/2 bg-primary"
+          aria-hidden
+        />
+      ) : null}
+      {placement === 'after' ? (
+        <span
+          className="pointer-events-none absolute inset-x-2 bottom-0 z-10 h-0.5 translate-y-1/2 bg-primary"
+          aria-hidden
+        />
+      ) : null}
+      {children}
+    </div>
+  )
 }
 
 export function TreeRowMenu({ ariaLabel, children }: { ariaLabel: string; children: ReactNode }) {
@@ -68,7 +132,6 @@ export function TreeNavRow({
   onSelect,
   onDragStart,
   onDragEnd,
-  onDrop,
 }: {
   treeId: string
   icon: LucideIcon
@@ -83,7 +146,6 @@ export function TreeNavRow({
   onSelect: () => void
   onDragStart?: () => void
   onDragEnd?: () => void
-  onDrop?: () => void
 }) {
   const reportHover = useTreeHoverReporter()
   return (
@@ -115,18 +177,6 @@ export function TreeNavRow({
         onDragStart?.()
       }}
       onDragEnd={onDragEnd}
-      onDragOver={(event) => {
-        if (!onDrop) return
-        event.preventDefault()
-        event.stopPropagation()
-        event.dataTransfer.dropEffect = 'move'
-      }}
-      onDrop={(event) => {
-        if (!onDrop) return
-        event.preventDefault()
-        event.stopPropagation()
-        onDrop()
-      }}
     >
       <Icon className="h-5 w-5 shrink-0" aria-hidden />
       <span className="min-w-0 flex-1 text-left">

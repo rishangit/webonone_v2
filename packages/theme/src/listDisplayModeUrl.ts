@@ -34,17 +34,17 @@ export function stripListDisplayModeQueryParams(searchParams: URLSearchParams): 
 export function relayListDisplayModeQueryParams(
   searchParams: URLSearchParams,
 ): Record<string, string> {
+  const persisted = readPersistedListDisplayMode()
+  if (persisted) {
+    return serializeListDisplayModeQueryParams(persisted)
+  }
+
   const fromQuery = parseListDisplayModeFromQuery(searchParams)
   if (fromQuery) {
     return serializeListDisplayModeQueryParams(fromQuery)
   }
 
-  const persisted = readPersistedListDisplayMode()
-  if (!persisted) {
-    return {}
-  }
-
-  return serializeListDisplayModeQueryParams(persisted)
+  return {}
 }
 
 export function applyListDisplayModeFromQueryParams(
@@ -57,6 +57,11 @@ export function applyListDisplayModeFromQueryParams(
 }
 
 export function resolveListDisplayMode(searchParams?: URLSearchParams): ListDisplayMode {
+  const persisted = readPersistedListDisplayMode()
+  if (persisted) {
+    return persisted
+  }
+
   const fromQuery = searchParams ? parseListDisplayModeFromQuery(searchParams) : null
-  return fromQuery ?? readPersistedListDisplayMode() ?? DEFAULT_LIST_DISPLAY_MODE
+  return fromQuery ?? DEFAULT_LIST_DISPLAY_MODE
 }
