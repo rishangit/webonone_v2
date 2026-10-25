@@ -51,6 +51,7 @@ export function ListTemplateElementsPanel({
                   templateHostEditor.onOpenTemplateAddonSettings(
                     element.templateBlockId,
                     element.templateAddonId,
+                    templateHostEditor.listManualItemId ?? undefined,
                   )
                 }
               }}

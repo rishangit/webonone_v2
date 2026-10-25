@@ -56,8 +56,14 @@ export interface AddonRenderProps {
 export type TemplateHostEditorContext = {
   hostBlockId: string
   hostAddonId: string
+  /** When set, template add-on content edits apply to this manual list row only. */
+  listManualItemId?: string | null
   onOpenTemplateBlockSettings: (templateBlockId: string) => void
-  onOpenTemplateAddonSettings: (templateBlockId: string, templateAddonId: string) => void
+  onOpenTemplateAddonSettings: (
+    templateBlockId: string,
+    templateAddonId: string,
+    listManualItemId?: string,
+  ) => void
 }
 
 export interface AddonPropsFieldsProps {

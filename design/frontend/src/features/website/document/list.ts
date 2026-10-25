@@ -154,8 +154,30 @@ export function collectListDataTree(template: WebsiteBlock | null): ListDataNode
   return nodes
 }
 
+export function cloneListManualItemData(data: Record<string, unknown>): Record<string, unknown> {
+  return structuredClone(data)
+}
+
 export function createEmptyListItem(): ListManualItem {
   return { id: nanoid(10), data: {} }
+}
+
+/** Fresh row data with empty values for every bindable field (no shared references). */
+export function createEmptyListItemForTree(nodes: ListDataNode[]): ListManualItem {
+  let data: Record<string, unknown> = {}
+  function walk(fieldNodes: ListDataNode[]) {
+    for (const node of fieldNodes) {
+      if (node.kind === 'field') {
+        const empty =
+          node.fieldKind === 'images' ? [] : node.fieldKind === 'media' ? null : ''
+        data = writeRecordValue(data, node.path, empty)
+      } else {
+        data = writeRecordValue(data, node.path, [])
+      }
+    }
+  }
+  walk(nodes)
+  return { id: nanoid(10), data }
 }
 
 export function createEmptyNestedRow(): Record<string, unknown> {
@@ -212,7 +234,9 @@ export function resolveListItems(input: {
     return itemsFromDataValue(readRecordValue(input.parentDataItem, path)).slice(0, max)
   }
   if (input.dataSource === 'manual') {
-    return input.manualItems.slice(0, max).map((item) => item.data)
+    return input.manualItems
+      .slice(0, max)
+      .map((item) => cloneListManualItemData(item.data))
   }
   if (input.dataSource === 'parent') {
     const path = input.itemsPath?.trim()

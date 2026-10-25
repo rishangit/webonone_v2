@@ -13,7 +13,9 @@ import {
 import {
   clampListItemGap,
   collectListDataTree,
+  cloneListManualItemData,
   createEmptyListItem,
+  createEmptyListItemForTree,
   inferListItemGroup,
   listMainBlock,
   presentListItemBlock,
@@ -240,9 +242,10 @@ function ListAddonPropsFields({
   }
 
   function updateManualItem(itemId: string, data: Record<string, unknown>) {
+    const snapshot = cloneListManualItemData(data)
     updateProps({
       manualItems: listAddon.props.manualItems.map((item) =>
-        item.id === itemId ? { ...item, data } : item,
+        item.id === itemId ? { ...item, data: snapshot } : item,
       ),
     })
   }
@@ -294,7 +297,12 @@ function ListAddonPropsFields({
               }
               onClick={() =>
                 updateProps({
-                  manualItems: [...listAddon.props.manualItems, createEmptyListItem()],
+                  manualItems: [
+                    ...listAddon.props.manualItems,
+                    dataNodes.length > 0
+                      ? createEmptyListItemForTree(dataNodes)
+                      : createEmptyListItem(),
+                  ],
                 })
               }
             >
@@ -388,14 +396,29 @@ function ListAddonPropsFields({
 
       {editingItem && editingIndex >= 0 ? (
         <ListManualItemEditDialog
+          key={editingItem.id}
           open
+          itemId={editingItem.id}
           onOpenChange={(open) => {
             if (!open) setEditingItemId(null)
           }}
           title={t('listEditItemTitle', { index: editingIndex + 1 })}
           nodes={dataNodes}
           templateElements={templateElements}
-          templateHostEditor={templateHostEditor}
+          templateHostEditor={
+            templateHostEditor
+              ? {
+                  ...templateHostEditor,
+                  listManualItemId: editingItem.id,
+                  onOpenTemplateAddonSettings: (templateBlockId, templateAddonId) =>
+                    templateHostEditor.onOpenTemplateAddonSettings(
+                      templateBlockId,
+                      templateAddonId,
+                      editingItem.id,
+                    ),
+                }
+              : null
+          }
           data={editingItem.data}
           onSave={(data) => updateManualItem(editingItem.id, data)}
           onNestedDialogOpenChange={onNestedDialogOpenChange}

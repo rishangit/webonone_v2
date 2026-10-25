@@ -120,6 +120,22 @@ describe('resolveListItems', () => {
     })
     assert.deepEqual(rows, [{ title: 'One' }])
   })
+
+  it('returns independent data objects for each manual row', () => {
+    const shared = { title: 'Shared' }
+    const rows = resolveListItems({
+      addonId: 'list-1',
+      dataSource: 'manual',
+      datasetId: null,
+      manualItems: [
+        { id: 'a', data: shared },
+        { id: 'b', data: shared },
+      ],
+    })
+    rows[0]!.title = 'One'
+    assert.equal(rows[1]!.title, 'Shared')
+    assert.equal(shared.title, 'Shared')
+  })
 })
 
 describe('listMainBlock / resolveListRowTemplate', () => {

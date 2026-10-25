@@ -53,6 +53,10 @@ import {
   updateTemplateBlock,
 } from '../document/slider'
 import {
+  mergeListRowIntoTemplateAddon,
+  saveManualListTemplateAddon,
+} from '../document/listManualAddon'
+import {
   addAddon,
   addAddonToSliderTemplate,
   addBlock,
@@ -140,6 +144,8 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     /** When editing an addon inside a slider slide template. */
     sliderAddonId?: string
     templateBlockId?: string
+    /** Manual list row whose bound content is edited (template add-on settings). */
+    listManualItemId?: string
   } | null>(null)
   const [saveAsPresetBlockId, setSaveAsPresetBlockId] = useState<string | null>(null)
   const [awaitingSaveAs, setAwaitingSaveAs] = useState(false)
@@ -372,31 +378,49 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     }
   }, [blockSettings, document, datasetsState.items])
 
+  function defaultManualListItemId(hostBlockId: string, listAddonId: string): string | undefined {
+    const list = findBlock(document, hostBlockId)?.addons.find((addon) => addon.id === listAddonId)
+    if (list?.type !== 'list' || list.props.dataSource !== 'manual') return undefined
+    return list.props.manualItems[0]?.id
+  }
+
   const listTemplateHostEditor = useMemo(() => {
     if (!addonSettings?.blockId) return null
-    const resolved = addonSettings.sliderAddonId && addonSettings.templateBlockId
-      ? resolveTemplateAddon(
-          document,
-          addonSettings.blockId,
-          addonSettings.sliderAddonId,
-          addonSettings.templateBlockId,
-          addonSettings.addonId,
-        )
-      : findBlock(document, addonSettings.blockId)?.addons.find((item) => item.id === addonSettings.addonId) ??
-        null
-    if (resolved?.type !== 'list') return null
+    let listAddonId = addonSettings.sliderAddonId
+    if (!listAddonId) {
+      const candidate = findBlock(document, addonSettings.blockId)?.addons.find(
+        (item) => item.id === addonSettings.addonId,
+      )
+      if (candidate?.type === 'list') listAddonId = candidate.id
+    }
+    if (!listAddonId) return null
+    const list = findBlock(document, addonSettings.blockId)?.addons.find(
+      (addon) => addon.id === listAddonId,
+    )
+    if (list?.type !== 'list') return null
     const hostBlockId = addonSettings.blockId
-    const listAddonId = resolved.id
     return {
       hostBlockId,
       hostAddonId: listAddonId,
+      listManualItemId: addonSettings.listManualItemId ?? defaultManualListItemId(hostBlockId, listAddonId),
       onOpenTemplateBlockSettings: (templateBlockId: string) => {
         openTemplateBlockSettings(hostBlockId, listAddonId, templateBlockId)
       },
-      onOpenTemplateAddonSettings: (templateBlockId: string, templateAddonId: string) => {
-        openTemplateAddonSettings(hostBlockId, listAddonId, templateBlockId, templateAddonId)
+      onOpenTemplateAddonSettings: (
+        templateBlockId: string,
+        templateAddonId: string,
+        listManualItemId?: string,
+      ) => {
+        openTemplateAddonSettings(
+          hostBlockId,
+          listAddonId,
+          templateBlockId,
+          templateAddonId,
+          listManualItemId,
+        )
       },
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable host callbacks; row id derived from document
   }, [addonSettings, document])
 
   if (embedParentOrigin) return null
@@ -744,6 +768,7 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         addonId: selection.templateAddonId,
         sliderAddonId: selection.sliderAddonId,
         templateBlockId: selection.templateBlockId,
+        listManualItemId: defaultManualListItemId(selection.hostBlockId, selection.sliderAddonId),
       })
       return
     }
@@ -759,7 +784,9 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
     sliderAddonId: string,
     templateBlockId: string,
     templateAddonId: string,
+    listManualItemId?: string,
   ) {
+    const rowId = listManualItemId ?? defaultManualListItemId(hostBlockId, sliderAddonId)
     setSelection({
       kind: 'templateAddon',
       hostBlockId,
@@ -772,19 +799,33 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
       addonId: templateAddonId,
       sliderAddonId,
       templateBlockId,
+      listManualItemId: rowId,
     })
   }
 
   const settingsAddon = addonSettings
-    ? addonSettings.sliderAddonId && addonSettings.templateBlockId
-      ? resolveTemplateAddon(
-          document,
-          addonSettings.blockId,
-          addonSettings.sliderAddonId,
-          addonSettings.templateBlockId,
-          addonSettings.addonId,
+    ? (() => {
+        const base =
+          addonSettings.sliderAddonId && addonSettings.templateBlockId
+            ? resolveTemplateAddon(
+                document,
+                addonSettings.blockId,
+                addonSettings.sliderAddonId,
+                addonSettings.templateBlockId,
+                addonSettings.addonId,
+              )
+            : findBlock(document, addonSettings.blockId)?.addons.find(
+                (item) => item.id === addonSettings.addonId,
+              ) ?? null
+        if (!base || !addonSettings.listManualItemId || !addonSettings.sliderAddonId) return base
+        const list = findBlock(document, addonSettings.blockId)?.addons.find(
+          (item) => item.id === addonSettings.sliderAddonId,
         )
-      : findBlock(document, addonSettings.blockId)?.addons.find((item) => item.id === addonSettings.addonId) ?? null
+        if (list?.type !== 'list' || list.props.dataSource !== 'manual') return base
+        const row = list.props.manualItems.find((item) => item.id === addonSettings.listManualItemId)
+        if (!row) return base
+        return mergeListRowIntoTemplateAddon(base, row.data)
+      })()
     : null
 
   const settingsDatasetIdOverride =
@@ -1287,6 +1328,19 @@ export function WebsiteDesignerPage({ kind }: { kind: WebsiteDesignerKind }) {
         onSave={(next) => {
           if (!addonSettings) return
           if (addonSettings.sliderAddonId && addonSettings.templateBlockId) {
+            if (addonSettings.listManualItemId) {
+              setDocument(
+                saveManualListTemplateAddon(
+                  document,
+                  addonSettings.blockId,
+                  addonSettings.sliderAddonId,
+                  addonSettings.templateBlockId,
+                  next,
+                  addonSettings.listManualItemId,
+                ),
+              )
+              return
+            }
             setDocument(
               updateTemplateAddon(
                 document,

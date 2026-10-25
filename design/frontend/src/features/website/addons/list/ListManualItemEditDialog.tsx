@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, CustomDialog } from '@webonone/ui-kit'
 import { WebsiteImagePicker } from '../../components/WebsiteImagePicker'
-import type { ListDataNode } from '../../document/list'
+import { cloneListManualItemData, type ListDataNode } from '../../document/list'
 import type { ListTemplateElement } from '../../document/listTemplateElements'
 import type { TemplateHostEditorContext } from '../types'
 import { ListManualDataTree, type ListImagePickRequest } from './ListManualDataTree'
@@ -15,6 +15,7 @@ const DIALOG_SIZE = {
 
 export function ListManualItemEditDialog({
   open,
+  itemId,
   onOpenChange,
   title,
   nodes,
@@ -25,6 +26,7 @@ export function ListManualItemEditDialog({
   onNestedDialogOpenChange,
 }: {
   open: boolean
+  itemId: string
   onOpenChange: (open: boolean) => void
   title: string
   nodes: ListDataNode[]
@@ -40,8 +42,11 @@ export function ListManualItemEditDialog({
   const [imagePick, setImagePick] = useState<ListImagePickRequest | null>(null)
 
   useEffect(() => {
-    if (open) setDraft(data)
-  }, [open, data])
+    if (!open) return
+    setDraft(cloneListManualItemData(data))
+    // Reload only when opening a different item — not on every parent re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `data` is read when `itemId` / `open` changes
+  }, [open, itemId])
 
   useEffect(() => {
     onNestedDialogOpenChange?.(open || imagePick != null)
@@ -49,7 +54,7 @@ export function ListManualItemEditDialog({
   }, [open, imagePick, onNestedDialogOpenChange])
 
   function submit() {
-    onSave(draft)
+    onSave(cloneListManualItemData(draft))
     onOpenChange(false)
   }
 
