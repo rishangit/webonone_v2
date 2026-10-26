@@ -6,7 +6,7 @@ import { updateTemplateAddon } from './slider'
 
 function mediaFromAddon(addon: Extract<WebsiteAddon, { type: 'image' }>): MediaRef | null {
   const bp = addon.props.mediaByBreakpoint
-  return bp?.['2xl'] ?? bp?.xl ?? bp?.lg ?? bp?.md ?? bp?.sm ?? bp?.xs ?? null
+  return bp?.['2xl'] ?? bp?.xl ?? bp?.lg ?? bp?.md ?? bp?.sm ?? null
 }
 
 /** Overlay one manual row onto a template add-on for settings UI. */
