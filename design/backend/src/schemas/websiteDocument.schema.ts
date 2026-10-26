@@ -456,7 +456,10 @@ function stripLegacyImageSliders(value: unknown): unknown {
           .filter((addon) => !(addon && typeof addon === 'object' && (addon as { type?: string }).type === 'imageSlider'))
           .map((addon) => {
             if (!addon || typeof addon !== 'object') return addon
-            const typed = addon as { type?: string; props?: { slideTemplate?: unknown } }
+            const typed = addon as {
+              type?: string
+              props?: { slideTemplate?: unknown; itemTemplate?: unknown }
+            }
             if (typed.type === 'slider' && typed.props?.slideTemplate) {
               return {
                 ...typed,
